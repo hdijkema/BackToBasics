@@ -10,6 +10,7 @@ track_t* track_new()
   I(artist);
   I(composer);
   I(piece);
+  I(genre);
   I(album_title);
   I(album_artist);
   I(album_composer);
@@ -40,6 +41,7 @@ track_t* track_copy(track_t* s)
   C(artist);
   C(composer);
   C(piece);
+  C(genre);
   C(album_title);
   C(album_artist);
   C(album_composer);
@@ -63,6 +65,7 @@ void track_destroy(track_t* t)
   D(artist);
   D(composer);
   D(piece);
+  D(genre);
   D(album_title);
   D(album_artist);
   D(album_composer);
@@ -93,6 +96,7 @@ SET_GET(title)
 SET_GET(artist)
 SET_GET(composer)
 SET_GET(piece)
+SET_GET(genre)
 SET_GET(album_title)
 SET_GET(album_artist)
 SET_GET(album_composer)

@@ -13,6 +13,7 @@ typedef struct {
   char* album_title;
   char* album_artist;
   char* album_composer;
+  char* genre;
   int year;
   int nr;
   char* artid;
@@ -33,6 +34,9 @@ track_t* track_copy(track_t* t);
 
 void track_set_id(track_t* t, long id);
 long track_get_id(track_t* t);
+
+void track_set_genre(track_t* t, const char* genre);
+const char* track_get_genre(track_t* t);
 
 void track_set_title(track_t* t, const char* val);
 const char* track_get_title(track_t* t);
