@@ -1,4 +1,5 @@
 ﻿#include <audio/aodev.h>
+#include <elementals.h>
 
 
 ao_t* aodev_new(void) 

@@ -20,6 +20,15 @@
 
 #include <glib/gi18n.h>
 
+int log_this_severity(int severity) 
+{
+  return 1;
+}
+
+FILE* log_handle()
+{
+  return stderr;
+}
 
 
 /* For testing propose use the local (not installed) ui file */

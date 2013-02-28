@@ -10,9 +10,18 @@ static audio_result_t pause(void* mp3_info);
 static el_bool can_seek(void* mp3_info);
 static audio_result_t seek(void* mp3_info, long position_in_ms);
 static audio_result_t gard(void* mp3_info, long position_in_ms);
+static long length_in_ms(void* mp3_info);
+static audio_result_t load_file(void* mp3_info, const char* file);
+static audio_result_t load_url(void* mp3_info, const char* url);
 static void destroy(void* mp3_info);
 
 static void* player_thread(void* mp3_info);
+
+void post_event(audio_event_fifo* fifo, audio_state_t state, long position_in_ms)
+{
+  audio_event_t e = {state, position_in_ms};
+  audio_event_fifo_enqueue(fifo, &e);
+}
  
 static audio_worker_t* init(const char* file_or_url, el_bool file, audio_result_t* res)
 {
@@ -44,6 +53,9 @@ static audio_worker_t* init(const char* file_or_url, el_bool file, audio_result_
   worker->seek = seek;
   worker->gard = gard;
   worker->destroy = destroy;
+  worker->length_in_ms = length_in_ms;
+  worker->load_file = load_file;
+  worker->load_url = load_url;
   worker->fifo = audio_event_fifo_new();
   worker->worker_data = (void*) mp3;
     
@@ -54,25 +66,29 @@ static audio_worker_t* init(const char* file_or_url, el_bool file, audio_result_
   mp3->client_notification = worker->fifo;
   mp3->player_control = audio_event_fifo_new();
   
+  mp3->is_open = el_false;
+  mp3->length  = -1;
+  sem_init(&mp3->length_set, 0, 0);
+  
   mp3->ao_handle = aodev_new();
 
   if (file) {
     mp3->can_seek = el_true;
     mp3->is_file = el_true;
-    mpg123_open(mp3->handle, file_or_url);
-    mpg123_getformat(mp3->handle, &mp3->rate, &mp3->channels, &mp3->encoding);
-    
-    aodev_set_format(mp3->ao_handle, mpg123_encsize(mp3->encoding) * 8, mp3->rate, mp3->channels);
-    aodev_open(mp3->ao_handle);
-    
+    mp3->file_or_url = mc_strdup(file_or_url);
+    post_event(mp3->player_control, INTERNAL_CMD_LOAD_FILE, -1); 
   } else { // URL
     mp3->can_seek = el_false;
     mp3->is_file = el_false;
-    mpg123_open_feed(mp3->handle);
+    mp3->file_or_url = mc_strdup(file_or_url);
+    post_event(mp3->player_control, INTERNAL_CMD_LOAD_URL, -1);
   }
   
   int thread_id = pthread_create(&mp3->player_thread, NULL, player_thread, mp3);
-  
+
+  // wait until fully loaded (length is set)
+  sem_wait(&mp3->length_set);
+
   return worker;
 }
 
@@ -90,12 +106,6 @@ audio_worker_t* mp3_new_from_url(const char* url, audio_result_t* res)
  * mp3 worker thread
  ******************************************************************************************/
 
-void post_event(audio_event_fifo* fifo, audio_state_t state, long position_in_ms)
-{
-  audio_event_t e = {state, position_in_ms};
-  audio_event_fifo_enqueue(fifo, &e);
-}
-
 void* player_thread(void* _mp3_info) 
 {
   mp3_t* mp3_info = (mp3_t* ) _mp3_info;
@@ -103,15 +113,46 @@ void* player_thread(void* _mp3_info)
   long gard_position_in_ms = -1;
   el_bool playing = el_false;
   
-  post_event(mp3_info->client_notitication, AUDIO_READY, current_position_in_ms);
+  post_event(mp3_info->client_notification, AUDIO_READY, current_position_in_ms);
  
   audio_event_t *event;
-  while((event = audio_event_fifo_dequeue(mp3_info->player_control)) != INTERNAL_CMD_DESTROY) {
+  event = audio_event_fifo_dequeue(mp3_info->player_control);
+  while (event->state != INTERNAL_CMD_DESTROY) {
+    
     audio_state_t event_state = event->state;
     long event_position = event->position_in_ms;
     audio_event_destroy(event);
     
     switch(event_state) {
+      case INTERNAL_CMD_LOAD_FILE: {
+          playing = el_false;
+          if (mp3_info->is_open) {
+            mpg123_close(mp3_info->handle);
+            aodev_close(mp3_info->ao_handle);
+          }
+          mpg123_open(mp3_info->handle, mp3_info->file_or_url);
+          mc_free(mp3_info->file_or_url);
+          mpg123_getformat(mp3_info->handle, &mp3_info->rate, &mp3_info->channels, &mp3_info->encoding);
+          mp3_info->buffer_size = mpg123_outblock(mp3_info->handle);
+          mc_free(mp3_info->buffer);
+          mp3_info->buffer = mc_malloc(mp3_info->buffer_size * sizeof(char) );
+          aodev_set_format(mp3_info->ao_handle, mpg123_encsize(mp3_info->encoding) * 8, mp3_info->rate, mp3_info->channels);
+          aodev_open(mp3_info->ao_handle);
+          mp3_info->is_open = el_true;
+          {
+            off_t l = mpg123_length(mp3_info->handle);
+            if (l == MPG123_ERR) {
+              mp3_info->length = -1; 
+            } else {
+              mp3_info->length = (l * 1000) / mp3_info->rate;
+            }
+            sem_post(&mp3_info->length_set);
+          }
+      }
+      break;
+      case INTERNAL_CMD_LOAD_URL: {
+      }
+      break;
       case INTERNAL_CMD_SEEK: {
         off_t pos = mpg123_timeframe(mp3_info->handle, (event_position / 1000.0));
         mpg123_seek_frame(mp3_info->handle, pos, SEEK_SET);
@@ -131,10 +172,12 @@ void* player_thread(void* _mp3_info)
       break;
       case INTERNAL_CMD_NONE:
       break;
+      default:
+      break;
     }
     
     if (gard_position_in_ms >= 0 && current_position_in_ms >= gard_position_in_ms) {
-    
+
       gard_position_in_ms = -1;
       post_event(mp3_info->client_notification, AUDIO_GARD_REACHED, current_position_in_ms);
       
@@ -148,16 +191,35 @@ void* player_thread(void* _mp3_info)
           off_t frame = mpg123_tellframe(mp3_info->handle);
           current_position_in_ms = frame * 26;    // 1 frame is 26 milliseconds
           post_event(mp3_info->client_notification, AUDIO_PLAYING, current_position_in_ms);
+        } else if (res == MPG123_DONE) {
+          post_event(mp3_info->client_notification, AUDIO_EOS, current_position_in_ms);
+          playing = el_false;
         } else {
-          post_event(mp3_info->client_notification, AUDIO_DECODER_ERROR, current_position_in_ms);
+          post_event(mp3_info->client_notification, AUDIO_STATE_ERROR, current_position_in_ms);
+          playing = el_false;
         }
       } else { // Stream playing
+        post_event(mp3_info->client_notification, AUDIO_STATE_ERROR, -1);
+        playing = el_false;
       } 
     
-      post_event(mp3_info->player_control, INTERNAL_CMD_NONE, current_position_in_ms);
     }
     
+    if (playing) {
+      if (audio_event_fifo_peek(mp3_info->player_control) != NULL) {
+        event = audio_event_fifo_dequeue(mp3_info->player_control);
+      } else {
+        event = (audio_event_t*) mc_malloc(sizeof(audio_event_t));
+        event->state = INTERNAL_CMD_NONE;
+        event->position_in_ms = -1;
+      }
+    } else {
+      event = audio_event_fifo_dequeue(mp3_info->player_control);
+    }
   }
+
+  // destroy event received
+  audio_event_destroy(event);
 
   // exit thread  
   return NULL;
@@ -166,6 +228,24 @@ void* player_thread(void* _mp3_info)
 /******************************************************************************************
  * mp3 worker commands
  ******************************************************************************************/
+
+static audio_result_t load_file(void* _mp3_info, const char* file)
+{
+  mp3_t* mp3_info = (mp3_t*) _mp3_info;
+  mp3_info->file_or_url = mc_strdup(file);
+  post_event(mp3_info->player_control, INTERNAL_CMD_LOAD_FILE, -1);
+  sem_wait(&mp3_info->length_set);
+  return AUDIO_OK;
+}
+
+static audio_result_t load_url(void* _mp3_info, const char* url)
+{
+  mp3_t* mp3_info = (mp3_t*) _mp3_info;
+  mp3_info->file_or_url = mc_strdup(url);
+  post_event(mp3_info->player_control, INTERNAL_CMD_LOAD_URL, -1);
+  sem_wait(&mp3_info->length_set);
+  return AUDIO_OK;
+}
 
 static audio_result_t play(void* _mp3_info) 
 {
@@ -205,6 +285,12 @@ static audio_result_t gard(void* _mp3_info, long position_in_ms)
   return AUDIO_OK;
 }
 
+static long length_in_ms(void* _mp3_info)
+{
+  mp3_t* mp3_info = (mp3_t*) _mp3_info;
+  return mp3_info->length;
+}
+
 static void destroy(void* _mp3_info) 
 {
   mp3_t* mp3_info = (mp3_t* ) _mp3_info;
@@ -218,6 +304,5 @@ static void destroy(void* _mp3_info)
   mpg123_delete(mp3_info->handle);
   
   audio_event_fifo_destroy(mp3_info->player_control);
-  
 }
 

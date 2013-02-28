@@ -2,7 +2,7 @@
 #define __MP3__BTB
 
 #include <audio/audio.h>
-#include <ao/ao.h>
+#include <audio/aodev.h>
 #include <mpg123.h>
 #include <elementals.h>
 
@@ -19,6 +19,10 @@ typedef struct {
   void* buffer;
   size_t buffer_size;
   el_bool is_file;
+  el_bool is_open;
+  char* file_or_url;
+  long length;
+  sem_t length_set;
 } mp3_t;
 
 audio_worker_t* mp3_new_from_file(const char* localpath, audio_result_t *res);

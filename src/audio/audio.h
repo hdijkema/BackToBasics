@@ -13,17 +13,22 @@ typedef enum {
 } audio_result_t;
 
 typedef enum {
+  AUDIO_NONE,
   AUDIO_PLAYING,
   AUDIO_SEEKED,
   AUDIO_GARD_REACHED,
   AUDIO_PAUSED,
   AUDIO_EOS,
   AUDIO_READY, 
+  AUDIO_STATE_ERROR,
+  AUDIO_LENGTH,
   INTERNAL_CMD_DESTROY,
   INTERNAL_CMD_PLAY,
   INTERNAL_CMD_SEEK,
   INTERNAL_CMD_PAUSE,
   INTERNAL_CMD_GARD,
+  INTERNAL_CMD_LOAD_FILE,
+  INTERNAL_CMD_LOAD_URL,
   INTERNAL_CMD_NONE
 } audio_state_t;
 
@@ -40,6 +45,9 @@ typedef struct {
   audio_result_t (*seek)(void* w,long position_in_ms);
   audio_result_t (*gard)(void* w,long position_in_ms);
   audio_result_t (*pause)(void* w);
+  audio_result_t (*load_file)(void* w, const char* local_path);
+  audio_result_t (*load_url)(void* w, const char* url);
+  long (*length_in_ms)(void* w);
   void (*destroy)(void* worker);
   audio_event_fifo *fifo;
   void* worker_data;
@@ -49,14 +57,21 @@ audio_worker_t* media_new_from_file(const char* local_path, audio_result_t* err)
 audio_worker_t* media_new_from_url(const char* url, audio_result_t* err);
 void media_destroy(audio_worker_t* worker);
 
+audio_result_t media_load_file(audio_worker_t* worker, const char* local_path);
+audio_result_t media_load_url(audio_worker_t* worker, const char* url);
+
 audio_result_t media_play(audio_worker_t* worker);
 el_bool media_can_seek(audio_worker_t* worker);
 audio_result_t media_seek(audio_worker_t* worker, long position_in_ms);
-audio_result_t media_gard_position(audio_worker_t* worker, long position_in_ms);
+audio_result_t media_gard(audio_worker_t* worker, long position_in_ms);
 audio_result_t media_pause(audio_worker_t* worker);
+
+long media_length_in_ms(audio_worker_t* worker);
 
 el_bool media_peek_event(audio_worker_t *worker);
 audio_event_t *media_get_event(audio_worker_t *worker);
 void audio_event_destroy(audio_event_t *event);
+audio_state_t audio_event_state(audio_event_t* event);
+long audio_event_ms(audio_event_t* event);
 
 #endif

@@ -5,7 +5,7 @@ Geometry=1366x715+0+24
 
 [Project Manager]
 Shortcut=BackToBasics//src//backtobasics%%%BackToBasics//src//btb_play
-Expand=BackToBasics%%%BackToBasics//src%%%BackToBasics//src//btb_play%%%BackToBasics//backtobasicsdoc%%%BackToBasics//BACKTOBASICS
+Expand=BackToBasics%%%BackToBasics//src%%%BackToBasics//backtobasicsdoc%%%BackToBasics//BACKTOBASICS
 
 [File Loader]
 Files=../../src/btb_play.c#1
@@ -19,7 +19,7 @@ Working directories=../../../BackToBasics
 
 [Build]
 Configuration list=1:Default:%%%1:Debug:Debug%%%1:Profiling:Profiling%%%1:Optimized:Optimized
-Selected Configuration=Debug
+Selected Configuration=Default
 BuildArgs/Default=--enable-maintainer-mode
 BuildArgs/Debug=--enable-maintainer-mode 'CFLAGS=-g -O0' 'CXXFLAGS=-g -O0' 'JFLAGS=-g -O0' 'FFLAGS=-g -O0'
 BuildArgs/Profiling=--enable-maintainer-mode 'CFLAGS=-g -pg' 'CXXFLAGS=-g -pg' 'JFLAGS=-g -pg' 'FFLAGS=-g -pg'
