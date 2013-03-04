@@ -33,7 +33,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = backtobasics$(EXEEXT) btb_play$(EXEEXT)
+bin_PROGRAMS = backtobasics$(EXEEXT) btb_play$(EXEEXT) \
+	btb_playlist$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -48,7 +49,7 @@ am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(uidir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__objects_1 = aodev.$(OBJEXT) audio.$(OBJEXT) mp3.$(OBJEXT) \
 	track.$(OBJEXT) cue.$(OBJEXT) tracks_source.$(OBJEXT) \
-	playlist.$(OBJEXT) playlist_player.$(OBJEXT)
+	playlist.$(OBJEXT) playlist_player.$(OBJEXT) i18n.$(OBJEXT)
 am_backtobasics_OBJECTS = $(am__objects_1) main.$(OBJEXT) \
 	backtobasics.$(OBJEXT)
 backtobasics_OBJECTS = $(am_backtobasics_OBJECTS)
@@ -59,12 +60,27 @@ backtobasics_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 am__objects_2 = btb_play-aodev.$(OBJEXT) btb_play-audio.$(OBJEXT) \
 	btb_play-mp3.$(OBJEXT) btb_play-track.$(OBJEXT) \
 	btb_play-cue.$(OBJEXT) btb_play-tracks_source.$(OBJEXT) \
-	btb_play-playlist.$(OBJEXT) btb_play-playlist_player.$(OBJEXT)
+	btb_play-playlist.$(OBJEXT) btb_play-playlist_player.$(OBJEXT) \
+	btb_play-i18n.$(OBJEXT)
 am_btb_play_OBJECTS = $(am__objects_2) btb_play-btb_play.$(OBJEXT)
 btb_play_OBJECTS = $(am_btb_play_OBJECTS)
 btb_play_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 btb_play_LINK = $(CCLD) $(btb_play_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
+am__objects_3 = btb_playlist-aodev.$(OBJEXT) \
+	btb_playlist-audio.$(OBJEXT) btb_playlist-mp3.$(OBJEXT) \
+	btb_playlist-track.$(OBJEXT) btb_playlist-cue.$(OBJEXT) \
+	btb_playlist-tracks_source.$(OBJEXT) \
+	btb_playlist-playlist.$(OBJEXT) \
+	btb_playlist-playlist_player.$(OBJEXT) \
+	btb_playlist-i18n.$(OBJEXT)
+am_btb_playlist_OBJECTS = $(am__objects_3) \
+	btb_playlist-btb_playlist.$(OBJEXT)
+btb_playlist_OBJECTS = $(am_btb_playlist_OBJECTS)
+btb_playlist_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+btb_playlist_LINK = $(CCLD) $(btb_playlist_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -88,8 +104,10 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(backtobasics_SOURCES) $(btb_play_SOURCES)
-DIST_SOURCES = $(backtobasics_SOURCES) $(btb_play_SOURCES)
+SOURCES = $(backtobasics_SOURCES) $(btb_play_SOURCES) \
+	$(btb_playlist_SOURCES)
+DIST_SOURCES = $(backtobasics_SOURCES) $(btb_play_SOURCES) \
+	$(btb_playlist_SOURCES)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -276,7 +294,9 @@ GENERICSRC = \
 	playlist/playlist.c \
 	playlist/playlist.h \
 	playlist/playlist_player.c \
-	playlist/playlist_player.h 
+	playlist/playlist_player.h \
+	i18n/i18n.c \
+	i18n/i18n.h
 
 backtobasics_SOURCES = \
   $(GENERICSRC) \
@@ -294,6 +314,14 @@ btb_play_SOURCES = \
 
 btb_play_CFLAGS = $(TARGET_READLINE_INC)
 btb_play_LDADD = \
+	$(BTB_PLAY_LIBS) $(TARGET_READLINE_LIBS)
+
+btb_playlist_SOURCES = \
+  $(GENERICSRC) \
+  btb_playlist.c
+
+btb_playlist_CFLAGS = $(TARGET_READLINE_INC)
+btb_playlist_LDADD = \
 	$(BTB_PLAY_LIBS) $(TARGET_READLINE_LIBS)
 
 EXTRA_DIST = $(ui_DATA)
@@ -374,6 +402,9 @@ backtobasics$(EXEEXT): $(backtobasics_OBJECTS) $(backtobasics_DEPENDENCIES) $(EX
 btb_play$(EXEEXT): $(btb_play_OBJECTS) $(btb_play_DEPENDENCIES) $(EXTRA_btb_play_DEPENDENCIES) 
 	@rm -f btb_play$(EXEEXT)
 	$(AM_V_CCLD)$(btb_play_LINK) $(btb_play_OBJECTS) $(btb_play_LDADD) $(LIBS)
+btb_playlist$(EXEEXT): $(btb_playlist_OBJECTS) $(btb_playlist_DEPENDENCIES) $(EXTRA_btb_playlist_DEPENDENCIES) 
+	@rm -f btb_playlist$(EXEEXT)
+	$(AM_V_CCLD)$(btb_playlist_LINK) $(btb_playlist_OBJECTS) $(btb_playlist_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -388,12 +419,24 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_play-audio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_play-btb_play.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_play-cue.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_play-i18n.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_play-mp3.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_play-playlist.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_play-playlist_player.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_play-track.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_play-tracks_source.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_playlist-aodev.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_playlist-audio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_playlist-btb_playlist.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_playlist-cue.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_playlist-i18n.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_playlist-mp3.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_playlist-playlist.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_playlist-playlist_player.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_playlist-track.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_playlist-tracks_source.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cue.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/i18n.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mp3.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/playlist.Po@am__quote@
@@ -527,6 +570,20 @@ playlist_player.obj: playlist/playlist_player.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o playlist_player.obj `if test -f 'playlist/playlist_player.c'; then $(CYGPATH_W) 'playlist/playlist_player.c'; else $(CYGPATH_W) '$(srcdir)/playlist/playlist_player.c'; fi`
 
+i18n.o: i18n/i18n.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT i18n.o -MD -MP -MF $(DEPDIR)/i18n.Tpo -c -o i18n.o `test -f 'i18n/i18n.c' || echo '$(srcdir)/'`i18n/i18n.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/i18n.Tpo $(DEPDIR)/i18n.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='i18n/i18n.c' object='i18n.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o i18n.o `test -f 'i18n/i18n.c' || echo '$(srcdir)/'`i18n/i18n.c
+
+i18n.obj: i18n/i18n.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT i18n.obj -MD -MP -MF $(DEPDIR)/i18n.Tpo -c -o i18n.obj `if test -f 'i18n/i18n.c'; then $(CYGPATH_W) 'i18n/i18n.c'; else $(CYGPATH_W) '$(srcdir)/i18n/i18n.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/i18n.Tpo $(DEPDIR)/i18n.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='i18n/i18n.c' object='i18n.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o i18n.obj `if test -f 'i18n/i18n.c'; then $(CYGPATH_W) 'i18n/i18n.c'; else $(CYGPATH_W) '$(srcdir)/i18n/i18n.c'; fi`
+
 btb_play-aodev.o: audio/aodev.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_play_CFLAGS) $(CFLAGS) -MT btb_play-aodev.o -MD -MP -MF $(DEPDIR)/btb_play-aodev.Tpo -c -o btb_play-aodev.o `test -f 'audio/aodev.c' || echo '$(srcdir)/'`audio/aodev.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_play-aodev.Tpo $(DEPDIR)/btb_play-aodev.Po
@@ -639,6 +696,20 @@ btb_play-playlist_player.obj: playlist/playlist_player.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_play_CFLAGS) $(CFLAGS) -c -o btb_play-playlist_player.obj `if test -f 'playlist/playlist_player.c'; then $(CYGPATH_W) 'playlist/playlist_player.c'; else $(CYGPATH_W) '$(srcdir)/playlist/playlist_player.c'; fi`
 
+btb_play-i18n.o: i18n/i18n.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_play_CFLAGS) $(CFLAGS) -MT btb_play-i18n.o -MD -MP -MF $(DEPDIR)/btb_play-i18n.Tpo -c -o btb_play-i18n.o `test -f 'i18n/i18n.c' || echo '$(srcdir)/'`i18n/i18n.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_play-i18n.Tpo $(DEPDIR)/btb_play-i18n.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='i18n/i18n.c' object='btb_play-i18n.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_play_CFLAGS) $(CFLAGS) -c -o btb_play-i18n.o `test -f 'i18n/i18n.c' || echo '$(srcdir)/'`i18n/i18n.c
+
+btb_play-i18n.obj: i18n/i18n.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_play_CFLAGS) $(CFLAGS) -MT btb_play-i18n.obj -MD -MP -MF $(DEPDIR)/btb_play-i18n.Tpo -c -o btb_play-i18n.obj `if test -f 'i18n/i18n.c'; then $(CYGPATH_W) 'i18n/i18n.c'; else $(CYGPATH_W) '$(srcdir)/i18n/i18n.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_play-i18n.Tpo $(DEPDIR)/btb_play-i18n.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='i18n/i18n.c' object='btb_play-i18n.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_play_CFLAGS) $(CFLAGS) -c -o btb_play-i18n.obj `if test -f 'i18n/i18n.c'; then $(CYGPATH_W) 'i18n/i18n.c'; else $(CYGPATH_W) '$(srcdir)/i18n/i18n.c'; fi`
+
 btb_play-btb_play.o: btb_play.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_play_CFLAGS) $(CFLAGS) -MT btb_play-btb_play.o -MD -MP -MF $(DEPDIR)/btb_play-btb_play.Tpo -c -o btb_play-btb_play.o `test -f 'btb_play.c' || echo '$(srcdir)/'`btb_play.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_play-btb_play.Tpo $(DEPDIR)/btb_play-btb_play.Po
@@ -652,6 +723,146 @@ btb_play-btb_play.obj: btb_play.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='btb_play.c' object='btb_play-btb_play.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_play_CFLAGS) $(CFLAGS) -c -o btb_play-btb_play.obj `if test -f 'btb_play.c'; then $(CYGPATH_W) 'btb_play.c'; else $(CYGPATH_W) '$(srcdir)/btb_play.c'; fi`
+
+btb_playlist-aodev.o: audio/aodev.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-aodev.o -MD -MP -MF $(DEPDIR)/btb_playlist-aodev.Tpo -c -o btb_playlist-aodev.o `test -f 'audio/aodev.c' || echo '$(srcdir)/'`audio/aodev.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-aodev.Tpo $(DEPDIR)/btb_playlist-aodev.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='audio/aodev.c' object='btb_playlist-aodev.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-aodev.o `test -f 'audio/aodev.c' || echo '$(srcdir)/'`audio/aodev.c
+
+btb_playlist-aodev.obj: audio/aodev.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-aodev.obj -MD -MP -MF $(DEPDIR)/btb_playlist-aodev.Tpo -c -o btb_playlist-aodev.obj `if test -f 'audio/aodev.c'; then $(CYGPATH_W) 'audio/aodev.c'; else $(CYGPATH_W) '$(srcdir)/audio/aodev.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-aodev.Tpo $(DEPDIR)/btb_playlist-aodev.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='audio/aodev.c' object='btb_playlist-aodev.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-aodev.obj `if test -f 'audio/aodev.c'; then $(CYGPATH_W) 'audio/aodev.c'; else $(CYGPATH_W) '$(srcdir)/audio/aodev.c'; fi`
+
+btb_playlist-audio.o: audio/audio.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-audio.o -MD -MP -MF $(DEPDIR)/btb_playlist-audio.Tpo -c -o btb_playlist-audio.o `test -f 'audio/audio.c' || echo '$(srcdir)/'`audio/audio.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-audio.Tpo $(DEPDIR)/btb_playlist-audio.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='audio/audio.c' object='btb_playlist-audio.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-audio.o `test -f 'audio/audio.c' || echo '$(srcdir)/'`audio/audio.c
+
+btb_playlist-audio.obj: audio/audio.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-audio.obj -MD -MP -MF $(DEPDIR)/btb_playlist-audio.Tpo -c -o btb_playlist-audio.obj `if test -f 'audio/audio.c'; then $(CYGPATH_W) 'audio/audio.c'; else $(CYGPATH_W) '$(srcdir)/audio/audio.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-audio.Tpo $(DEPDIR)/btb_playlist-audio.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='audio/audio.c' object='btb_playlist-audio.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-audio.obj `if test -f 'audio/audio.c'; then $(CYGPATH_W) 'audio/audio.c'; else $(CYGPATH_W) '$(srcdir)/audio/audio.c'; fi`
+
+btb_playlist-mp3.o: audio/mp3.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-mp3.o -MD -MP -MF $(DEPDIR)/btb_playlist-mp3.Tpo -c -o btb_playlist-mp3.o `test -f 'audio/mp3.c' || echo '$(srcdir)/'`audio/mp3.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-mp3.Tpo $(DEPDIR)/btb_playlist-mp3.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='audio/mp3.c' object='btb_playlist-mp3.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-mp3.o `test -f 'audio/mp3.c' || echo '$(srcdir)/'`audio/mp3.c
+
+btb_playlist-mp3.obj: audio/mp3.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-mp3.obj -MD -MP -MF $(DEPDIR)/btb_playlist-mp3.Tpo -c -o btb_playlist-mp3.obj `if test -f 'audio/mp3.c'; then $(CYGPATH_W) 'audio/mp3.c'; else $(CYGPATH_W) '$(srcdir)/audio/mp3.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-mp3.Tpo $(DEPDIR)/btb_playlist-mp3.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='audio/mp3.c' object='btb_playlist-mp3.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-mp3.obj `if test -f 'audio/mp3.c'; then $(CYGPATH_W) 'audio/mp3.c'; else $(CYGPATH_W) '$(srcdir)/audio/mp3.c'; fi`
+
+btb_playlist-track.o: metadata/track.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-track.o -MD -MP -MF $(DEPDIR)/btb_playlist-track.Tpo -c -o btb_playlist-track.o `test -f 'metadata/track.c' || echo '$(srcdir)/'`metadata/track.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-track.Tpo $(DEPDIR)/btb_playlist-track.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='metadata/track.c' object='btb_playlist-track.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-track.o `test -f 'metadata/track.c' || echo '$(srcdir)/'`metadata/track.c
+
+btb_playlist-track.obj: metadata/track.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-track.obj -MD -MP -MF $(DEPDIR)/btb_playlist-track.Tpo -c -o btb_playlist-track.obj `if test -f 'metadata/track.c'; then $(CYGPATH_W) 'metadata/track.c'; else $(CYGPATH_W) '$(srcdir)/metadata/track.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-track.Tpo $(DEPDIR)/btb_playlist-track.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='metadata/track.c' object='btb_playlist-track.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-track.obj `if test -f 'metadata/track.c'; then $(CYGPATH_W) 'metadata/track.c'; else $(CYGPATH_W) '$(srcdir)/metadata/track.c'; fi`
+
+btb_playlist-cue.o: metadata/cue.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-cue.o -MD -MP -MF $(DEPDIR)/btb_playlist-cue.Tpo -c -o btb_playlist-cue.o `test -f 'metadata/cue.c' || echo '$(srcdir)/'`metadata/cue.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-cue.Tpo $(DEPDIR)/btb_playlist-cue.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='metadata/cue.c' object='btb_playlist-cue.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-cue.o `test -f 'metadata/cue.c' || echo '$(srcdir)/'`metadata/cue.c
+
+btb_playlist-cue.obj: metadata/cue.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-cue.obj -MD -MP -MF $(DEPDIR)/btb_playlist-cue.Tpo -c -o btb_playlist-cue.obj `if test -f 'metadata/cue.c'; then $(CYGPATH_W) 'metadata/cue.c'; else $(CYGPATH_W) '$(srcdir)/metadata/cue.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-cue.Tpo $(DEPDIR)/btb_playlist-cue.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='metadata/cue.c' object='btb_playlist-cue.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-cue.obj `if test -f 'metadata/cue.c'; then $(CYGPATH_W) 'metadata/cue.c'; else $(CYGPATH_W) '$(srcdir)/metadata/cue.c'; fi`
+
+btb_playlist-tracks_source.o: metadata/tracks_source.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-tracks_source.o -MD -MP -MF $(DEPDIR)/btb_playlist-tracks_source.Tpo -c -o btb_playlist-tracks_source.o `test -f 'metadata/tracks_source.c' || echo '$(srcdir)/'`metadata/tracks_source.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-tracks_source.Tpo $(DEPDIR)/btb_playlist-tracks_source.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='metadata/tracks_source.c' object='btb_playlist-tracks_source.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-tracks_source.o `test -f 'metadata/tracks_source.c' || echo '$(srcdir)/'`metadata/tracks_source.c
+
+btb_playlist-tracks_source.obj: metadata/tracks_source.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-tracks_source.obj -MD -MP -MF $(DEPDIR)/btb_playlist-tracks_source.Tpo -c -o btb_playlist-tracks_source.obj `if test -f 'metadata/tracks_source.c'; then $(CYGPATH_W) 'metadata/tracks_source.c'; else $(CYGPATH_W) '$(srcdir)/metadata/tracks_source.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-tracks_source.Tpo $(DEPDIR)/btb_playlist-tracks_source.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='metadata/tracks_source.c' object='btb_playlist-tracks_source.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-tracks_source.obj `if test -f 'metadata/tracks_source.c'; then $(CYGPATH_W) 'metadata/tracks_source.c'; else $(CYGPATH_W) '$(srcdir)/metadata/tracks_source.c'; fi`
+
+btb_playlist-playlist.o: playlist/playlist.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-playlist.o -MD -MP -MF $(DEPDIR)/btb_playlist-playlist.Tpo -c -o btb_playlist-playlist.o `test -f 'playlist/playlist.c' || echo '$(srcdir)/'`playlist/playlist.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-playlist.Tpo $(DEPDIR)/btb_playlist-playlist.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='playlist/playlist.c' object='btb_playlist-playlist.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-playlist.o `test -f 'playlist/playlist.c' || echo '$(srcdir)/'`playlist/playlist.c
+
+btb_playlist-playlist.obj: playlist/playlist.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-playlist.obj -MD -MP -MF $(DEPDIR)/btb_playlist-playlist.Tpo -c -o btb_playlist-playlist.obj `if test -f 'playlist/playlist.c'; then $(CYGPATH_W) 'playlist/playlist.c'; else $(CYGPATH_W) '$(srcdir)/playlist/playlist.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-playlist.Tpo $(DEPDIR)/btb_playlist-playlist.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='playlist/playlist.c' object='btb_playlist-playlist.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-playlist.obj `if test -f 'playlist/playlist.c'; then $(CYGPATH_W) 'playlist/playlist.c'; else $(CYGPATH_W) '$(srcdir)/playlist/playlist.c'; fi`
+
+btb_playlist-playlist_player.o: playlist/playlist_player.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-playlist_player.o -MD -MP -MF $(DEPDIR)/btb_playlist-playlist_player.Tpo -c -o btb_playlist-playlist_player.o `test -f 'playlist/playlist_player.c' || echo '$(srcdir)/'`playlist/playlist_player.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-playlist_player.Tpo $(DEPDIR)/btb_playlist-playlist_player.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='playlist/playlist_player.c' object='btb_playlist-playlist_player.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-playlist_player.o `test -f 'playlist/playlist_player.c' || echo '$(srcdir)/'`playlist/playlist_player.c
+
+btb_playlist-playlist_player.obj: playlist/playlist_player.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-playlist_player.obj -MD -MP -MF $(DEPDIR)/btb_playlist-playlist_player.Tpo -c -o btb_playlist-playlist_player.obj `if test -f 'playlist/playlist_player.c'; then $(CYGPATH_W) 'playlist/playlist_player.c'; else $(CYGPATH_W) '$(srcdir)/playlist/playlist_player.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-playlist_player.Tpo $(DEPDIR)/btb_playlist-playlist_player.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='playlist/playlist_player.c' object='btb_playlist-playlist_player.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-playlist_player.obj `if test -f 'playlist/playlist_player.c'; then $(CYGPATH_W) 'playlist/playlist_player.c'; else $(CYGPATH_W) '$(srcdir)/playlist/playlist_player.c'; fi`
+
+btb_playlist-i18n.o: i18n/i18n.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-i18n.o -MD -MP -MF $(DEPDIR)/btb_playlist-i18n.Tpo -c -o btb_playlist-i18n.o `test -f 'i18n/i18n.c' || echo '$(srcdir)/'`i18n/i18n.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-i18n.Tpo $(DEPDIR)/btb_playlist-i18n.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='i18n/i18n.c' object='btb_playlist-i18n.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-i18n.o `test -f 'i18n/i18n.c' || echo '$(srcdir)/'`i18n/i18n.c
+
+btb_playlist-i18n.obj: i18n/i18n.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-i18n.obj -MD -MP -MF $(DEPDIR)/btb_playlist-i18n.Tpo -c -o btb_playlist-i18n.obj `if test -f 'i18n/i18n.c'; then $(CYGPATH_W) 'i18n/i18n.c'; else $(CYGPATH_W) '$(srcdir)/i18n/i18n.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-i18n.Tpo $(DEPDIR)/btb_playlist-i18n.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='i18n/i18n.c' object='btb_playlist-i18n.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-i18n.obj `if test -f 'i18n/i18n.c'; then $(CYGPATH_W) 'i18n/i18n.c'; else $(CYGPATH_W) '$(srcdir)/i18n/i18n.c'; fi`
+
+btb_playlist-btb_playlist.o: btb_playlist.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-btb_playlist.o -MD -MP -MF $(DEPDIR)/btb_playlist-btb_playlist.Tpo -c -o btb_playlist-btb_playlist.o `test -f 'btb_playlist.c' || echo '$(srcdir)/'`btb_playlist.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-btb_playlist.Tpo $(DEPDIR)/btb_playlist-btb_playlist.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='btb_playlist.c' object='btb_playlist-btb_playlist.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-btb_playlist.o `test -f 'btb_playlist.c' || echo '$(srcdir)/'`btb_playlist.c
+
+btb_playlist-btb_playlist.obj: btb_playlist.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -MT btb_playlist-btb_playlist.obj -MD -MP -MF $(DEPDIR)/btb_playlist-btb_playlist.Tpo -c -o btb_playlist-btb_playlist.obj `if test -f 'btb_playlist.c'; then $(CYGPATH_W) 'btb_playlist.c'; else $(CYGPATH_W) '$(srcdir)/btb_playlist.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/btb_playlist-btb_playlist.Tpo $(DEPDIR)/btb_playlist-btb_playlist.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='btb_playlist.c' object='btb_playlist-btb_playlist.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_playlist_CFLAGS) $(CFLAGS) -c -o btb_playlist-btb_playlist.obj `if test -f 'btb_playlist.c'; then $(CYGPATH_W) 'btb_playlist.c'; else $(CYGPATH_W) '$(srcdir)/btb_playlist.c'; fi`
 install-uiDATA: $(ui_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(uidir)" || $(MKDIR_P) "$(DESTDIR)$(uidir)"

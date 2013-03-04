@@ -48,6 +48,7 @@ typedef struct {
   char *album_performer;
   char *album_composer;
   char *genre;
+  char *image_file;
   char *cuefile;
   int count;
   cue_entry_t **entries;
@@ -70,6 +71,7 @@ const char *cue_album_performer(cue_t * cue);
 const char *cue_album_composer(cue_t * cue);
 const char *cue_audio_file(cue_t * cue);
 const char *cue_genre(cue_t * cue);
+const char *cue_image_file(cue_t* cue);
 
 int cue_entries(cue_t * cue);
 cue_entry_t *cue_entry(cue_t * cue, int index);

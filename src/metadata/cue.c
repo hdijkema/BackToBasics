@@ -231,6 +231,7 @@ cue_t* cue_new(const char* file)
   r->album_title = NULL;
   r->album_performer = NULL;
   r->album_composer = NULL;
+  r->image_file = NULL;
   r->genre = NULL;
   r->cuefile = mystrdup(file);
   r->count = 0;
@@ -244,7 +245,7 @@ cue_t* cue_new(const char* file)
     r->_errno = ENOFILECUE;
   } else {
     char* line;
-    char* image = NULL;
+    //char* image = NULL;
     char* year = NULL;
     cue_entry_t* entry = NULL;
     int in_tracks = 0;
@@ -298,8 +299,8 @@ cue_t* cue_new(const char* file)
               mc_free(year);
               year = unquote(&line[3], "date");
             } else if (eq(&line[3], "image")) {
-              mc_free(image);
-              image = unquote(&line[3], "image");
+              mc_free(r->image_file);
+              r->image_file = unquote(&line[3], "image");
             } else if (eq(&line[3], "composer")) {
               mc_free(r->album_composer);
               r->album_performer = unquote(&line[3], "composer");
@@ -359,7 +360,7 @@ cue_t* cue_new(const char* file)
     }
     
     mc_free(year);
-    mc_free(image);
+    //mc_free(image);
 
     if (r->count > 0) {
       int i, N;
@@ -394,6 +395,7 @@ static void cue_destroy1(cue_t* c)
   mc_free(c->genre);
   mc_free(c->cuefile);
   mc_free(c->entries);
+  mc_free(c->image_file);
   mc_free(c);
 }
 
@@ -415,6 +417,11 @@ const char* cue_file(cue_t* cue)
 const char* cue_album_title(cue_t* cue)
 {
   return T(cue->album_title);
+}
+
+const char* cue_image_file(cue_t* cue)
+{
+  return T(cue->image_file);
 }
 
 const char* cue_album_performer(cue_t* cue)

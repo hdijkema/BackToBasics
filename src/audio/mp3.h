@@ -25,8 +25,8 @@ typedef struct {
   sem_t length_set;
 } mp3_t;
 
-audio_worker_t* mp3_new_from_file(const char* localpath, audio_result_t *res);
-audio_worker_t* mp3_new_from_url(const char* url, audio_result_t *res);
+audio_result_t mp3_new_from_file(audio_worker_t* worker, const char* localpath);
+audio_result_t mp3_new_from_url(audio_worker_t* worker, const char* url);
 
 #endif
 

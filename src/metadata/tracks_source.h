@@ -7,7 +7,7 @@
 DECLARE_EL_ARRAY(track_array, track_t);
 
 track_array tracks_from_cue(const char* cuefile);
-track_array tracks_from_mp3(const char* localfile);
-track_array tracks_from_flac(const char* localfile);
+track_array tracks_from_media(const char* localfile);
+el_bool save_track(track_t *t);
 
 #endif

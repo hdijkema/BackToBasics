@@ -5567,12 +5567,12 @@ if test -n "$BACKTOBASICS_CFLAGS"; then
     pkg_cv_BACKTOBASICS_CFLAGS="$BACKTOBASICS_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib gdk-3.0 libpcre elementals\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib gdk-3.0 libpcre elementals") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_BACKTOBASICS_CFLAGS=`$PKG_CONFIG --cflags "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib gdk-3.0 libpcre elementals" 2>/dev/null`
+  pkg_cv_BACKTOBASICS_CFLAGS=`$PKG_CONFIG --cflags "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -5584,12 +5584,12 @@ if test -n "$BACKTOBASICS_LIBS"; then
     pkg_cv_BACKTOBASICS_LIBS="$BACKTOBASICS_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib gdk-3.0 libpcre elementals\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib gdk-3.0 libpcre elementals") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_BACKTOBASICS_LIBS=`$PKG_CONFIG --libs "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib gdk-3.0 libpcre elementals" 2>/dev/null`
+  pkg_cv_BACKTOBASICS_LIBS=`$PKG_CONFIG --libs "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -5610,14 +5610,14 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        BACKTOBASICS_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib gdk-3.0 libpcre elementals" 2>&1`
+	        BACKTOBASICS_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals" 2>&1`
         else
-	        BACKTOBASICS_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib gdk-3.0 libpcre elementals" 2>&1`
+	        BACKTOBASICS_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$BACKTOBASICS_PKG_ERRORS" >&5
 
-	as_fn_error $? "Package requirements (gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib gdk-3.0 libpcre elementals) were not met:
+	as_fn_error $? "Package requirements (gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals) were not met:
 
 $BACKTOBASICS_PKG_ERRORS
 
@@ -5658,12 +5658,12 @@ if test -n "$BTB_PLAY_CFLAGS"; then
     pkg_cv_BTB_PLAY_CFLAGS="$BTB_PLAY_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"ao libmpg123 elementals\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "ao libmpg123 elementals") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"ao libmpg123 taglib_c libpcre elementals\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "ao libmpg123 taglib_c libpcre elementals") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_BTB_PLAY_CFLAGS=`$PKG_CONFIG --cflags "ao libmpg123 elementals" 2>/dev/null`
+  pkg_cv_BTB_PLAY_CFLAGS=`$PKG_CONFIG --cflags "ao libmpg123 taglib_c libpcre elementals" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -5675,12 +5675,12 @@ if test -n "$BTB_PLAY_LIBS"; then
     pkg_cv_BTB_PLAY_LIBS="$BTB_PLAY_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"ao libmpg123 elementals\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "ao libmpg123 elementals") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"ao libmpg123 taglib_c libpcre elementals\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "ao libmpg123 taglib_c libpcre elementals") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_BTB_PLAY_LIBS=`$PKG_CONFIG --libs "ao libmpg123 elementals" 2>/dev/null`
+  pkg_cv_BTB_PLAY_LIBS=`$PKG_CONFIG --libs "ao libmpg123 taglib_c libpcre elementals" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -5701,14 +5701,14 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        BTB_PLAY_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "ao libmpg123 elementals" 2>&1`
+	        BTB_PLAY_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "ao libmpg123 taglib_c libpcre elementals" 2>&1`
         else
-	        BTB_PLAY_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "ao libmpg123 elementals" 2>&1`
+	        BTB_PLAY_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "ao libmpg123 taglib_c libpcre elementals" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$BTB_PLAY_PKG_ERRORS" >&5
 
-	as_fn_error $? "Package requirements (ao libmpg123 elementals) were not met:
+	as_fn_error $? "Package requirements (ao libmpg123 taglib_c libpcre elementals) were not met:
 
 $BTB_PLAY_PKG_ERRORS
 
