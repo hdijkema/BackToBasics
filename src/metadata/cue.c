@@ -97,8 +97,10 @@ static int eq(const char* s, const char* e)
   int lr = strlen(r);
   int le = strlen(e);
   
-  if (lr < le) 
+  if (lr < le) {
+    mc_free(r);
     return 0;
+  }
   
   if (strncasecmp(r, e, le) == 0) {
     mc_free(r);
@@ -378,14 +380,6 @@ cue_t* cue_new(const char* file)
   return r;
 }
 
-void cue_destroy(cue_t* c)
-{
-  int i, N;
-  for (i = 0, N = c->count; i < N; i++) {
-    cue_entry_destroy(c->entries[0]);
-  }
-}
-
 static void cue_destroy1(cue_t* c)
 {
   mc_free(c->audio_file);
@@ -398,6 +392,18 @@ static void cue_destroy1(cue_t* c)
   mc_free(c->image_file);
   mc_free(c);
 }
+
+void cue_destroy(cue_t* c)
+{
+  int i, N;
+  for (i = 0, N = c->count; i < N; i++) {
+    cue_entry_destroy(c->entries[0]);
+  }
+  if (N == 0) {
+    cue_destroy1(c);
+  }
+}
+
 
 int cue_valid(cue_t* c)
 {

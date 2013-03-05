@@ -40,7 +40,9 @@ GENERICSRC = \
 	playlist/playlist_player.c \
 	playlist/playlist_player.h \
 	i18n/i18n.c \
-	i18n/i18n.h
+	i18n/i18n.h \
+	library/library.c \
+	library/library.h
 
 
 backtobasics_SOURCES = \

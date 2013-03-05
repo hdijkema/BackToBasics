@@ -199,3 +199,102 @@ void log_track(track_t* t)
   LD(file_size);
   log_debug("end track");
 }
+
+#define TRACK_MAGIC_NUMBER 93224244L
+#define WSTR(s, f) { long len = strlen(s)+1;fwrite(&len,sizeof(long),1,f);fwrite(s,len,1,f); }
+#define WNR(n, f) fwrite(&n, sizeof(n), 1, f)
+
+void track_fwrite(track_t* t, FILE* f) 
+{
+  long track_magic_number = TRACK_MAGIC_NUMBER;
+  fwrite(&track_magic_number, sizeof(long), 1, f);
+  WNR(t->id, f);
+  WSTR(t->title, f);
+  WSTR(t->artist, f);
+  WSTR(t->composer, f);
+  WSTR(t->piece, f);
+  WSTR(t->album_title, f);
+  WSTR(t->album_artist, f);
+  WSTR(t->album_composer, f);
+  WSTR(t->genre, f);
+  WSTR(t->lyric, f);
+  WNR(t->year, f);
+  WNR(t->nr, f);
+  WSTR(t->artid, f);
+  WNR(t->is_file, f);
+  WSTR(t->source_id, f);
+  WNR(t->source_mtime, f);
+  WSTR(t->file_or_url, f);
+  WNR(t->begin_offset_in_ms, f);
+  WNR(t->end_offset_in_ms, f);
+  WNR(t->length_in_ms, f);
+  WNR(t->file_size, f);
+}
+
+#define RSTR(result, s, f) if (result) { long len; \
+                     int c = fread(&len, sizeof(len), 1, f); \
+                     mc_free(s); \
+                     s = (char*) mc_malloc(len); \
+                     c += fread(s, len, 1, f); \
+                     result = (c == 2); \
+}
+
+#define RNR(result, n, f) if (result) { result = (fread(&n, sizeof(n), 1, f) == 1); }
+
+el_bool track_fread(track_t* t, FILE* f)
+{
+  long track_magic_number;
+  if (fread(&track_magic_number, sizeof(long), 1, f) != 1) {
+    return el_false;
+  }
+  
+  if (track_magic_number == TRACK_MAGIC_NUMBER) {
+    el_bool result = el_true;
+    RNR(result, t->id, f);
+    RSTR(result, t->title, f);
+    RSTR(result, t->artist, f);
+    RSTR(result, t->composer, f);
+    RSTR(result, t->piece, f);
+    RSTR(result, t->album_title, f);
+    RSTR(result, t->album_artist, f);
+    RSTR(result, t->album_composer, f);
+    RSTR(result, t->genre, f);
+    RSTR(result, t->lyric, f);
+    RNR(result, t->year, f);
+    RNR(result, t->nr, f);
+    RSTR(result, t->artid, f);
+    RNR(result, t->is_file, f);
+    RSTR(result, t->source_id, f);
+    RNR(result, t->source_mtime, f);
+    RSTR(result, t->file_or_url, f);
+    RNR(result, t->begin_offset_in_ms, f);
+    RNR(result, t->end_offset_in_ms, f);
+    RNR(result, t->length_in_ms, f);
+    RNR(result, t->file_size, f);
+    return result;
+  } else {
+    return el_false;
+  }
+}
+
+int track_cmp(track_t* t1, track_t* t2)
+{
+  int r1 = strcmp(t1->file_or_url, t2->file_or_url);
+  if (r1 == 0) {
+    long b1 = t1->begin_offset_in_ms;
+    long b2 = t2->begin_offset_in_ms;
+    long e1 = (t1->end_offset_in_ms >= 0) ? t1->end_offset_in_ms : t1->length_in_ms;
+    long e2 = (t2->end_offset_in_ms >= 0) ? t2->end_offset_in_ms : t2->length_in_ms;
+    if (b1 == b2) {
+      if (e1 > e2) { return 1; }
+      else if (e1 == e2) { return 0; }
+      else { return -1; }
+    } else if (b1 > b2) { 
+      return 1; 
+    } else {
+      return -1;
+    }
+  } else {
+    return r1;
+  }
+}

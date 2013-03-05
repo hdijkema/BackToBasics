@@ -3,6 +3,8 @@
 
 #include <elementals/types.h>
 #include <time.h>
+#include <stdio.h>
+
 
 typedef struct {
   long id;
@@ -37,6 +39,9 @@ track_t* track_new();
 void track_destroy(track_t* t);
 el_bool track_valid_id(track_t* t);
 track_t* track_copy(track_t* t);
+
+el_bool track_fread(track_t* t, FILE* f);
+void track_fwrite(track_t* t, FILE* f);
 
 void log_track(track_t* t);
 
@@ -98,6 +103,8 @@ const char* track_get_source_id(track_t* t);
 
 void track_set_lyric(track_t* t,const char* lyric);
 const char* track_get_lyric(track_t* t);
+
+int track_cmp(track_t *t1, track_t* t2);
 
 #endif
 

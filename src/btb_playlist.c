@@ -9,6 +9,7 @@
 #include <metadata/tracks_source.h>
 #include <playlist/playlist_player.h>
 #include <playlist/playlist.h>
+#include <library/library.h>
 #include <metadata/track.h>
 #include <i18n/i18n.h>
 
@@ -84,6 +85,10 @@ FILE* log_handle()
   return stderr;
 }
 
+void library_cb(int count, int tot) {
+  printf("scanning library %d of %d\r", count, tot);
+}
+
 
 int main(char *argv[],int argc) {
   mc_init();
@@ -100,6 +105,7 @@ int main(char *argv[],int argc) {
   hre_t re_quit = hre_compile("^quit$","i");
   hre_t re_repeat = hre_compile("^repeat\\s+(off|list|track)$","i");
   hre_t re_again = hre_compile("^again$","i");
+  hre_t re_scan = hre_compile("^scan\\s+(.*)$","i");
   
   file_info_t *history_file = mc_take_over(file_info_new_home(".btb_playlist"));
   printf("history file: %s\n", file_info_absolute_path(history_file));
@@ -144,6 +150,7 @@ int main(char *argv[],int argc) {
               playlist_append(pl, track_array_get(array, i));
             }
             playlist_player_set_playlist(player, pl);
+            track_array_destroy(array);
           }
         }
       }
@@ -187,8 +194,23 @@ int main(char *argv[],int argc) {
       } else {
         playlist_player_set_repeat(player, PLP_NO_REPEAT);
       }
+      hre_matches_destroy(m);
     } else if (hre_has_match(re_again, line)) {
       playlist_player_again(player);
+    } else if (hre_has_match(re_scan, line)) {
+      hre_matches m = hre_match(re_scan, line);
+      hre_match_t* match = hre_matches_get(m, 1);
+      printf("scanning %s\n", hre_match_str(match));
+      library_t* library = library_new();
+      printf("calling scan_library\n");
+      scan_library(library, hre_match_str(match), library_cb);
+      printf("\n");
+      printf("library: %d tracks\n", library_count(library));
+      printf("done scanning, destroying library\n");
+      library_destroy(library);
+      printf("library destroyed\n");
+      hre_matches_destroy(m);
+      printf("matches destroyed\n");
     }
     
     mc_free(line);
@@ -209,6 +231,7 @@ int main(char *argv[],int argc) {
   hre_destroy(re_previous);
   hre_destroy(re_again);
   hre_destroy(re_repeat);
+  hre_destroy(re_scan);
   
   return 0;
 }
