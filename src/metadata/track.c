@@ -23,6 +23,7 @@ track_t* track_new()
   t->year = -1;
   t->nr = -1;
   t->id = -1;
+  t->id_str = mc_strdup("-1");
   t->begin_offset_in_ms = -1;
   t->end_offset_in_ms = -1;
   t->length_in_ms = -1;
@@ -32,7 +33,7 @@ track_t* track_new()
 
 el_bool track_valid_id(track_t* t)
 {
-  return t->id>=0;
+  return t->id >= 0;
 }
 
 #define C(a) t->/**/a = mc_strdup(s->/**/a)
@@ -58,6 +59,7 @@ track_t* track_copy(track_t* s)
   CC(year);
   CC(nr);
   CC(id);
+  C(id_str);
   CC(begin_offset_in_ms);
   CC(end_offset_in_ms);
   CC(length_in_ms);
@@ -80,6 +82,7 @@ void track_destroy(track_t* t)
   D(artid);
   D(source_id);
   D(file_or_url);
+  D(id_str);
   mc_free(t);
 }
 
@@ -117,7 +120,25 @@ SET_GET_T(source_mtime, time_t);
 SET_GET_T(year, int)
 SET_GET_T(nr, int)
 
-SET_GET_T(id, long);
+void track_set_id(track_t* t, long val)
+{
+  t->id = val;
+  char s[100];
+  sprintf(s, "%ld", val);
+  mc_free(t->id_str);
+  t->id_str = mc_strdup(s);
+}
+
+long track_get_id(track_t* t) 
+{
+  return t->id;
+}
+
+const char* track_get_id_as_str(track_t* t)
+{
+  return t->id_str;
+}
+
 SET_GET_T(file_size, long long);
 
 void track_set_file(track_t* t, const char* file, long length_in_ms, long begin_offset_in_ms, long end_offset_in_ms)

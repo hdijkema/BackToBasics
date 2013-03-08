@@ -7,14 +7,39 @@
 #define LIBRARY_MAGIC_NUMBER  826292822L
 #define LIBRARY_VERSION       1
 
+static char* copy_str(char* s)
+{
+  return mc_strdup(s);
+}
+
+static void destroy_str(char* s)
+{
+  mc_free(s);
+}
+
+IMPLEMENT_EL_ARRAY(genre_array, char, copy_str, destroy_str);
+IMPLEMENT_EL_ARRAY(artist_array, char, copy_str, destroy_str);
+IMPLEMENT_EL_ARRAY(album_array, char, copy_str, destroy_str);
+
+
 library_t* library_new(void)
 {
-  library_t* l = (library_t*) mc_malloc(sizeof(library_t));
+  library_t* l = (library_t*)  mc_malloc(sizeof(library_t));
   l->current_id = 0;
   l->all_tracks = playlist_new(_("Library"));
   l->filter_genre = NULL;
   l->filter_album_artist = NULL;
   l->filter_album_title = NULL;
+  l->dirty = el_true;
+  l->filter = el_true;
+  l->genres = genre_array_new();
+  l->artists = artist_array_new();
+  l->albums = album_array_new();
+  
+  l->filtered_artists = set_new(SET_CASE_INSENSITIVE);
+  l->filtered_albums = set_new(SET_CASE_INSENSITIVE);
+  l->filtered_tracks = set_new(SET_CASE_SENSITIVE);
+  
   return l;
 }
 
@@ -24,6 +49,12 @@ void library_destroy(library_t* l)
   mc_free(l->filter_genre);
   mc_free(l->filter_album_artist);
   mc_free(l->filter_album_title);
+  genre_array_destroy(l->genres);
+  artist_array_destroy(l->artists);
+  album_array_destroy(l->albums);
+  set_destroy(l->filtered_artists);
+  set_destroy(l->filtered_albums);
+  set_destroy(l->filtered_tracks);
   mc_free(l);
 }
 
@@ -35,6 +66,7 @@ int library_count(library_t* l)
 library_result_t library_load(library_t* l, const char* localpath)
 {
   FILE* f = fopen(localpath, "rt");
+  l->dirty = el_true;
   if (f!=NULL) {
     long magic_number = -1;
     short version = -1;
@@ -127,7 +159,7 @@ playlist_t* library_current_selection(library_t* l, const char* name)
         take_track = el_false;
     }
     if (l->filter_album_title != NULL) {
-      if (strcasecmp(track_get_album_artist(trk), l->filter_album_artist) != 0)
+      if (strcasecmp(track_get_album_title(trk), l->filter_album_title) != 0)
         take_track = el_false;
     }
     if (take_track) 
@@ -142,6 +174,7 @@ library_result_t library_add(library_t* l, track_t* t)
   l->current_id += 1;
   track_set_id(t, l->current_id);
   playlist_append(l->all_tracks, t);
+  l->dirty = el_true;
   return LIBRARY_OK;
 }
 
@@ -161,6 +194,7 @@ library_result_t library_set(library_t* l, int index, track_t* t)
   track_t* trk = playlist_get(l->all_tracks, index);
   track_set_id(t, track_get_id(trk));
   playlist_set(l->all_tracks, index, t);
+  l->dirty = el_true;
   return LIBRARY_OK;
 }
 
@@ -172,25 +206,30 @@ void library_filter_none(library_t* l)
   l->filter_genre = NULL;
   l->filter_album_artist = NULL;
   l->filter_album_title = NULL;
+  l->filter = el_true;
 }
 
 void library_filter_genre(library_t* l, const char* genre)
 {
   mc_free(l->filter_genre);
-  l->filter_genre = mc_strdup(genre);
+  l->filter_genre = (genre==NULL) ? NULL : mc_strdup(genre);
+  l->filter = el_true;
 }
 
 void library_filter_album_artist(library_t* l, const char* album_artist)
 {
   mc_free(l->filter_album_artist);
-  l->filter_album_artist = mc_strdup(album_artist);
+  l->filter_album_artist = (album_artist == NULL) ? NULL : mc_strdup(album_artist);
+  l->filter = el_true;
 }
 
 void library_filter_album_title(library_t* l, const char* album_title)
 {
   mc_free(l->filter_album_title);
-  l->filter_album_title = mc_strdup(album_title);
+  l->filter_album_title = (album_title == NULL) ? NULL : mc_strdup(album_title);
+  l->filter = el_true;
 }
+
 
 static char* copy(char* c)
 {
@@ -205,6 +244,130 @@ static void destroy(char* c)
 DECLARE_STATIC_HASH(scanned_hash, char);
 IMPLEMENT_STATIC_HASH(scanned_hash, char, copy, destroy);
 
+static void fill_arrays(library_t* l)
+{
+  if (l->dirty) {
+    scanned_hash *hgenres = scanned_hash_new(100, HASH_CASE_INSENSITIVE);
+    scanned_hash *hartists = scanned_hash_new(100, HASH_CASE_INSENSITIVE);
+    scanned_hash *halbums = scanned_hash_new(100, HASH_CASE_INSENSITIVE);
+    
+    genre_array_clear(l->genres);
+    artist_array_clear(l->artists);
+    album_array_clear(l->albums);
+    
+    int i, N;
+    playlist_t* pl = l->all_tracks;
+    for(i = 0, N = playlist_count(pl); i < N; ++i) {
+      track_t* trk = playlist_get(pl, i);
+      
+      if (!scanned_hash_exists(hgenres, track_get_genre(trk))) {
+        scanned_hash_put(hgenres, track_get_genre(trk), "");
+        genre_array_append(l->genres, (char*) track_get_genre(trk));
+      }
+      
+      if (!scanned_hash_exists(hartists, track_get_album_artist(trk))) {
+        scanned_hash_put(hartists, track_get_album_artist(trk), "");
+        artist_array_append(l->artists, (char*) track_get_album_artist(trk));
+      }
+      
+      if (!scanned_hash_exists(halbums, track_get_album_title(trk))) {
+        scanned_hash_put(halbums, track_get_album_title(trk), "");
+        album_array_append(l->albums, (char*) track_get_album_title(trk));
+      }
+    }
+    
+    genre_array_sort(l->genres, (int (*)(char*,char*)) strcasecmp);
+    artist_array_sort(l->artists, (int (*)(char*,char*)) strcasecmp);
+    album_array_sort(l->albums, (int (*)(char*,char*)) strcasecmp);
+    
+    scanned_hash_destroy(hgenres);
+    scanned_hash_destroy(hartists);
+    scanned_hash_destroy(halbums);
+    
+    l->dirty = el_false;
+  }
+}
+
+genre_array library_genres(library_t* l)
+{
+  fill_arrays(l);
+  int i,N;
+  for(i=0, N= genre_array_count(l->genres); i < N; i++) {
+    log_debug2("%s", genre_array_get(l->genres, i));
+  }
+  return l->genres;
+  //return genre_array_copy(l->genres);
+}
+
+album_array library_albums(library_t* l)
+{
+  fill_arrays(l);
+  return l->albums;
+  //return album_array_copy(l->albums);
+}
+
+artist_array library_artists(library_t* l)
+{
+  fill_arrays(l);
+  return l->artists;
+  //return artist_array_copy(l->artists);
+}
+
+static void fill_filters(library_t* l)
+{
+  if (l->filter) {
+    l->filter = el_false;
+    
+    set_clear(l->filtered_artists);
+    set_clear(l->filtered_albums);
+    set_clear(l->filtered_tracks);
+    
+    int i, N;
+    playlist_t* pl = l->all_tracks;
+    for(i = 0, N = playlist_count(pl); i < N; ++i) {
+      track_t* trk = playlist_get(pl, i);
+      
+      el_bool take_track = el_true;
+      if (l->filter_genre != NULL) {
+        if (strcasecmp(track_get_genre(trk), l->filter_genre) != 0) 
+          take_track = el_false;
+      }
+      if (l->filter_album_artist != NULL) {
+        if (strcasecmp(track_get_album_artist(trk), l->filter_album_artist) != 0)
+          take_track = el_false;
+      }
+      if (l->filter_album_title != NULL) {
+        if (strcasecmp(track_get_album_title(trk), l->filter_album_title) != 0)
+          take_track = el_false;
+      }
+      if (take_track) {
+        set_put(l->filtered_artists, track_get_album_artist(trk));
+        set_put(l->filtered_albums, track_get_album_title(trk));
+        set_put(l->filtered_tracks, track_get_id_as_str(trk));
+      }
+    }
+    
+  }
+}
+
+set_t* library_filtered_artists(library_t* l)
+{
+  fill_filters(l);
+  return l->filtered_artists;
+}
+
+set_t* library_filtered_albums(library_t* l)
+{
+  fill_filters(l);
+  return l->filtered_albums;
+}
+
+set_t* library_filtered_tracks(library_t* l)
+{
+  fill_filters(l);
+  return l->filtered_tracks;
+}
+
 static void scanlib(library_t* l, file_info_t* path, scanned_hash *hash,
                       void (*cb)(int c, int t), int *count, int total)
 {
@@ -217,7 +380,7 @@ static void scanlib(library_t* l, file_info_t* path, scanned_hash *hash,
   for(i = 0, N = file_info_array_count(cues);i < N; ++i) {
     
     *count += 1;
-    cb(*count, total);
+    if (cb) cb(*count, total);
     
     file_info_t* info = file_info_array_get(cues, i);
     track_array tracks = tracks_from_cue(file_info_absolute_path(info));
@@ -249,7 +412,7 @@ static void scanlib(library_t* l, file_info_t* path, scanned_hash *hash,
   for(i = 0, N = file_info_array_count(musics);i < N; ++i) {
     
     *count += 1;
-    cb(*count, total);
+    if(cb) cb(*count, total);
     
     file_info_t* info = file_info_array_get(musics, i);
     const char* p = file_info_absolute_path(info);
@@ -317,6 +480,7 @@ void scan_library(library_t* library, const char* path, void (*cb)(int c, int to
   
   scanned_hash_destroy(h);
   
+  library->dirty = el_true;
   log_debug("hash destroyed");
 }
 

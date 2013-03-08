@@ -20,4 +20,6 @@ track_t* playlist_get(playlist_t* pl,int index);
 
 int playlist_count(playlist_t* pl);
 
+long long playlist_tracks_hash(playlist_t* pl);
+
 #endif

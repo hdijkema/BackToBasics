@@ -46,10 +46,19 @@ GENERICSRC = \
 
 
 backtobasics_SOURCES = \
-  $(GENERICSRC) \
+	$(GENERICSRC) \
 	main.c \
 	backtobasics.h \
-	backtobasics.c
+	backtobasics.c \
+	gui/library_view.c \
+	gui/library_view.h \
+	gui/playlist_model.c \
+	gui/playlist_model.h \
+	gui/string_model.c \
+	gui/string_model.h \
+	gui/async_call.c \
+	gui/async_call.h
+
 
 backtobasics_LDFLAGS = \
 	-Wl,--export-dynamic

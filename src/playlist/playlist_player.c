@@ -145,7 +145,7 @@ playlist_player_repeat_t playlist_player_get_repeat(playlist_player_t* plp)
   return rep;
 }
 
-int playlist_player_get_track(playlist_player_t* plp) 
+int playlist_player_get_track_index(playlist_player_t* plp) 
 {
   int result;
   pthread_mutex_lock(plp->mutex);
@@ -153,6 +153,18 @@ int playlist_player_get_track(playlist_player_t* plp)
   pthread_mutex_unlock(plp->mutex);
   return result;
 }
+
+track_t* playlist_player_get_track(playlist_player_t* plp)
+{
+  int i = playlist_player_get_track_index(plp);
+  if (i >= 0) {
+    return playlist_get(plp->playlist, i);
+  } else {
+    return NULL;
+  }
+}
+
+
 
 long playlist_player_get_current_position_in_ms(playlist_player_t* plp)
 {

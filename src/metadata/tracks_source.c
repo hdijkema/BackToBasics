@@ -33,7 +33,22 @@ track_array tracks_from_cue(const char* cuefile)
     TL_SET(album_artist, t, cue_album_performer(cue));
     TL_SET(album_composer, t, cue_album_composer(cue));
     TL_SET(genre, t, cue_genre(cue));
-    TL_SET(artid, t, cue_image_file(cue));
+    {
+      file_info_t* info = file_info_new(cue_audio_file(cue));
+      file_info_t* artfile = file_info_new(cue_image_file(cue));
+      if (!file_info_is_absolute(artfile)) {
+        const char* basedir = file_info_dirname(info);
+        file_info_t* dir_info = file_info_new(basedir);
+        file_info_t* nartfile = file_info_combine(dir_info, file_info_filename(artfile));
+        TL_SET(artid, t, file_info_absolute_path(nartfile));
+        file_info_destroy(dir_info);
+        file_info_destroy(nartfile);
+      } else {
+        TL_SET(artid, t, cue_image_file(cue));
+      }
+      file_info_destroy(artfile);
+      file_info_destroy(info);
+    }
     
     long bo = cue_entry_begin_offset_in_ms(entry);
     long be = cue_entry_end_offset_in_ms(entry);
@@ -85,6 +100,7 @@ track_array tracks_from_media(const char* localfile)
     TagLib_Tag* tg = taglib_file_tag(fl);
     TL_SET(title, t, taglib_tag_title(tg));
     TL_SET(artist, t, taglib_tag_artist(tg));
+    TL_SET(album_artist, t, taglib_tag_artist(tg));
     TL_SET(album_title, t, taglib_tag_album(tg));
     TL_SET(genre, t, taglib_tag_genre(tg));
     TL_SETT(year, t, (int) taglib_tag_year(tg));

@@ -4,12 +4,24 @@
 #include <playlist/playlist.h>
 #include <elementals.h>
 
+DECLARE_EL_ARRAY(genre_array, char);
+DECLARE_EL_ARRAY(artist_array, char);
+DECLARE_EL_ARRAY(album_array, char);
+
 typedef struct {
   long current_id;
   playlist_t* all_tracks;
   char* filter_genre;
   char* filter_album_artist;
   char* filter_album_title;
+  el_bool dirty;
+  genre_array genres;
+  artist_array artists;
+  album_array albums;
+  el_bool filter;
+  set_t* filtered_artists;
+  set_t* filtered_albums;
+  set_t* filtered_tracks;
 } library_t;
 
 typedef enum {
@@ -29,6 +41,14 @@ playlist_t* library_current_selection(library_t* library, const char* name);
 library_result_t library_add(library_t* library, track_t* t);
 library_result_t library_set(library_t* library, int index, track_t* t);
 int library_find_index(library_t* library, track_t* t);
+
+genre_array library_genres(library_t* library);
+artist_array library_artists(library_t* library);
+album_array library_albums(library_t* library);
+
+set_t* library_filtered_artists(library_t* library);
+set_t* library_filtered_albums(library_t* library);
+set_t* library_filtered_tracks(library_t* library);
 
 void library_filter_none(library_t* library);
 void library_filter_genre(library_t* library, const char* genre);

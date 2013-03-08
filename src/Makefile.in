@@ -52,7 +52,9 @@ am__objects_1 = aodev.$(OBJEXT) audio.$(OBJEXT) mp3.$(OBJEXT) \
 	playlist.$(OBJEXT) playlist_player.$(OBJEXT) i18n.$(OBJEXT) \
 	library.$(OBJEXT)
 am_backtobasics_OBJECTS = $(am__objects_1) main.$(OBJEXT) \
-	backtobasics.$(OBJEXT)
+	backtobasics.$(OBJEXT) library_view.$(OBJEXT) \
+	playlist_model.$(OBJEXT) string_model.$(OBJEXT) \
+	async_call.$(OBJEXT)
 backtobasics_OBJECTS = $(am_backtobasics_OBJECTS)
 am__DEPENDENCIES_1 =
 backtobasics_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -302,10 +304,18 @@ GENERICSRC = \
 	library/library.h
 
 backtobasics_SOURCES = \
-  $(GENERICSRC) \
+	$(GENERICSRC) \
 	main.c \
 	backtobasics.h \
-	backtobasics.c
+	backtobasics.c \
+	gui/library_view.c \
+	gui/library_view.h \
+	gui/playlist_model.c \
+	gui/playlist_model.h \
+	gui/string_model.c \
+	gui/string_model.h \
+	gui/async_call.c \
+	gui/async_call.h
 
 backtobasics_LDFLAGS = \
 	-Wl,--export-dynamic
@@ -416,6 +426,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/aodev.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/async_call.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/backtobasics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btb_play-aodev.Po@am__quote@
@@ -443,10 +454,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cue.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/i18n.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/library.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/library_view.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mp3.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/playlist.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/playlist_model.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/playlist_player.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/string_model.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/track.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tracks_source.Po@am__quote@
 
@@ -603,6 +617,62 @@ library.obj: library/library.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='library/library.c' object='library.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o library.obj `if test -f 'library/library.c'; then $(CYGPATH_W) 'library/library.c'; else $(CYGPATH_W) '$(srcdir)/library/library.c'; fi`
+
+library_view.o: gui/library_view.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT library_view.o -MD -MP -MF $(DEPDIR)/library_view.Tpo -c -o library_view.o `test -f 'gui/library_view.c' || echo '$(srcdir)/'`gui/library_view.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/library_view.Tpo $(DEPDIR)/library_view.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gui/library_view.c' object='library_view.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o library_view.o `test -f 'gui/library_view.c' || echo '$(srcdir)/'`gui/library_view.c
+
+library_view.obj: gui/library_view.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT library_view.obj -MD -MP -MF $(DEPDIR)/library_view.Tpo -c -o library_view.obj `if test -f 'gui/library_view.c'; then $(CYGPATH_W) 'gui/library_view.c'; else $(CYGPATH_W) '$(srcdir)/gui/library_view.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/library_view.Tpo $(DEPDIR)/library_view.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gui/library_view.c' object='library_view.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o library_view.obj `if test -f 'gui/library_view.c'; then $(CYGPATH_W) 'gui/library_view.c'; else $(CYGPATH_W) '$(srcdir)/gui/library_view.c'; fi`
+
+playlist_model.o: gui/playlist_model.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT playlist_model.o -MD -MP -MF $(DEPDIR)/playlist_model.Tpo -c -o playlist_model.o `test -f 'gui/playlist_model.c' || echo '$(srcdir)/'`gui/playlist_model.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/playlist_model.Tpo $(DEPDIR)/playlist_model.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gui/playlist_model.c' object='playlist_model.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o playlist_model.o `test -f 'gui/playlist_model.c' || echo '$(srcdir)/'`gui/playlist_model.c
+
+playlist_model.obj: gui/playlist_model.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT playlist_model.obj -MD -MP -MF $(DEPDIR)/playlist_model.Tpo -c -o playlist_model.obj `if test -f 'gui/playlist_model.c'; then $(CYGPATH_W) 'gui/playlist_model.c'; else $(CYGPATH_W) '$(srcdir)/gui/playlist_model.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/playlist_model.Tpo $(DEPDIR)/playlist_model.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gui/playlist_model.c' object='playlist_model.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o playlist_model.obj `if test -f 'gui/playlist_model.c'; then $(CYGPATH_W) 'gui/playlist_model.c'; else $(CYGPATH_W) '$(srcdir)/gui/playlist_model.c'; fi`
+
+string_model.o: gui/string_model.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT string_model.o -MD -MP -MF $(DEPDIR)/string_model.Tpo -c -o string_model.o `test -f 'gui/string_model.c' || echo '$(srcdir)/'`gui/string_model.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/string_model.Tpo $(DEPDIR)/string_model.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gui/string_model.c' object='string_model.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o string_model.o `test -f 'gui/string_model.c' || echo '$(srcdir)/'`gui/string_model.c
+
+string_model.obj: gui/string_model.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT string_model.obj -MD -MP -MF $(DEPDIR)/string_model.Tpo -c -o string_model.obj `if test -f 'gui/string_model.c'; then $(CYGPATH_W) 'gui/string_model.c'; else $(CYGPATH_W) '$(srcdir)/gui/string_model.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/string_model.Tpo $(DEPDIR)/string_model.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gui/string_model.c' object='string_model.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o string_model.obj `if test -f 'gui/string_model.c'; then $(CYGPATH_W) 'gui/string_model.c'; else $(CYGPATH_W) '$(srcdir)/gui/string_model.c'; fi`
+
+async_call.o: gui/async_call.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT async_call.o -MD -MP -MF $(DEPDIR)/async_call.Tpo -c -o async_call.o `test -f 'gui/async_call.c' || echo '$(srcdir)/'`gui/async_call.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/async_call.Tpo $(DEPDIR)/async_call.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gui/async_call.c' object='async_call.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o async_call.o `test -f 'gui/async_call.c' || echo '$(srcdir)/'`gui/async_call.c
+
+async_call.obj: gui/async_call.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT async_call.obj -MD -MP -MF $(DEPDIR)/async_call.Tpo -c -o async_call.obj `if test -f 'gui/async_call.c'; then $(CYGPATH_W) 'gui/async_call.c'; else $(CYGPATH_W) '$(srcdir)/gui/async_call.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/async_call.Tpo $(DEPDIR)/async_call.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gui/async_call.c' object='async_call.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o async_call.obj `if test -f 'gui/async_call.c'; then $(CYGPATH_W) 'gui/async_call.c'; else $(CYGPATH_W) '$(srcdir)/gui/async_call.c'; fi`
 
 btb_play-aodev.o: audio/aodev.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_play_CFLAGS) $(CFLAGS) -MT btb_play-aodev.o -MD -MP -MF $(DEPDIR)/btb_play-aodev.Tpo -c -o btb_play-aodev.o `test -f 'audio/aodev.c' || echo '$(srcdir)/'`audio/aodev.c

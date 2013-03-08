@@ -79,7 +79,8 @@ void playlist_player_again(playlist_player_t* player);
 void playlist_player_seek(playlist_player_t* player, long position_in_ms);
 void playlist_player_set_repeat(playlist_player_t* player, playlist_player_repeat_t repeat);
 
-int  playlist_player_get_track(playlist_player_t* player);
+int  playlist_player_get_track_index(playlist_player_t* player);
+track_t* playlist_player_get_track(playlist_player_t* player);
 
 long playlist_player_get_current_position_in_ms(playlist_player_t* player);
 long playlist_player_get_track_position_in_ms(playlist_player_t* player);

@@ -6,7 +6,7 @@
 
 static track_t* copy(track_t* t)
 {
-  return track_copy(t);
+  return mc_take_over(track_copy(t));
 }
 
 static void destroy(track_t* t)
@@ -63,6 +63,18 @@ track_t* playlist_get(playlist_t* pl,int index)
 int playlist_count(playlist_t* pl)
 {
   return playlist_array_count(pl->list);
+}
+
+long long playlist_tracks_hash(playlist_t* pl)
+{
+  int i, N;
+  long long a = 0;
+  for(i = 0, N = playlist_array_count(pl->list); i < N; ++i) {
+    a += track_get_id(playlist_get(pl, i));
+    a <<= 1;
+  }
+  a += N;
+  return a;
 }
 
 

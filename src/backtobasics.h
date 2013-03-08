@@ -21,6 +21,9 @@
 #define _BACKTOBASICS_
 
 #include <gtk/gtk.h>
+#include <library/library.h>
+#include <playlist/playlist_player.h>
+#include <libconfig.h>
 
 G_BEGIN_DECLS
 
@@ -35,6 +38,8 @@ typedef struct _BacktobasicsClass BacktobasicsClass;
 typedef struct _Backtobasics Backtobasics;
 typedef struct _BacktobasicsPrivate BacktobasicsPrivate;
 
+#include <gui/library_view.h>
+
 struct _BacktobasicsClass
 {
 	GtkApplicationClass parent_class;
@@ -43,13 +48,32 @@ struct _BacktobasicsClass
 struct _Backtobasics
 {
 	GtkApplication parent_instance;
-
 	BacktobasicsPrivate *priv;
+	
+	// Config
+	config_t config;
 
+  // My GUI data	
+	GtkBuilder* builder;
+	library_view_t* library_view;
+	
+	// Audio player
+	playlist_player_t* player;
+	
+	// My data
+	library_t*  library;
 };
 
 GType backtobasics_get_type (void) G_GNUC_CONST;
 Backtobasics *backtobasics_new (void);
+
+GtkBuilder* backtobasics_builder(Backtobasics* app);
+library_t* backtobasics_library(Backtobasics* app);
+playlist_player_t* backtobasics_player(Backtobasics* app);
+
+config_t* btb_config(Backtobasics* app);
+void btb_config_set_int(Backtobasics* app, const char* path, int val);
+int btb_config_get_int(Backtobasics* app, const char* path, int default_val);
 
 /* Callbacks */
 

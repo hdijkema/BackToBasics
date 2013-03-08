@@ -21,7 +21,7 @@ void sleep_ms(int ms)
 
 void p_player(playlist_player_t *player)
 {
-  int track = playlist_player_get_track(player);
+  int track = playlist_player_get_track_index(player);
   long pos = playlist_player_get_track_position_in_ms(player);
   el_bool changed = playlist_player_get_track_changed(player);
   playlist_t* pl = playlist_player_get_playlist(player);
