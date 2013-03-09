@@ -49,7 +49,10 @@ typedef struct {
   GtkWidget* btn_pause;
   GtkTreeViewColumn** cols;
   GtkTreeView* tview;
+  
   WebKitWebView* lyric_view;
+  GtkLabel* lbl_lyric_track;
+  track_t* current_lyric_track;
   
 } library_view_t;
 

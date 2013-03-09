@@ -51,6 +51,8 @@ library_view_t* library_view_new(Backtobasics* btb, library_t* library)
   
   view->ignore_sel_changed = el_false;
   
+  view->current_lyric_track = NULL;
+  
   return view;
 }
 
@@ -191,6 +193,7 @@ void library_view_init(library_view_t* view)
   
   // Lyric view
   view->lyric_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+  view->lbl_lyric_track = GTK_LABEL(gtk_builder_get_object(view->builder, "lbl_lyric_track"));
   GtkScrolledWindow* scw_lyric = GTK_SCROLLED_WINDOW(gtk_builder_get_object(view->builder, "scw_lyric"));
   gtk_container_add(GTK_CONTAINER(scw_lyric), GTK_WIDGET(view->lyric_view));
   
@@ -547,43 +550,54 @@ struct lyric_cb {
   library_view_t* view;
 };
 
-static void library_view_process_lyric(const char* lyric, void* data)
+static void library_view_process_lyric(char* lyric, void* data)
 {
+  
   struct lyric_cb* cb = (struct lyric_cb*) data;
   track_t* t = cb->track;
   library_view_t* view = cb->view;
   mc_free(cb);
+
+  view->current_lyric_track = t;
   track_set_lyric(t, lyric);
   
-  
-  
-  memblock_t* blk = memblock_new();
-  memblock_concat(blk, "<html><head></head><body><p style=\"font-size:7pt;font-family:sans\">");
-  memblock_concat(blk, lyric);
-  memblock_concat(blk, "</body></html>");
-  char c = '\0';
-  memblock_write(blk, &c, sizeof(c));
-
-  file_info_t* info = file_info_new(track_get_file(t));
-  file_info_t* dn = file_info_new(file_info_dirname(info));
-  char* s = (char*) mc_malloc( ( strlen(track_get_artist(t)) + sizeof("-") + strlen(track_get_title(t)) + sizeof(".lyric") + 1 ) * sizeof(char));
-  sprintf(s,"%s-%s.lyric", track_get_artist(t), track_get_title(t));  
-  file_info_t *lf = file_info_combine(dn, s);
-  if (!file_info_exists(lf) && strcmp(lyric,"") != 0) {
-    FILE* f = fopen(file_info_absolute_path(lf), "wt");
-    if (f != NULL) {
-      fprintf(f, "%s", memblock_as_str(blk));
-      fclose(f);
-    }
-  }
+  char* s = (char*) mc_malloc(strlen(track_get_artist(t))+sizeof(", ")+strlen(track_get_title(t))+200);
+  sprintf(s,"<span size=\"x-small\"><i><b>%s, %s</b></i></span>", track_get_artist(t), track_get_title(t));
+  gtk_label_set_markup(view->lbl_lyric_track,s);
   mc_free(s);
-  file_info_destroy(info);
-  file_info_destroy(dn);
-  file_info_destroy(lf);
   
-  webkit_web_view_load_string(view->lyric_view, memblock_as_str(blk), NULL, NULL, "");
+  if (strcmp(lyric,"") != 0) {
+    char* html = lyric_text_to_html(lyric);
+    write_lyric(t, lyric, el_false); // write but don't overwrite
+    webkit_web_view_load_string(view->lyric_view, html, NULL, NULL, "");
+    mc_free(html);
+  }
   
-  memblock_destroy(blk);
+  mc_free(lyric);
+}
+
+void library_view_edit_lyric(GtkToolButton *btn, GObject *lview) 
+{
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  
+  if (view->current_lyric_track != NULL) {
+    GtkDialog* dlg = GTK_DIALOG(gtk_builder_get_object(view->builder, "dlg_edit_lyric"));
+    GtkTextView* tv = GTK_TEXT_VIEW(gtk_builder_get_object(view->builder, "txt_lyric_edit"));
+    GtkTextBuffer* buf = gtk_text_view_get_buffer(tv);
+    const char* lyric = track_get_lyric(view->current_lyric_track);
+    gtk_text_buffer_set_text(buf, lyric, -1);
+    int response = gtk_dialog_run(dlg);
+    if (response) {
+      GtkTextIter start, end;
+      gtk_text_buffer_get_iter_at_offset(buf, &start, 0);
+      gtk_text_buffer_get_iter_at_offset(buf, &end, -1);
+      char* txt = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
+      write_lyric(view->current_lyric_track, txt, el_true);
+      track_set_lyric(view->current_lyric_track, txt);
+      g_free(txt);
+    }
+    gtk_widget_hide(GTK_WIDGET(dlg));
+  }
 }
 
 
@@ -662,6 +676,11 @@ static gboolean library_view_update_info(library_view_t* view)
             cb->track = track;
             cb->view = view;
             fetch_lyric(track, library_view_process_lyric, cb);
+          } else {
+            struct lyric_cb* cb = (struct lyric_cb*) mc_malloc(sizeof(struct lyric_cb));
+            cb->track = track;
+            cb->view = view;
+            library_view_process_lyric(mc_strdup(track_get_lyric(track)), cb);
           }
             
           // Print artist info
