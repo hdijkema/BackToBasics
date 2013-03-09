@@ -2,6 +2,8 @@
 #define GUI_LIBRARY_VIEW
 
 #include <gtk/gtk.h>
+#include <webkit/webkit.h>
+
 #include <backtobasics.h>
 #include <gui/playlist_model.h>
 #include <gui/string_model.h>
@@ -34,8 +36,11 @@ typedef struct {
   long len_in_ms;
   int track_index;
   long track_id;
-  el_bool sliding;
+  int sliding;
   long long playing_list_hash;
+  playlist_player_repeat_t repeat;
+  
+  el_bool ignore_sel_changed;
   
   int img_w;
   int img_h;
@@ -44,6 +49,7 @@ typedef struct {
   GtkWidget* btn_pause;
   GtkTreeViewColumn** cols;
   GtkTreeView* tview;
+  WebKitWebView* lyric_view;
   
 } library_view_t;
 

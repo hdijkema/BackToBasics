@@ -21,9 +21,10 @@
   <object class="GtkWindow" id="window">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="title" translatable="yes">BackToBasics</property>
+    <property name="title" translatable="yes">BackToBasics - a music player that just works</property>
     <property name="default_width">500</property>
     <property name="default_height">400</property>
+    <property name="icon">btb.png</property>
     <child>
       <object class="GtkBox" id="window_box">
         <property name="visible">True</property>
@@ -163,6 +164,7 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
                                         <property name="stock">gtk-home</property>
+                                        <property name="icon-size">3</property>
                                       </object>
                                     </child>
                                   </object>
@@ -185,7 +187,7 @@
                                       <object class="GtkImage" id="image2">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
-                                        <property name="icon_name">applications-internet</property>
+                                        <property name="stock">gtk-network</property>
                                         <property name="icon-size">3</property>
                                       </object>
                                     </child>
@@ -407,7 +409,8 @@
                                             <property name="restrict_to_fill_level">False</property>
                                             <property name="fill_level">-0</property>
                                             <property name="draw_value">False</property>
-                                            <signal name="change-value" handler="library_view_playback_changes" object="view_library" swapped="no"/>
+                                            <signal name="button-press-event" handler="library_view_slider_set" object="view_library" swapped="no"/>
+                                            <signal name="button-release-event" handler="library_view_slider_unset" object="view_library" swapped="no"/>
                                             <signal name="value-changed" handler="library_view_playback_changed" object="view_library" swapped="no"/>
                                           </object>
                                           <packing>
@@ -456,7 +459,53 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkSeparatorToolItem" id="sep2">
+                              <object class="GtkToolButton" id="tbtn_repeat">
+                                <property name="use_action_appearance">False</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="use_action_appearance">False</property>
+                                <property name="label" translatable="yes">Repeat</property>
+                                <property name="use_underline">True</property>
+                                <property name="icon_name">media-playlist-repeat-symbolic</property>
+                                <signal name="clicked" handler="library_view_repeat" object="view_library" swapped="no"/>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="homogeneous">True</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkToolButton" id="tbtn_repeat_one">
+                                <property name="use_action_appearance">False</property>
+                                <property name="can_focus">False</property>
+                                <property name="use_action_appearance">False</property>
+                                <property name="label" translatable="yes">Repeat one</property>
+                                <property name="use_underline">True</property>
+                                <property name="icon_name">media-playlist-repeat-one-symbolic</property>
+                                <signal name="clicked" handler="library_view_repeat" object="view_library" swapped="no"/>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="homogeneous">True</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkToolButton" id="tbtn_repeat_all">
+                                <property name="use_action_appearance">False</property>
+                                <property name="can_focus">False</property>
+                                <property name="use_action_appearance">False</property>
+                                <property name="label" translatable="yes">Repeat all</property>
+                                <property name="use_underline">True</property>
+                                <property name="icon_name">media-playlist-repeat-active-symbolic</property>
+                                <signal name="clicked" handler="library_view_repeat" object="view_library" swapped="no"/>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="homogeneous">True</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkSeparatorToolItem" id="sep3">
                                 <property name="use_action_appearance">False</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
@@ -624,6 +673,7 @@
                                           <object class="GtkTreeView" id="tv_album_aspect">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
+                                            <signal name="row-activated" handler="library_view_play_album" object="view_library" swapped="no"/>
                                             <child internal-child="selection">
                                               <object class="GtkTreeSelection" id="tvs_album_aspect">
                                                 <signal name="changed" handler="library_view_album_sel_changed" object="view_library" swapped="no"/>
@@ -661,23 +711,103 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkScrolledWindow" id="scrolledwindow1">
+                              <object class="GtkPaned" id="paned2">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="shadow_type">in</property>
                                 <child>
-                                  <object class="GtkTreeView" id="tv_library">
+                                  <object class="GtkScrolledWindow" id="scrolledwindow1">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
-                                    <property name="reorderable">True</property>
-                                    <property name="rules_hint">True</property>
-                                    <property name="fixed_height_mode">True</property>
-                                    <property name="enable_grid_lines">horizontal</property>
-                                    <signal name="row-activated" handler="library_view_track_activated" object="view_library" swapped="no"/>
-                                    <child internal-child="selection">
-                                      <object class="GtkTreeSelection" id="library_selection"/>
+                                    <property name="hexpand">True</property>
+                                    <property name="shadow_type">in</property>
+                                    <child>
+                                      <object class="GtkTreeView" id="tv_library">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="reorderable">True</property>
+                                        <property name="rules_hint">True</property>
+                                        <property name="fixed_height_mode">True</property>
+                                        <property name="enable_grid_lines">horizontal</property>
+                                        <signal name="row-activated" handler="library_view_track_activated" object="view_library" swapped="no"/>
+                                      </object>
                                     </child>
                                   </object>
+                                  <packing>
+                                    <property name="resize">True</property>
+                                    <property name="shrink">True</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkBox" id="box1">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="orientation">vertical</property>
+                                    <child>
+                                      <object class="GtkExpander" id="exp_art">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="expanded">True</property>
+                                        <child>
+                                          <object class="GtkImage" id="img_art">
+                                            <property name="width_request">200</property>
+                                            <property name="height_request">200</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="stock">gtk-missing-image</property>
+                                          </object>
+                                        </child>
+                                        <child type="label">
+                                          <object class="GtkLabel" id="lbl_art">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="label" translatable="yes">&lt;b&gt;&lt;i&gt;Album Art&lt;/i&gt;&lt;/b&gt;</property>
+                                            <property name="use_markup">True</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkExpander" id="exp_lyric">
+                                        <property name="width_request">200</property>
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="vexpand">True</property>
+                                        <property name="expanded">True</property>
+                                        <child>
+                                          <object class="GtkScrolledWindow" id="scw_lyric">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">True</property>
+                                            <property name="shadow_type">in</property>
+                                            <child>
+                                              <placeholder/>
+                                            </child>
+                                          </object>
+                                        </child>
+                                        <child type="label">
+                                          <object class="GtkLabel" id="LblLyric">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="label" translatable="yes">&lt;b&gt;&lt;i&gt;Lyric&lt;/i&gt;&lt;/b&gt;</property>
+                                            <property name="use_markup">True</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="resize">False</property>
+                                    <property name="shrink">True</property>
+                                  </packing>
                                 </child>
                               </object>
                               <packing>
@@ -693,81 +823,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkBox" id="box1">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="orientation">vertical</property>
-                            <child>
-                              <object class="GtkExpander" id="exp_art">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="expanded">True</property>
-                                <child>
-                                  <object class="GtkImage" id="img_art">
-                                    <property name="width_request">200</property>
-                                    <property name="height_request">200</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="stock">gtk-missing-image</property>
-                                  </object>
-                                </child>
-                                <child type="label">
-                                  <object class="GtkLabel" id="lbl_art">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="label" translatable="yes">&lt;b&gt;&lt;i&gt;Album Art&lt;/i&gt;&lt;/b&gt;</property>
-                                    <property name="use_markup">True</property>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkExpander" id="exp_lyric">
-                                <property name="width_request">200</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="vexpand">True</property>
-                                <property name="expanded">True</property>
-                                <child>
-                                  <object class="GtkScrolledWindow" id="scrolledwindow2">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="shadow_type">in</property>
-                                    <child>
-                                      <object class="GtkTextView" id="txt_lyric">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
-                                <child type="label">
-                                  <object class="GtkLabel" id="LblLyric">
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="label" translatable="yes">&lt;b&gt;&lt;i&gt;Lyric&lt;/i&gt;&lt;/b&gt;</property>
-                                    <property name="use_markup">True</property>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="pack_type">end</property>
-                            <property name="position">1</property>
-                          </packing>
+                          <placeholder/>
                         </child>
                       </object>
                       <packing>

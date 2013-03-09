@@ -9,22 +9,6 @@
  * playlist player state fifo.
  ****************************************************************************************/
 
- /*
-static playlist_player_state_t* copy(playlist_player_state_t* st)
-{
-  playlist_player_state_t* stn = (playlist_player_state_t*) mc_malloc(sizeof(playlist_player_state_t));
-  *stn = *st;
-  return stn;
-}
-
-static void destroy(playlist_player_state_t* st)
-{
-  mc_free(st);
-}
-
-IMPLEMENT_FIFO(playlist_player_notify_fifo, playlist_player_state_t, copy, destroy);
-*/
-
 static playlist_player_cmd_t* copycmd(playlist_player_cmd_t* cmd)
 {
   playlist_player_cmd_t* ncmd=(playlist_player_cmd_t*) mc_malloc(sizeof(playlist_player_cmd_t));
@@ -318,12 +302,11 @@ void proces_media_event(playlist_player_t* plp) {
   switch (state) {
     case AUDIO_GUARD_REACHED:
     case AUDIO_EOS: {
+      log_debug2("repeat = %d", plp->repeat);
       if (plp->repeat == PLP_TRACK_REPEAT) {
-        if (plp->current_track == 0) {
-          track_t* trk = playlist_get(plp->playlist, plp->current_track);
-          pthread_mutex_unlock(plp->mutex);
-          load_and_play(plp, trk);
-        } 
+        track_t* trk = playlist_get(plp->playlist, plp->current_track);
+        pthread_mutex_unlock(plp->mutex);
+        load_and_play(plp, trk);
       } else if (plp->repeat == PLP_LIST_REPEAT) {
         if (playlist_count(plp->playlist) > 0) {
           track_t* trk0 = playlist_get(plp->playlist, 0);

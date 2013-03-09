@@ -61,6 +61,8 @@ static void cell_value(void* data, int row, int col, GValue* value)
     break;
     case PLAYLIST_MODEL_COL_ALBUM_ARTIST: g_value_set_static_string(value, track_get_album_artist(t));
     break;
+    case PLAYLIST_MODEL_COL_GENRE: g_value_set_static_string(value, track_get_genre(t));
+    break;
     case PLAYLIST_MODEL_COL_LENGTH: {
         long l = track_get_length_in_ms(t);
         int min = l / 1000 / 60;
@@ -85,6 +87,7 @@ const char* i18n_column_name(playlist_column_enum col) {
     case PLAYLIST_MODEL_COL_PIECE: return _("Piece");
     case PLAYLIST_MODEL_COL_ALBUM_TITLE: return _("Album");
     case PLAYLIST_MODEL_COL_ALBUM_ARTIST: return _("Album artist");
+    case PLAYLIST_MODEL_COL_GENRE: return _("Genre");
     case PLAYLIST_MODEL_COL_LENGTH: return _("Length");
     default: return "";
   }
@@ -92,15 +95,16 @@ const char* i18n_column_name(playlist_column_enum col) {
 
 const char* column_id(playlist_column_enum col) {
   switch (col) {
-    case PLAYLIST_MODEL_COL_NR: return _("col_nr");
-    case PLAYLIST_MODEL_COL_YEAR: return _("col_year");
-    case PLAYLIST_MODEL_COL_TITLE: return _("col_title");   
-    case PLAYLIST_MODEL_COL_ARTIST: return _("col_artist");
-    case PLAYLIST_MODEL_COL_COMPOSER: return _("col_composer");
-    case PLAYLIST_MODEL_COL_PIECE: return _("col_piece");
-    case PLAYLIST_MODEL_COL_ALBUM_TITLE: return _("col_album");
-    case PLAYLIST_MODEL_COL_ALBUM_ARTIST: return _("col_album_artist");
-    case PLAYLIST_MODEL_COL_LENGTH: return _("col_length");
+    case PLAYLIST_MODEL_COL_NR: return "col_nr";
+    case PLAYLIST_MODEL_COL_YEAR: return "col_year";
+    case PLAYLIST_MODEL_COL_TITLE: return "col_title";   
+    case PLAYLIST_MODEL_COL_ARTIST: return "col_artist";
+    case PLAYLIST_MODEL_COL_COMPOSER: return "col_composer";
+    case PLAYLIST_MODEL_COL_PIECE: return "col_piece";
+    case PLAYLIST_MODEL_COL_ALBUM_TITLE: return "col_album";
+    case PLAYLIST_MODEL_COL_ALBUM_ARTIST: return "col_album_artist";
+    case PLAYLIST_MODEL_COL_GENRE: return "col_genre";
+    case PLAYLIST_MODEL_COL_LENGTH: return "col_length";
     default: return "col_none";
   }
 }
@@ -118,7 +122,7 @@ static gboolean filter(void* data, int row)
   }
 }
 
-
+//TODO: Problemen met playlist allocatie!
 playlist_model_t* playlist_model_new()
 {
   playlist_model_t* model = (playlist_model_t*) mc_malloc(sizeof(playlist_model_t));
@@ -150,6 +154,7 @@ GtkTreeModel* playlist_model_gtk_model(playlist_model_t* model)
 
 void playlist_model_set_playlist(playlist_model_t* model, playlist_t* playlist)
 {
+  playlist_destroy(model->playlist);
   model->playlist = playlist;
   gtk_list_model_refilter(model->model);
 }

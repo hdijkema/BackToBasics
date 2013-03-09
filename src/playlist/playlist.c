@@ -6,12 +6,15 @@
 
 static track_t* copy(track_t* t)
 {
-  return mc_take_over(track_copy(t));
+  //return mc_take_over(track_copy(t));
+  return t;
 }
 
 static void destroy(track_t* t)
 {
-  track_destroy(t);
+  //track_destroy(t);
+  // Do nothing here. 
+  // Playlists are just proxies 
 }
 
 IMPLEMENT_EL_ARRAY(playlist_array, track_t, copy, destroy);
@@ -77,4 +80,28 @@ long long playlist_tracks_hash(playlist_t* pl)
   return a;
 }
 
+
+// sort on genre, album_title, nr
+static int cmp_standard(track_t* t1, track_t* t2) 
+{
+  int r;
+  if ((r = strcasecmp(track_get_genre(t1), track_get_genre(t2))) < 0) {
+    return -1;
+  } else if (r == 0) {
+    if ((r = strcasecmp(track_get_album_title(t1), track_get_album_title(t2))) < 0) {
+      return -1;
+    } else if (r == 0) {
+      return track_get_nr(t1) - track_get_nr(t2);
+    } else {
+      return 1;
+    }
+  } else {
+    return 1;
+  }
+}
+
+void playlist_sort_standard(playlist_t* pl)
+{
+  playlist_array_sort(pl->list, cmp_standard); 
+}
 

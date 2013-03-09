@@ -9,6 +9,7 @@
 #include <gtk/gtk.h>
 #include "backtobasics.h"
 #include <elementals.h>
+#include <curl/curl.h>
 
 #include <glib/gi18n.h>
 
@@ -18,6 +19,7 @@ int main (int argc, char *argv[])
 	int status;
 	
 	mc_init();
+	curl_global_init(CURL_GLOBAL_ALL);
 
 #ifdef ENABLE_NLS
 	bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);

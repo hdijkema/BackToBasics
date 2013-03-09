@@ -54,7 +54,7 @@ am__objects_1 = aodev.$(OBJEXT) audio.$(OBJEXT) mp3.$(OBJEXT) \
 am_backtobasics_OBJECTS = $(am__objects_1) main.$(OBJEXT) \
 	backtobasics.$(OBJEXT) library_view.$(OBJEXT) \
 	playlist_model.$(OBJEXT) string_model.$(OBJEXT) \
-	async_call.$(OBJEXT)
+	async_call.$(OBJEXT) lyrics.$(OBJEXT)
 backtobasics_OBJECTS = $(am_backtobasics_OBJECTS)
 am__DEPENDENCIES_1 =
 backtobasics_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -315,7 +315,9 @@ backtobasics_SOURCES = \
 	gui/string_model.c \
 	gui/string_model.h \
 	gui/async_call.c \
-	gui/async_call.h
+	gui/async_call.h \
+	lyrics/lyrics.c \
+	lyrics/lyrics.h
 
 backtobasics_LDFLAGS = \
 	-Wl,--export-dynamic
@@ -455,6 +457,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/i18n.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/library.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/library_view.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lyrics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mp3.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/playlist.Po@am__quote@
@@ -673,6 +676,20 @@ async_call.obj: gui/async_call.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gui/async_call.c' object='async_call.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o async_call.obj `if test -f 'gui/async_call.c'; then $(CYGPATH_W) 'gui/async_call.c'; else $(CYGPATH_W) '$(srcdir)/gui/async_call.c'; fi`
+
+lyrics.o: lyrics/lyrics.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT lyrics.o -MD -MP -MF $(DEPDIR)/lyrics.Tpo -c -o lyrics.o `test -f 'lyrics/lyrics.c' || echo '$(srcdir)/'`lyrics/lyrics.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/lyrics.Tpo $(DEPDIR)/lyrics.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='lyrics/lyrics.c' object='lyrics.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o lyrics.o `test -f 'lyrics/lyrics.c' || echo '$(srcdir)/'`lyrics/lyrics.c
+
+lyrics.obj: lyrics/lyrics.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT lyrics.obj -MD -MP -MF $(DEPDIR)/lyrics.Tpo -c -o lyrics.obj `if test -f 'lyrics/lyrics.c'; then $(CYGPATH_W) 'lyrics/lyrics.c'; else $(CYGPATH_W) '$(srcdir)/lyrics/lyrics.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/lyrics.Tpo $(DEPDIR)/lyrics.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='lyrics/lyrics.c' object='lyrics.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o lyrics.obj `if test -f 'lyrics/lyrics.c'; then $(CYGPATH_W) 'lyrics/lyrics.c'; else $(CYGPATH_W) '$(srcdir)/lyrics/lyrics.c'; fi`
 
 btb_play-aodev.o: audio/aodev.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(btb_play_CFLAGS) $(CFLAGS) -MT btb_play-aodev.o -MD -MP -MF $(DEPDIR)/btb_play-aodev.Tpo -c -o btb_play-aodev.o `test -f 'audio/aodev.c' || echo '$(srcdir)/'`audio/aodev.c

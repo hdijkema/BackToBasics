@@ -29,8 +29,8 @@ AM_GLIB_GNU_GETTEXT
 
 
 
-PKG_CHECK_MODULES(BACKTOBASICS, [gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig])
-PKG_CHECK_MODULES(BTB_PLAY, [ao libmpg123 taglib_c libpcre elementals])
+PKG_CHECK_MODULES(BACKTOBASICS, [gtk+-3.0 >= 2.90.3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig libtagcoverart libcurl webkitgtk-3.0])
+PKG_CHECK_MODULES(BTB_PLAY, [ao libmpg123 taglib_c libpcre elementals libtagcoverart])
 
 
 ##########

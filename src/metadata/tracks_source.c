@@ -1,6 +1,7 @@
 #include <metadata/tracks_source.h>
 #include <metadata/cue.h>
 #include <tag_c.h>
+#include <libtagcoverart.h>
 
 static track_t* copy(track_t* t) {
   return track_copy(t);
@@ -97,6 +98,8 @@ track_array tracks_from_media(const char* localfile)
   
   track_t* t = track_new();
   if (taglib_file_is_valid(fl)) {
+    file_info_t* info = file_info_new(localfile);
+    
     TagLib_Tag* tg = taglib_file_tag(fl);
     TL_SET(title, t, taglib_tag_title(tg));
     TL_SET(artist, t, taglib_tag_artist(tg));
@@ -106,16 +109,44 @@ track_array tracks_from_media(const char* localfile)
     TL_SETT(year, t, (int) taglib_tag_year(tg));
     TL_SETT(nr, t, (int) taglib_tag_track(tg));
     
+    if (strcmp(track_get_title(t),"") == 0) {
+      TL_SET(title, t, file_info_basename(info)); 
+    }
+    
     const TagLib_AudioProperties* ap = taglib_file_audioproperties(fl);
     track_set_file(t, localfile, taglib_audioproperties_length(ap) * 1000, -1, -1);
     
-    file_info_t* info = file_info_new(localfile);
     TL_SET(source_id, t, file_info_absolute_path(info));
     TL_SETT(source_mtime, t, file_info_mtime(info));
-    file_info_destroy(info);
     
+    // cover art
+    {
+      file_info_t* art_dir = file_info_new(file_info_dirname(info));
+      char *s = (char*) mc_malloc(sizeof(char) * (strlen(track_get_album_title(t)) + 4 + 4 + 1));
+      strcpy(s,"img_");
+      strcat(s,track_get_album_title(t));
+      strcat(s,".art");
+      file_info_t* art_file = file_info_combine(art_dir, s);
+      
+      if (!file_info_exists(art_file)) {
+        tag_cover_art_t* tag = tag_cover_art_new(file_info_absolute_path(info));
+        if (tag_cover_art_extract(tag, file_info_absolute_path(art_file))) {
+           TL_SET(artid, t, file_info_absolute_path(art_file));
+        }
+        tag_cover_art_destroy(tag);
+      } else {
+        TL_SET(artid, t, file_info_absolute_path(art_file));
+      }
+      file_info_destroy(art_file);
+      file_info_destroy(art_dir);
+      mc_free(s);
+    }
+    
+    file_info_destroy(info);
+
     track_array_append(array, t);
     track_destroy(t);
+
   } 
   taglib_file_free(fl);
   taglib_tag_free_strings();

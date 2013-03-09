@@ -1250,7 +1250,7 @@ m4trace:configure.ac:26: -1- m4_pattern_allow([^PO_IN_DATADIR_FALSE$])
 m4trace:configure.ac:26: -1- m4_pattern_allow([^POFILES$])
 m4trace:configure.ac:26: -1- m4_pattern_allow([^POSUB$])
 m4trace:configure.ac:26: -1- m4_pattern_allow([^MKINSTALLDIRS$])
-m4trace:configure.ac:32: -1- PKG_CHECK_MODULES([BACKTOBASICS], [gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig])
+m4trace:configure.ac:32: -1- PKG_CHECK_MODULES([BACKTOBASICS], [gtk+-3.0 >= 2.90.3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig libtagcoverart libcurl webkitgtk-3.0])
 m4trace:configure.ac:32: -1- PKG_PROG_PKG_CONFIG
 m4trace:configure.ac:32: -1- m4_pattern_forbid([^_?PKG_[A-Z_]+$])
 m4trace:configure.ac:32: -1- m4_pattern_allow([^PKG_CONFIG(_(PATH|LIBDIR|SYSROOT_DIR|ALLOW_SYSTEM_(CFLAGS|LIBS)))?$])
@@ -1261,17 +1261,17 @@ m4trace:configure.ac:32: -1- m4_pattern_allow([^PKG_CONFIG_LIBDIR$])
 m4trace:configure.ac:32: -1- m4_pattern_allow([^PKG_CONFIG$])
 m4trace:configure.ac:32: -1- m4_pattern_allow([^BACKTOBASICS_CFLAGS$])
 m4trace:configure.ac:32: -1- m4_pattern_allow([^BACKTOBASICS_LIBS$])
-m4trace:configure.ac:32: -1- PKG_CHECK_EXISTS([gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig], [pkg_cv_[]BACKTOBASICS_CFLAGS=`$PKG_CONFIG --[]cflags "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig" 2>/dev/null`
+m4trace:configure.ac:32: -1- PKG_CHECK_EXISTS([gtk+-3.0 >= 2.90.3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig libtagcoverart libcurl webkitgtk-3.0], [pkg_cv_[]BACKTOBASICS_CFLAGS=`$PKG_CONFIG --[]cflags "gtk+-3.0 >= 2.90.3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig libtagcoverart libcurl webkitgtk-3.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
-m4trace:configure.ac:32: -1- PKG_CHECK_EXISTS([gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig], [pkg_cv_[]BACKTOBASICS_LIBS=`$PKG_CONFIG --[]libs "gtk+-3.0 >= 2.90.3 sqlite3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig" 2>/dev/null`
+m4trace:configure.ac:32: -1- PKG_CHECK_EXISTS([gtk+-3.0 >= 2.90.3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig libtagcoverart libcurl webkitgtk-3.0], [pkg_cv_[]BACKTOBASICS_LIBS=`$PKG_CONFIG --[]libs "gtk+-3.0 >= 2.90.3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig libtagcoverart libcurl webkitgtk-3.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
 m4trace:configure.ac:32: -1- _PKG_SHORT_ERRORS_SUPPORTED
-m4trace:configure.ac:33: -1- PKG_CHECK_MODULES([BTB_PLAY], [ao libmpg123 taglib_c libpcre elementals])
+m4trace:configure.ac:33: -1- PKG_CHECK_MODULES([BTB_PLAY], [ao libmpg123 taglib_c libpcre elementals libtagcoverart])
 m4trace:configure.ac:33: -1- m4_pattern_allow([^BTB_PLAY_CFLAGS$])
 m4trace:configure.ac:33: -1- m4_pattern_allow([^BTB_PLAY_LIBS$])
-m4trace:configure.ac:33: -1- PKG_CHECK_EXISTS([ao libmpg123 taglib_c libpcre elementals], [pkg_cv_[]BTB_PLAY_CFLAGS=`$PKG_CONFIG --[]cflags "ao libmpg123 taglib_c libpcre elementals" 2>/dev/null`
+m4trace:configure.ac:33: -1- PKG_CHECK_EXISTS([ao libmpg123 taglib_c libpcre elementals libtagcoverart], [pkg_cv_[]BTB_PLAY_CFLAGS=`$PKG_CONFIG --[]cflags "ao libmpg123 taglib_c libpcre elementals libtagcoverart" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
-m4trace:configure.ac:33: -1- PKG_CHECK_EXISTS([ao libmpg123 taglib_c libpcre elementals], [pkg_cv_[]BTB_PLAY_LIBS=`$PKG_CONFIG --[]libs "ao libmpg123 taglib_c libpcre elementals" 2>/dev/null`
+m4trace:configure.ac:33: -1- PKG_CHECK_EXISTS([ao libmpg123 taglib_c libpcre elementals libtagcoverart], [pkg_cv_[]BTB_PLAY_LIBS=`$PKG_CONFIG --[]libs "ao libmpg123 taglib_c libpcre elementals libtagcoverart" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
 m4trace:configure.ac:33: -1- _PKG_SHORT_ERRORS_SUPPORTED
 m4trace:configure.ac:43: -1- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.

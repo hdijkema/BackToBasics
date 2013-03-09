@@ -17,16 +17,27 @@ static void destroy_str(char* s)
   mc_free(s);
 }
 
+static track_t* copy_trk(track_t* trk)
+{
+  return mc_take_over(track_copy(trk));
+}
+
+static void destroy_trk(track_t* trk)
+{
+  track_destroy(trk);
+}
+
 IMPLEMENT_EL_ARRAY(genre_array, char, copy_str, destroy_str);
 IMPLEMENT_EL_ARRAY(artist_array, char, copy_str, destroy_str);
 IMPLEMENT_EL_ARRAY(album_array, char, copy_str, destroy_str);
-
+IMPLEMENT_HASH(library_db, track_t, copy_trk, destroy_trk); 
 
 library_t* library_new(void)
 {
   library_t* l = (library_t*)  mc_malloc(sizeof(library_t));
   l->current_id = 0;
   l->all_tracks = playlist_new(_("Library"));
+  l->tracks_db = library_db_new(100, HASH_CASE_SENSITIVE);
   l->filter_genre = NULL;
   l->filter_album_artist = NULL;
   l->filter_album_title = NULL;
@@ -55,6 +66,7 @@ void library_destroy(library_t* l)
   set_destroy(l->filtered_artists);
   set_destroy(l->filtered_albums);
   set_destroy(l->filtered_tracks);
+  library_db_destroy(l->tracks_db);
   mc_free(l);
 }
 
@@ -173,7 +185,9 @@ library_result_t library_add(library_t* l, track_t* t)
 {
   l->current_id += 1;
   track_set_id(t, l->current_id);
-  playlist_append(l->all_tracks, t);
+  library_db_put(l->tracks_db, track_get_id_as_str(t), t);
+  track_t* nt = library_db_get(l->tracks_db, track_get_id_as_str(t));
+  playlist_append(l->all_tracks, nt);
   l->dirty = el_true;
   return LIBRARY_OK;
 }
@@ -383,27 +397,29 @@ static void scanlib(library_t* l, file_info_t* path, scanned_hash *hash,
     if (cb) cb(*count, total);
     
     file_info_t* info = file_info_array_get(cues, i);
-    track_array tracks = tracks_from_cue(file_info_absolute_path(info));
-
-    int k, M;
-    for(k = 0, M = track_array_count(tracks); k < M; ++k) {
-      track_t* t = track_array_get(tracks, k);
-      if (track_get_is_file(t)) {
-        file_info_t* tf = file_info_new(track_get_file(t));
-        const char* p = file_info_absolute_path(tf);
-        if (!scanned_hash_exists(hash, p)) {
-          scanned_hash_put(hash, p, (char*) p);
+    if (!file_info_is_hidden(info)) {
+      track_array tracks = tracks_from_cue(file_info_absolute_path(info));
+  
+      int k, M;
+      for(k = 0, M = track_array_count(tracks); k < M; ++k) {
+        track_t* t = track_array_get(tracks, k);
+        if (track_get_is_file(t)) {
+          file_info_t* tf = file_info_new(track_get_file(t));
+          const char* p = file_info_absolute_path(tf);
+          if (!scanned_hash_exists(hash, p)) {
+            scanned_hash_put(hash, p, (char*) p);
+          }
+          file_info_destroy(tf);
+        } else {
+          if (!scanned_hash_exists(hash, track_get_url(t))) {
+            scanned_hash_put(hash, track_get_url(t), (char*) track_get_url(t));
+          }
         }
-        file_info_destroy(tf);
-      } else {
-        if (!scanned_hash_exists(hash, track_get_url(t))) {
-          scanned_hash_put(hash, track_get_url(t), (char*) track_get_url(t));
-        }
+        library_add(l, t);
       }
-      library_add(l, t);
+      
+      track_array_destroy(tracks);
     }
-    
-    track_array_destroy(tracks);
   }
 
   file_info_array_destroy(cues);
@@ -415,18 +431,20 @@ static void scanlib(library_t* l, file_info_t* path, scanned_hash *hash,
     if(cb) cb(*count, total);
     
     file_info_t* info = file_info_array_get(musics, i);
-    const char* p = file_info_absolute_path(info);
-    
-    if (!scanned_hash_exists(hash, p)) {
-      track_array tracks = tracks_from_media(p);
+    if (!file_info_is_hidden(info)) {
+      const char* p = file_info_absolute_path(info);
       
-      int k, M;
-      for(k = 0, M = track_array_count(tracks); k < M; ++k) {
-        track_t* t = track_array_get(tracks, k);
-        library_add(l, t);  
+      if (!scanned_hash_exists(hash, p)) {
+        track_array tracks = tracks_from_media(p);
+        
+        int k, M;
+        for(k = 0, M = track_array_count(tracks); k < M; ++k) {
+          track_t* t = track_array_get(tracks, k);
+          library_add(l, t);  
+        }
+        
+        track_array_destroy(tracks);
       }
-      
-      track_array_destroy(tracks);
     }
   }
 
@@ -482,5 +500,11 @@ void scan_library(library_t* library, const char* path, void (*cb)(int c, int to
   
   library->dirty = el_true;
   log_debug("hash destroyed");
+  
+  library_sort(library);
 }
 
+void library_sort(library_t* library)
+{
+  playlist_sort_standard(library->all_tracks);
+}

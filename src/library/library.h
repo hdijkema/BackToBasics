@@ -7,9 +7,11 @@
 DECLARE_EL_ARRAY(genre_array, char);
 DECLARE_EL_ARRAY(artist_array, char);
 DECLARE_EL_ARRAY(album_array, char);
+DECLARE_HASH(library_db, track_t);
 
 typedef struct {
   long current_id;
+  library_db* tracks_db;
   playlist_t* all_tracks;
   char* filter_genre;
   char* filter_album_artist;
@@ -22,6 +24,7 @@ typedef struct {
   set_t* filtered_artists;
   set_t* filtered_albums;
   set_t* filtered_tracks;
+  
 } library_t;
 
 typedef enum {
@@ -56,6 +59,7 @@ void library_filter_album_artist(library_t* library, const char* album_artist);
 void library_filter_album_title(library_t* library, const char* album_title);
 
 void scan_library(library_t* library, const char* path, void (*cb)(int c, int tot));
+void library_sort(library_t* library);
 
 #endif
 

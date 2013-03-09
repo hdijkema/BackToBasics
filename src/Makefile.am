@@ -57,7 +57,9 @@ backtobasics_SOURCES = \
 	gui/string_model.c \
 	gui/string_model.h \
 	gui/async_call.c \
-	gui/async_call.h
+	gui/async_call.h \
+	lyrics/lyrics.c \
+	lyrics/lyrics.h
 
 
 backtobasics_LDFLAGS = \

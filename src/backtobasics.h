@@ -70,6 +70,7 @@ Backtobasics *backtobasics_new (void);
 GtkBuilder* backtobasics_builder(Backtobasics* app);
 library_t* backtobasics_library(Backtobasics* app);
 playlist_player_t* backtobasics_player(Backtobasics* app);
+const char* backtobasics_logo(Backtobasics* app);
 
 config_t* btb_config(Backtobasics* app);
 void btb_config_set_int(Backtobasics* app, const char* path, int val);

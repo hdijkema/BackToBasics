@@ -5,6 +5,7 @@
 #include <metadata/track.h>
 
 DECLARE_EL_ARRAY(playlist_array, track_t);
+
 typedef struct {
   playlist_array list;
   char* name;
@@ -21,5 +22,7 @@ track_t* playlist_get(playlist_t* pl,int index);
 int playlist_count(playlist_t* pl);
 
 long long playlist_tracks_hash(playlist_t* pl);
+
+void playlist_sort_standard(playlist_t* pl);
 
 #endif

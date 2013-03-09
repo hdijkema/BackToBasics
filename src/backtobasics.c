@@ -62,6 +62,11 @@ playlist_player_t* backtobasics_player(Backtobasics* app)
   return app->player;
 }
 
+const char* backtobasics_logo(Backtobasics* app)
+{
+  return "../images/logo_vague.png";
+}
+
 /* Create a new window */
 static void backtobasics_new_window (GApplication *app)
 {

@@ -4,6 +4,7 @@
 #include <gui/async_call.h>
 #include <i18n/i18n.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <lyrics/lyrics.h>
 
 static gboolean library_view_update_info(library_view_t* view);
 
@@ -14,9 +15,9 @@ library_view_t* library_view_new(Backtobasics* btb, library_t* library)
   view->builder = btb->builder;
   view->library = library;
   
-  view->playlist_model = playlist_model_new();
+  view->playlist_model = mc_take_over(playlist_model_new());
   view->library_list_changed = el_false;
-  view->library_list_hash = -1;
+  view->library_list_hash = playlist_model_tracks_hash(view->playlist_model);
   
   view->genre_model = string_model_new();
   view->artist_model = string_model_new();
@@ -25,6 +26,9 @@ library_view_t* library_view_new(Backtobasics* btb, library_t* library)
   view->aspect = GENRE_ASPECT;
   
   playlist_model_set_playlist(view->playlist_model, library_current_selection(view->library, _("Library")));
+  view->library_list_changed = el_true;
+  view->library_list_hash = playlist_model_tracks_hash(view->playlist_model);
+  
   string_model_set_array(view->genre_model, library_genres(view->library), el_false);
   string_model_set_array(view->artist_model, library_artists(view->library), el_false);
   string_model_set_array(view->album_model, library_albums(view->library), el_false);
@@ -34,8 +38,9 @@ library_view_t* library_view_new(Backtobasics* btb, library_t* library)
   view->len_in_ms = -1;
   view->track_index = -1;
   view->track_id = -1;
-  view->sliding = el_false;
+  view->sliding = 0;
   view->playing_list_hash = -1;
+  view->repeat = -1;
   
   view->img_w = 200;
   view->img_h = 200;
@@ -43,6 +48,8 @@ library_view_t* library_view_new(Backtobasics* btb, library_t* library)
   view->btn_play = NULL;
   view->btn_pause = NULL;
   view->cols = NULL;
+  
+  view->ignore_sel_changed = el_false;
   
   return view;
 }
@@ -119,7 +126,6 @@ void library_view_init(library_view_t* view)
   int width;
   
   // Genres
-  
   tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_genre_aspect"));
   col = gtk_tree_view_column_new_with_attributes(_("Genre"), renderer, "text", 0, NULL);
   gtk_tree_view_column_set_sizing(col, GTK_TREE_VIEW_COLUMN_FIXED);
@@ -160,6 +166,33 @@ void library_view_init(library_view_t* view)
     GtkLabel* lbl = GTK_LABEL(gtk_builder_get_object(view->builder, "lbl_song_info"));
     gtk_label_set_markup(lbl, ss);
   }
+  
+  // Set logo
+  {
+    file_info_t* info = file_info_new(backtobasics_logo(view->btb)); 
+    if (file_info_is_file(info)) {
+      GError *err = NULL;
+      GdkPixbuf* pb = gdk_pixbuf_new_from_file_at_scale(file_info_path(info),
+                                                        view->img_w, view->img_h,
+                                                        TRUE,
+                                                        &err
+                                                        );
+      if (pb != NULL) {
+        GtkImage* img = GTK_IMAGE(gtk_builder_get_object(view->builder, "img_art"));
+        gtk_image_set_from_pixbuf(img, pb);
+        g_object_unref(pb);
+      } else {
+        log_error3("error loading image art: %d, %s", err->code, err->message);
+        //g_free(err);
+      }
+    }
+    file_info_destroy(info);
+  }
+  
+  // Lyric view
+  view->lyric_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+  GtkScrolledWindow* scw_lyric = GTK_SCROLLED_WINDOW(gtk_builder_get_object(view->builder, "scw_lyric"));
+  gtk_container_add(GTK_CONTAINER(scw_lyric), GTK_WIDGET(view->lyric_view));
   
   // Start timeout every 250 ms
   g_timeout_add(250, (GSourceFunc) library_view_update_info, view); 
@@ -211,6 +244,8 @@ static void library_view_aspect_page(library_view_t* view, aspect_enum aspect)
 
 static void library_set_aspect_filter(library_view_t* view, aspect_enum aspect)
 {
+  log_debug("aspect");
+  
   set_t* filtered_artists = library_filtered_artists(view->library);
   set_t* filtered_albums = library_filtered_albums(view->library);
   
@@ -223,7 +258,7 @@ static void library_set_aspect_filter(library_view_t* view, aspect_enum aspect)
       library_view_aspect_page(view, ALBUM_ASPECT);
     }
   } else if (aspect == ALBUM_ASPECT) {
-    string_model_set_valid(view->artist_model, filtered_artists);
+    //string_model_set_valid(view->artist_model, filtered_artists);
   } else if (aspect == ARTIST_ASPECT) {
     string_model_set_valid(view->album_model, filtered_albums);
     library_view_aspect_page(view, ALBUM_ASPECT);
@@ -233,19 +268,28 @@ static void library_set_aspect_filter(library_view_t* view, aspect_enum aspect)
   view->library_list_changed = el_true;
   view->library_list_hash = playlist_model_tracks_hash(view->playlist_model);
   
-  set_key_list* lst = set_keys(library_filtered_artists(view->library));
+  /*set_key_list* lst = set_keys(library_filtered_artists(view->library));
   const char* s = set_key_list_start_iter(lst, LIST_FIRST);
   while (s != NULL) {
     log_debug2("key = %s", s);
     s = set_key_list_next_iter(lst);
   }
-  set_key_list_destroy(lst);
+  set_key_list_destroy(lst);*/
+  log_debug("OK");
   
 }
 
 void library_view_genre_sel_changed(GtkTreeSelection *sel, GObject* lview)
 {
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+
+  log_debug("sel changed");
+  if (view->ignore_sel_changed) {
+    view->ignore_sel_changed = el_false;
+    log_debug("ignored");
+    return;
+  }
+  
   GtkTreeModel* model;
   GtkTreeIter iter;
   if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
@@ -262,6 +306,21 @@ void library_view_genre_sel_changed(GtkTreeSelection *sel, GObject* lview)
 void library_view_artist_sel_changed(GtkTreeSelection *sel, GObject* lview)
 {
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+
+  log_debug("sel changed");
+  if (view->ignore_sel_changed) {
+    view->ignore_sel_changed = el_false;
+    log_debug("ignored");
+    return;
+  }
+  
+  {
+    view->ignore_sel_changed = el_true;
+    GtkTreeView* tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_album_aspect"));
+    GtkTreeSelection* sel = gtk_tree_view_get_selection(tview);
+    gtk_tree_selection_unselect_all(sel);
+  }
+  
   GtkTreeModel* model;
   GtkTreeIter iter;
   if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
@@ -274,11 +333,20 @@ void library_view_artist_sel_changed(GtkTreeSelection *sel, GObject* lview)
     library_filter_album_title(view->library, NULL);
   }
   library_set_aspect_filter(view, ARTIST_ASPECT);
+  
 }
 
 void library_view_album_sel_changed(GtkTreeSelection *sel, GObject* lview)
 {
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+
+  log_debug("sel changed");
+  if (view->ignore_sel_changed) {
+    view->ignore_sel_changed = el_false;
+    log_debug("ignored");
+    return;
+  }
+  
   GtkTreeModel* model;
   GtkTreeIter iter;
   if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
@@ -301,6 +369,11 @@ void library_view_artists(GtkToggleToolButton *btn, GObject* lview)
   
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
   library_view_aspect_page(view, ARTIST_ASPECT);
+
+  view->ignore_sel_changed = el_true;
+  GtkTreeView* tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_artist_aspect"));
+  GtkTreeSelection* sel = gtk_tree_view_get_selection(tview);
+  gtk_tree_selection_unselect_all(sel);
 }
 
 void library_view_albums(GtkToggleToolButton *btn, GObject* lview)
@@ -310,6 +383,11 @@ void library_view_albums(GtkToggleToolButton *btn, GObject* lview)
 
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
   library_view_aspect_page(view, ALBUM_ASPECT);
+  
+  view->ignore_sel_changed = el_true;
+  GtkTreeView* tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_album_aspect"));
+  GtkTreeSelection* sel = gtk_tree_view_get_selection(tview);
+  gtk_tree_selection_unselect_all(sel);
 }
 
 void library_view_genres(GtkToggleToolButton *btn, GObject* lview)
@@ -319,6 +397,32 @@ void library_view_genres(GtkToggleToolButton *btn, GObject* lview)
 
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
   library_view_aspect_page(view, GENRE_ASPECT);
+  
+  view->ignore_sel_changed = el_true;
+  GtkTreeView* tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_genre_aspect"));
+  GtkTreeSelection* sel = gtk_tree_view_get_selection(tview);
+  gtk_tree_selection_unselect_all(sel);
+}
+
+static void library_view_play_at(library_view_t* view, int track)
+{
+  playlist_player_t* player = backtobasics_player(view->btb);
+
+  if (view->library_list_changed) {
+    playlist_t* pl = playlist_model_get_selected_playlist(view->playlist_model);
+    view->playing_list_hash = playlist_tracks_hash(pl);
+    playlist_player_set_playlist(player, pl);
+    playlist_player_set_repeat(player, PLP_NO_REPEAT);
+    view->library_list_changed = el_false;
+    view->time_in_ms = -1;
+  }
+
+  playlist_player_set_track(player, track);
+  
+  if (!playlist_player_is_playing(player)) {
+    playlist_player_play(player);
+  }
+  
 }
 
 void library_view_play(GtkToolButton *btn, GObject* lview)
@@ -326,15 +430,16 @@ void library_view_play(GtkToolButton *btn, GObject* lview)
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
   playlist_player_t* player = backtobasics_player(view->btb);
   if (!playlist_player_is_playing(player)) {
-    if (view->library_list_changed) {
-      //playlist_t* pl = library_current_selection(view->library, _("Library"));
-      playlist_t* pl = playlist_model_get_selected_playlist(view->playlist_model);
-      view->playing_list_hash = playlist_tracks_hash(pl);
-      playlist_player_set_playlist(player, pl);
-      view->library_list_changed = el_false;
-      view->time_in_ms = -1;
+    GtkTreeView* tview = view->tview;
+    GtkTreePath* path = NULL;
+    GtkTreeViewColumn* col = NULL;
+    gtk_tree_view_get_cursor(tview, &path, &col);
+    int index = 0;
+    if (path != NULL) {
+      int *i = gtk_tree_path_get_indices(path);
+      index = i[0];
     }
-    playlist_player_play(player);
+    library_view_play_at(view, index);
   }
 }
 
@@ -359,28 +464,128 @@ void library_view_play_next(GtkToolButton *btn, GObject* lview)
   playlist_player_next(player);
 }
 
-void library_view_track_activated(GtkTreeView *tview, GtkTreePath *path, GtkTreeViewColumn *column, GObject* lview)
+void library_view_repeat(GtkToolButton* btn, GObject* lview)
 {
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
   playlist_player_t* player = backtobasics_player(view->btb);
-  int* index = gtk_tree_path_get_indices(path);
-  
-  if (view->library_list_changed) {
-    //playlist_t* pl = library_current_selection(view->library, _("Library"));
-    playlist_t* pl = playlist_model_get_selected_playlist(view->playlist_model);
-    view->playing_list_hash = playlist_tracks_hash(pl);
-    playlist_player_set_playlist(player, pl);
-    view->library_list_changed = el_false;
-    view->time_in_ms = -1;
-  }
-  
-  playlist_player_set_track(player, index[0]);
-  
-  if (!playlist_player_is_playing(player)) {
-    playlist_player_play(player);
+  playlist_player_repeat_t r = playlist_player_get_repeat(player);
+  switch (r) {
+    case PLP_NO_REPEAT: {
+      playlist_player_set_repeat(player, PLP_TRACK_REPEAT);
+    }
+    break;
+    case PLP_TRACK_REPEAT: {
+      playlist_player_set_repeat(player, PLP_LIST_REPEAT);  
+    }
+    break;
+    case PLP_LIST_REPEAT: {
+      playlist_player_set_repeat(player, PLP_NO_REPEAT);  
+    }
+    break;
   }
 }
-                                                         
+
+void library_view_track_activated(GtkTreeView *tview, GtkTreePath *path, GtkTreeViewColumn *column, GObject* lview)
+{
+  log_debug("entering track activated");
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  int* index = gtk_tree_path_get_indices(path);
+  library_view_play_at(view, index[0]);
+}
+
+void library_view_play_album(GtkTreeView *album_view, GtkTreePath *path, GtkTreeViewColumn* column, GObject* lview)
+{
+  log_debug("play album");
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  library_view_play_at(view, 0);  
+}
+
+
+void library_view_playback_changed(GtkRange* range, GtkScrollType scroll, gdouble value, GObject* lview)
+{
+  log_debug("changed");
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  if (view) {
+    if (view->sliding == 2) {
+      view->sliding = 0;
+      playlist_player_t* player = backtobasics_player(view->btb);
+      if (playlist_player_is_playing(player)) {
+        track_t* t = playlist_player_get_track(player);
+        if (t != NULL) {
+          double d = value / 100.0;
+          long len_in_ms = track_get_length_in_ms(t);
+          long seek_in_ms = len_in_ms * d;
+          playlist_player_seek(player, seek_in_ms);
+        }
+      }
+      view->sliding = el_false;
+    } else if (view->sliding == 1) {
+      
+    }
+  } 
+} 
+
+gboolean library_view_slider_set(GtkWidget* widget, GdkEvent* event, GObject* lview)
+{
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  view->sliding = 1;
+  return FALSE;
+}
+
+gboolean library_view_slider_unset(GtkWidget* widget, GdkEvent* event, GObject* lview)
+{
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  view->sliding = 2;
+  library_view_playback_changed(GTK_RANGE(widget), GTK_SCROLL_JUMP, 
+                                gtk_range_get_value(GTK_RANGE(widget)), 
+                                lview);
+  return FALSE;
+}
+
+struct lyric_cb {
+  track_t* track;
+  library_view_t* view;
+};
+
+static void library_view_process_lyric(const char* lyric, void* data)
+{
+  struct lyric_cb* cb = (struct lyric_cb*) data;
+  track_t* t = cb->track;
+  library_view_t* view = cb->view;
+  mc_free(cb);
+  track_set_lyric(t, lyric);
+  
+  
+  
+  memblock_t* blk = memblock_new();
+  memblock_concat(blk, "<html><head></head><body><p style=\"font-size:7pt;font-family:sans\">");
+  memblock_concat(blk, lyric);
+  memblock_concat(blk, "</body></html>");
+  char c = '\0';
+  memblock_write(blk, &c, sizeof(c));
+
+  file_info_t* info = file_info_new(track_get_file(t));
+  file_info_t* dn = file_info_new(file_info_dirname(info));
+  char* s = (char*) mc_malloc( ( strlen(track_get_artist(t)) + sizeof("-") + strlen(track_get_title(t)) + sizeof(".lyric") + 1 ) * sizeof(char));
+  sprintf(s,"%s-%s.lyric", track_get_artist(t), track_get_title(t));  
+  file_info_t *lf = file_info_combine(dn, s);
+  if (!file_info_exists(lf) && strcmp(lyric,"") != 0) {
+    FILE* f = fopen(file_info_absolute_path(lf), "wt");
+    if (f != NULL) {
+      fprintf(f, "%s", memblock_as_str(blk));
+      fclose(f);
+    }
+  }
+  mc_free(s);
+  file_info_destroy(info);
+  file_info_destroy(dn);
+  file_info_destroy(lf);
+  
+  webkit_web_view_load_string(view->lyric_view, memblock_as_str(blk), NULL, NULL, "");
+  
+  memblock_destroy(blk);
+}
+
 
 static gboolean library_view_update_info(library_view_t* view)
 {
@@ -417,8 +622,8 @@ static gboolean library_view_update_info(library_view_t* view)
       int min = tr_tm / 1000 / 60;
       int sec = (tr_tm / 1000) % 60;
       { 
-        char s[100]; 
-        sprintf(s,"<i>%02d:%02d</i>", min, sec);
+        char s[200]; 
+        sprintf(s,"<span size=\"x-small\"><b><i>%02d:%02d</i></b></span>", min, sec);
         GtkLabel* lbl = GTK_LABEL(gtk_builder_get_object(view->builder, "lbl_time"));
         gtk_label_set_markup(lbl, s);
       }
@@ -433,8 +638,8 @@ static gboolean library_view_update_info(library_view_t* view)
           int min = len_in_ms / 1000 / 60;
           int sec = (len_in_ms / 1000) % 60;
           {
-            char s[100];
-            sprintf(s,"<i>%02d:%02d</i>", min, sec);
+            char s[200];
+            sprintf(s,"<span size=\"x-small\"><b><i>%02d:%02d</i></b></span>", min, sec);
             GtkLabel* lbl = GTK_LABEL(gtk_builder_get_object(view->builder, "lbl_total"));
             gtk_label_set_markup(lbl, s);
           }
@@ -451,6 +656,15 @@ static gboolean library_view_update_info(library_view_t* view)
             (track != NULL && track_get_id(track) != view->track_id) ) {
         view->track_index = index;
         if (track != NULL) {
+          // fetch lyric if possible
+          if (strcmp(track_get_lyric(track),"") == 0) {
+            struct lyric_cb* cb = (struct lyric_cb*) mc_malloc(sizeof(struct lyric_cb));
+            cb->track = track;
+            cb->view = view;
+            fetch_lyric(track, library_view_process_lyric, cb);
+          }
+            
+          // Print artist info
           view->track_id = track_get_id(track);
           log_debug2("artid = %s", track_get_artid(track));
           char s[100];
@@ -465,6 +679,10 @@ static gboolean library_view_update_info(library_view_t* view)
           gtk_label_set_markup(lbl, ss);
           
           file_info_t* info = file_info_new(track_get_artid(track));
+          if (!file_info_is_file(info)) {
+            file_info_destroy(info);
+            info = file_info_new(backtobasics_logo(view->btb));
+          }
           if (file_info_is_file(info)) {
             GError *err = NULL;
             GdkPixbuf* pb = gdk_pixbuf_new_from_file_at_scale(file_info_path(info),
@@ -478,7 +696,7 @@ static gboolean library_view_update_info(library_view_t* view)
               g_object_unref(pb);
             } else {
               log_error3("error loading image art: %d, %s", err->code, err->message);
-              g_free(err);
+              //g_free(err);
             }
           }
           file_info_destroy(info);
@@ -494,6 +712,7 @@ static gboolean library_view_update_info(library_view_t* view)
           gtk_tree_view_set_cursor(tview, path, NULL, FALSE);
           gtk_tree_path_free(path);
         } 
+        
       }
 
       log_debug3("lib hash = %lld, pl hash = %lld", view->library_list_hash, view->playing_list_hash);
@@ -510,6 +729,38 @@ static gboolean library_view_update_info(library_view_t* view)
       }
       
     }
+    
+    // update repeat info
+    playlist_player_repeat_t repeat = playlist_player_get_repeat(player);
+    if (view->repeat != repeat) {
+      log_debug3("repeat = %d, view repeat = %d", repeat, view->repeat);
+      view->repeat = repeat;
+      GtkWidget* r_btn = GTK_WIDGET(gtk_builder_get_object(view->builder, "tbtn_repeat"));
+      GtkWidget* r1_btn = GTK_WIDGET(gtk_builder_get_object(view->builder, "tbtn_repeat_one"));
+      GtkWidget* rlist_btn = GTK_WIDGET(gtk_builder_get_object(view->builder, "tbtn_repeat_all"));
+      log_debug4("r = %p, r1 = %p, rall = %p", r_btn, r1_btn, rlist_btn);
+      switch (repeat) {
+        case PLP_NO_REPEAT: {
+          gtk_widget_show_all(r_btn);
+          gtk_widget_hide(rlist_btn);
+          gtk_widget_hide(r1_btn);
+        }
+        break;
+        case PLP_TRACK_REPEAT: {
+          gtk_widget_hide(r_btn);
+          gtk_widget_show_all(r1_btn);
+          gtk_widget_hide(rlist_btn);
+        }
+        break;
+        case PLP_LIST_REPEAT: {
+          gtk_widget_hide(r1_btn);
+          gtk_widget_show_all(rlist_btn);
+          gtk_widget_hide(r_btn);
+        }
+        break;
+      }
+    }
+
     
     return TRUE;
   } else {
