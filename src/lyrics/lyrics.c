@@ -53,6 +53,7 @@ static char* fetch_from_lyricsondemand_dot_com(struct fetcher* data)
   hre_t re_compress = hre_compile("(\\s|[,'\"?!.()_-])+","i");
   hre_t re_removenum = hre_compile("^[0-9]+","i");
   hre_t re_removeyear = hre_compile("[(][0-9]+[)]","i");
+  hre_t re_and = hre_compile("[&]","");
   
   char* artist = mc_strdup(track_get_artist(t));
   char* title = mc_strdup(track_get_title(t));
@@ -60,13 +61,42 @@ static char* fetch_from_lyricsondemand_dot_com(struct fetcher* data)
   char* qt = hre_replace_all(re_removeyear, title, "");
   char* qa1 = hre_replace_all(re_compress, qa, "");
   char* qt1 = hre_replace_all(re_compress, qt, "");
-  //char* query_artist = hre_replace_all(re_removenum, qa1, "");
-  char* query_artist = mc_strdup(qa1);
-  char* query_title = hre_replace(re_removenum, qt1, "");
+  char* qa1a = hre_replace_all(re_and, qa1, "and");
+  char* qt1a = hre_replace_all(re_and, qt1, "and");
+
+  char* query_artist;
+  char* query_title;
+  
+  gsize bytes_written;
+  GError* error = NULL;
+  char* qa2 = g_convert(qa1a, strlen(qa1a),
+                        "ASCII//TRANSLIT", "UTF-8", NULL, &bytes_written,
+                        &error);
+  if (error == NULL) {
+    query_artist = mc_strdup(qa2);
+    g_free(qa2);
+  } else {
+    log_debug2("conversion didn't succeed, %s", error->message);
+    query_artist = mc_strdup(qa1a);
+  }
+
+  char* qt2 = g_convert(qt1a, strlen(qt1a),
+                        "ASCII//TRANSLIT", "UTF-8", NULL, &bytes_written,
+                        &error);
+  if (error == NULL) {
+    query_title =hre_replace(re_removenum, qt2, "");
+    g_free(qt2);
+  } else {
+    log_debug2("conversion didn't succeed, %s", error->message);
+    query_title = mc_strdup(qt1a);
+  }
+ 
   mc_free(qa);mc_free(qt);mc_free(qa1);mc_free(qt1);
+  mc_free(qa1a);mc_free(qt1a);
+    
   hre_lc(query_artist);
   hre_lc(query_title);
-  
+    
   char url[10240];
   char first_char = query_artist[0];
   if (first_char >= '0' && first_char <= '9') { first_char = '0'; }
@@ -101,6 +131,7 @@ static char* fetch_from_lyricsondemand_dot_com(struct fetcher* data)
       char *p2 = strstr(p1, "<p>");
       if (p2) {
         p2[0] = '\0';
+        log_debug2("lyric: %s", p1);
         data->lyric = lyric_html_to_text(p1);
       }
     }
@@ -115,6 +146,7 @@ static char* fetch_from_lyricsondemand_dot_com(struct fetcher* data)
   hre_destroy(re_compress);
   hre_destroy(re_removenum);
   hre_destroy(re_removeyear);
+  hre_destroy(re_and);
   
   return data->lyric;
 }
@@ -183,12 +215,15 @@ char* lyric_html_to_text(const char* lyric)
   char* r1, *r2;
   r1 = mc_strdup(lyric);
   for(i = 0;res[i] != NULL; ++i) {
+    log_debug2("replacement = '%s'",repl[i]);
     r2 = hre_replace_all(res[i], r1, repl[i]);
+    log_debug2("r2 = %s", r2);
     mc_free(r1);
     hre_destroy(res[i]);
     r1 = r2;
   }
   hre_trim(r1);
+  log_debug2("r1 = now %s", r1);
   return r1;
 }
 
@@ -231,7 +266,7 @@ static void* fetch(void* tt)
     }
   }
 
-  printf("__RESULT__\n%s\n__RESULT_END\n",lyric);
+  //printf("__RESULT__\n%s\n__RESULT_END\n",lyric);
   
   data->lyric = lyric;  
   gdk_threads_enter();
@@ -250,5 +285,96 @@ void fetch_lyric(track_t* t, void (*f)(char* lyric, void* data), void* dt)
   data->lyric = NULL;
   data->data = dt;
   int thread_id = pthread_create(&data->thread, NULL, fetch, data);
+}
+
+static void open_url(GtkWidget* w, const char* url)
+{
+  GdkScreen *screen;
+  GError *error;
+
+  if (gtk_widget_has_screen (w))
+    screen = gtk_widget_get_screen (w);
+  else
+    screen = gdk_screen_get_default ();
+
+  error = NULL;
+  gtk_show_uri (screen, url,
+                gtk_get_current_event_time (),
+                &error);
+  if (error) {
+    log_debug2("%s", error->message);
+  }
+}
+
+char* stripped_title(track_t* t)
+{
+  const char* title = track_get_title(t);
+  hre_t* re = hre_compile("^\\s*[0-9]*\\s*[-]\\s*","");
+  char* tt = hre_replace(re, title, "");
+  return tt;
+}
+
+
+void lyrics_search_lyricsondemand(GtkButton* btn, GObject* data)
+{
+  track_t* t = g_object_get_data(data, "track");
+  char s[10240];
+  strcpy(s, "http://www.google.com/custom?q=%s&btnG=Search&domains=http://www.lyricsondemand.com&sitesearch=http://www.lyricsondemand.com&client=pub-1187925111528992");
+  char url[20480];
+  char query[10240];
+  
+  char* tt = stripped_title(t);
+  sprintf(query,"%s+%s",track_get_artist(t), tt);
+  mc_free(tt);
+  hre_t re_wsp = hre_compile("\\s+","");
+  char* q = hre_replace_all(re_wsp, query, "+");
+
+  sprintf(url, s, q);
+  open_url(GTK_WIDGET(btn), url);
+  
+  mc_free(q);
+  hre_destroy(re_wsp);
+}
+
+void lyrics_search_lyricsworld(GtkButton* btn, GObject* data)
+{
+  track_t* t = g_object_get_data(data, "track");
+  char s[10240];
+  strcpy(s, "http://www.elyricsworld.com/search.php?search=%s");
+  char url[20480];
+  char query[10240];
+
+  char* tt = stripped_title(t);
+  sprintf(query,"%s+%s",track_get_artist(t), tt);
+  mc_free(tt);
+  hre_t re_wsp = hre_compile("\\s+","");
+  char* q = hre_replace_all(re_wsp, query, "+");
+
+  sprintf(url, s, q);
+  open_url(GTK_WIDGET(btn), url);
+  
+  mc_free(q);
+  hre_destroy(re_wsp);
+}
+
+void lyrics_search_lyricsty(GtkButton* btn, GObject* data)
+{
+  track_t* t = g_object_get_data(data, "track");
+  char s[10240];
+  strcpy(s, "http://www.lyricsty.com/search.php?what=songs&s=%s");
+  char url[20480];
+  char query[10240];
+
+  char* tt = stripped_title(t);
+  sprintf(query,"%s+%s",track_get_artist(t), tt);
+  mc_free(tt);
+  hre_t re_wsp = hre_compile("\\s+","");
+  char* q = hre_replace_all(re_wsp, query, "+");
+
+  sprintf(url, s, q);
+  open_url(GTK_WIDGET(btn), url);
+  
+  mc_free(q);
+  hre_destroy(re_wsp);
 }
 

@@ -27,7 +27,7 @@ IMPLEMENT_FIFO(playlist_player_command_fifo, playlist_player_cmd_t, copycmd, des
 static void post_command(playlist_player_t* plp, playlist_player_cmd_enum cmd, void* data)
 {
   playlist_player_cmd_t c = { cmd, data };
-  printf("posting %d, %p\n", cmd, data);
+  log_debug3("posting %d, %p\n", cmd, data);
   playlist_player_command_fifo_enqueue(plp->player_control, &c);
 }
 
@@ -49,6 +49,7 @@ playlist_player_t* playlist_player_new(void)
   plp->mutex=(pthread_mutex_t*) mc_malloc(sizeof(pthread_mutex_t));
   plp->player_state = PLAYLIST_PLAYER_STOPPED;
   plp->repeat = PLP_NO_REPEAT;
+  plp->volume_percentage = 100.0;
   pthread_mutex_init(plp->mutex,NULL);
   int thread_id = pthread_create(&plp->playlist_player_thread, NULL, playlist_player_thread, plp);
   return plp;
@@ -58,6 +59,7 @@ void playlist_player_destroy(playlist_player_t* plp)
 {
   post_command(plp, PLP_CMD_DESTROY, NULL);
   pthread_join(plp->playlist_player_thread, NULL);
+  log_debug("joined");
   
   media_destroy(plp->worker);
   playlist_destroy(plp->playlist);
@@ -111,6 +113,19 @@ void playlist_player_again(playlist_player_t* plp)
 {
   post_command(plp, PLP_CMD_RESTART_TRACK, NULL);
 }
+
+
+double playlist_player_get_volume(playlist_player_t* plp)
+{
+  return plp->volume_percentage;
+}
+
+void playlist_player_set_volume(playlist_player_t* plp, double percentage)
+{
+  plp->volume_percentage = percentage;
+  post_command(plp, PLP_CMD_SET_VOLUME, &plp->volume_percentage);
+}
+
 
 void playlist_player_set_repeat(playlist_player_t* plp, playlist_player_repeat_t r)
 {
@@ -214,11 +229,14 @@ void load_and_play(playlist_player_t* plp, track_t* t)
         media_guard(plp->worker, track_get_end_offset_in_ms(t));
       }
     }
+    media_set_volume(plp->worker, plp->volume_percentage);
     media_play(plp->worker);
   } else {
     media_load_url(plp->worker, track_get_url(t));
+    media_set_volume(plp->worker, plp->volume_percentage);
     media_play(plp->worker);
   }
+  log_debug("loadandplay");
 }
 
 void seek_and_guard(playlist_player_t* plp, track_t* t)
@@ -264,8 +282,8 @@ void proces_next(playlist_player_t* plp)
         // do nothing, tracks follow each other 
         // only notify that the track has changed.
         // and guard the end.
-        // guard(plp, t_next);
-        seek_and_guard(plp, t_next);
+        guard(plp, t_next);
+        //seek_and_guard(plp, t_next);
       } else {
         // seek in the current file and set a new guard
         seek_and_guard(plp, t_next);
@@ -309,11 +327,16 @@ void proces_media_event(playlist_player_t* plp) {
         load_and_play(plp, trk);
       } else if (plp->repeat == PLP_LIST_REPEAT) {
         if (playlist_count(plp->playlist) > 0) {
-          track_t* trk0 = playlist_get(plp->playlist, 0);
-          plp->current_track = 0;
-          plp->current_position_in_ms = 0;
-          pthread_mutex_unlock(plp->mutex);
-          load_and_play(plp, trk0);
+          if (plp->current_track == (playlist_count(plp->playlist) - 1)) {
+            track_t* trk0 = playlist_get(plp->playlist, 0);
+            plp->current_track = 0;
+            plp->current_position_in_ms = 0;
+            pthread_mutex_unlock(plp->mutex);
+            load_and_play(plp, trk0);
+          } else {
+            pthread_mutex_unlock(plp->mutex);
+            proces_next(plp);
+          }
         } else {
           pthread_mutex_unlock(plp->mutex);
         }
@@ -358,7 +381,7 @@ void* playlist_player_thread(void* _plp)
       }
     }
     
-    if (cmd != PLP_CMD_NONE) printf("Command = %d, %p\n", cmd, data);
+    if (cmd != PLP_CMD_NONE) log_debug3("Command = %d, %p\n", cmd, data);
     
     switch (cmd) {
       case PLP_CMD_DESTROY: {
@@ -397,6 +420,11 @@ void* playlist_player_thread(void* _plp)
         }
       }
       break;
+      case PLP_CMD_SET_VOLUME: {
+        double volume_percentage = *((double*) data);
+        media_set_volume(plp->worker, volume_percentage);
+      }
+      break;
       case PLP_CMD_SEEK: {
         long seek = *((long*) data);
         pthread_mutex_lock(plp->mutex);
@@ -414,7 +442,7 @@ void* playlist_player_thread(void* _plp)
             if (seek >= len) { seek = len; }
           }
         } 
-        printf("seeking to %ld\n",seek);
+        log_debug2("seeking to %ld\n",seek);
         mc_free(data);
         media_seek(plp->worker, seek);
       }
@@ -471,7 +499,9 @@ void* playlist_player_thread(void* _plp)
       }
       break;
       case PLP_CMD_SET_TRACK: {
+          log_debug("settrack");
         pthread_mutex_lock(plp->mutex);
+          log_debug("settrack");
         if (plp->player_state == PLAYLIST_PLAYER_PLAYING ||
               plp->player_state == PLAYLIST_PLAYER_PAUSED) {
           int nr = *((int*) data);
@@ -528,7 +558,6 @@ void* playlist_player_thread(void* _plp)
     }
     
     // Now check the worker state
-    
     if (plp->player_state == PLAYLIST_PLAYER_PLAYING) {
       proces_media_event(plp);
       while (media_peek_event(plp->worker)) {
@@ -543,11 +572,11 @@ void* playlist_player_thread(void* _plp)
   }
   
   // destroy received.
+  log_debug("destroy ");
   
   media_pause(plp->worker);
 
   return NULL;  
 }
-
 
 

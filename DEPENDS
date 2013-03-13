@@ -1,0 +1,24 @@
+// audio
+flac
+vorbisfile
+mpg123
+libtag-c
+libtag
+libao
+
+// support
+gnureadline
+libconfig
+libpcre
+
+// widgets
+webkitgtk-3.0
+gdk-3.0
+gtk+-3.0
+
+// HOD libs
+elementals
+libgtklistmodel
+libtagcoverart
+
+

@@ -24,6 +24,7 @@ library_view_t* library_view_new(Backtobasics* btb, library_t* library)
   view->album_model = string_model_new();
   
   view->aspect = GENRE_ASPECT;
+  view->previous_aspect = NONE_ASPECT;
   
   playlist_model_set_playlist(view->playlist_model, library_current_selection(view->library, _("Library")));
   view->library_list_changed = el_true;
@@ -201,6 +202,32 @@ void library_view_init(library_view_t* view)
   g_timeout_add(250, (GSourceFunc) library_view_update_info, view); 
 }
 
+void library_view_reset_models(library_view_t* view)
+{
+  library_filter_none(view->library);
+  
+  playlist_model_set_playlist(view->playlist_model, library_current_selection(view->library, _("Library")));
+  view->library_list_changed = el_true;
+  view->library_list_hash = playlist_model_tracks_hash(view->playlist_model);
+
+  string_model_set_array(view->genre_model, library_genres(view->library), el_false);
+  string_model_set_array(view->artist_model, library_artists(view->library), el_false);
+  string_model_set_array(view->album_model, library_albums(view->library), el_false);
+  
+  GtkTreeView* tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_library"));
+  gtk_tree_view_set_model(tview, GTK_TREE_MODEL(playlist_model_gtk_model(view->playlist_model)));
+  
+  tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_genre_aspect"));
+  gtk_tree_view_set_model(tview, string_model_gtk_model(view->genre_model));
+  
+  tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_artist_aspect"));
+  gtk_tree_view_set_model(tview, string_model_gtk_model(view->artist_model));
+  
+  tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_album_aspect"));
+  gtk_tree_view_set_model(tview, string_model_gtk_model(view->album_model));
+  
+}
+
 
 #define SET_TOGGLE(btn, VAL) \
   if (!VAL && gtk_toggle_tool_button_get_active(btn)) { \
@@ -235,6 +262,8 @@ static void library_view_adjust_aspect_buttons(library_view_t* view, aspect_enum
         SET_TOGGLE(g_btn, FALSE);
     }
     break;
+    default:
+    break;
   }
 }
 
@@ -243,6 +272,10 @@ static void library_view_aspect_page(library_view_t* view, aspect_enum aspect)
   GtkNotebook* nb = GTK_NOTEBOOK(gtk_builder_get_object(view->builder, "nb_aspects"));
   gtk_notebook_set_current_page(nb, aspect);
   library_view_adjust_aspect_buttons(view, aspect);
+  if (aspect != view->aspect) {
+    view->previous_aspect = view->aspect;
+    view->aspect = aspect;
+  }
 }
 
 static void library_set_aspect_filter(library_view_t* view, aspect_enum aspect)
@@ -252,16 +285,18 @@ static void library_set_aspect_filter(library_view_t* view, aspect_enum aspect)
   set_t* filtered_artists = library_filtered_artists(view->library);
   set_t* filtered_albums = library_filtered_albums(view->library);
   
+  log_debug3("albums %d, artists %d", set_count(filtered_albums), set_count(filtered_artists));
+  
   if (aspect == GENRE_ASPECT) {
     string_model_set_valid(view->artist_model, filtered_artists);
     string_model_set_valid(view->album_model, filtered_albums);
-    if (set_count(filtered_artists) < set_count(filtered_albums)) {
+    if (set_count(filtered_artists) <= set_count(filtered_albums)) {
       library_view_aspect_page(view, ARTIST_ASPECT);
     } else {
       library_view_aspect_page(view, ALBUM_ASPECT);
     }
   } else if (aspect == ALBUM_ASPECT) {
-    //string_model_set_valid(view->artist_model, filtered_artists);
+    string_model_set_valid(view->artist_model, filtered_artists);
   } else if (aspect == ARTIST_ASPECT) {
     string_model_set_valid(view->album_model, filtered_albums);
     library_view_aspect_page(view, ALBUM_ASPECT);
@@ -271,97 +306,132 @@ static void library_set_aspect_filter(library_view_t* view, aspect_enum aspect)
   view->library_list_changed = el_true;
   view->library_list_hash = playlist_model_tracks_hash(view->playlist_model);
   
-  /*set_key_list* lst = set_keys(library_filtered_artists(view->library));
-  const char* s = set_key_list_start_iter(lst, LIST_FIRST);
-  while (s != NULL) {
-    log_debug2("key = %s", s);
-    s = set_key_list_next_iter(lst);
-  }
-  set_key_list_destroy(lst);*/
-  log_debug("OK");
-  
 }
 
-void library_view_genre_sel_changed(GtkTreeSelection *sel, GObject* lview)
+gboolean library_view_genre_clicked(GtkTreeView* tview, GdkEvent* event, GObject* lview)
 {
-  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
-
-  log_debug("sel changed");
-  if (view->ignore_sel_changed) {
-    view->ignore_sel_changed = el_false;
-    log_debug("ignored");
-    return;
+  log_debug("Genre clicked");
+  
+  GdkEventButton* ebtn = (GdkEventButton*) event; 
+  if (ebtn->button != 1) {
+    return FALSE;
   }
   
-  GtkTreeModel* model;
-  GtkTreeIter iter;
-  if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
-    int row = gtk_list_model_iter_to_row(GTK_LIST_MODEL(model), iter);
-    string_model_array arr = string_model_get_array(view->genre_model);
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  
+  GtkTreeSelection* sel = gtk_tree_view_get_selection(tview);
+  if (gtk_tree_selection_count_selected_rows(sel) == 0) {
     library_filter_none(view->library);
-    library_filter_genre(view->library, string_model_array_get(arr, row));
   } else {
-    library_filter_none(view->library);
+    GtkTreeModel* model;
+    GtkTreeIter iter;
+    if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
+      int row = gtk_list_model_iter_to_row(GTK_LIST_MODEL(model), iter);
+      string_model_array arr = string_model_get_array(view->genre_model);
+      library_filter_none(view->library);
+      library_filter_genre(view->library, string_model_array_get(arr, row));
+    }
   }
-  library_set_aspect_filter(view, GENRE_ASPECT);
-}
 
-void library_view_artist_sel_changed(GtkTreeSelection *sel, GObject* lview)
-{
-  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
-
-  log_debug("sel changed");
-  if (view->ignore_sel_changed) {
-    view->ignore_sel_changed = el_false;
-    log_debug("ignored");
-    return;
-  }
-  
-  {
-    view->ignore_sel_changed = el_true;
-    GtkTreeView* tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_album_aspect"));
-    GtkTreeSelection* sel = gtk_tree_view_get_selection(tview);
+  tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_artist_aspect"));
+  sel = gtk_tree_view_get_selection(tview);
+  if (gtk_tree_selection_count_selected_rows(sel) > 0) {
     gtk_tree_selection_unselect_all(sel);
+  }  
+  
+  tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_album_aspect"));
+  sel = gtk_tree_view_get_selection(tview);
+  if (gtk_tree_selection_count_selected_rows(sel) > 0) {
+    gtk_tree_selection_unselect_all(sel);
+  }  
+
+  library_set_aspect_filter(view, GENRE_ASPECT);
+  
+  return FALSE;
+}
+
+gboolean library_view_artist_clicked(GtkTreeView* tview, GdkEvent* event, GObject* lview)
+{
+  log_debug("Album clicked");
+
+  GdkEventButton* ebtn = (GdkEventButton*) event; 
+  if (ebtn->button != 1) {
+    return FALSE;
   }
   
-  GtkTreeModel* model;
-  GtkTreeIter iter;
-  if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
-    int row = gtk_list_model_iter_to_row(GTK_LIST_MODEL(model), iter);
-    string_model_array arr = string_model_get_array(view->artist_model);
-    library_filter_album_artist(view->library, string_model_array_get(arr, row));
-    library_filter_album_title(view->library, NULL);
-  } else {
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  
+  GtkTreeSelection* sel = gtk_tree_view_get_selection(tview);
+  if (gtk_tree_selection_count_selected_rows(sel) == 0) {
     library_filter_album_artist(view->library, NULL);
-    library_filter_album_title(view->library, NULL);
+  } else {
+    GtkTreeModel* model;
+    GtkTreeIter iter;
+    if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
+      int row = gtk_list_model_iter_to_row(GTK_LIST_MODEL(model), iter);
+      string_model_array arr = string_model_get_array(view->artist_model);
+      const char* artist = string_model_array_get(arr, row);
+      log_debug2("artist = %s", artist);
+      library_filter_album_artist(view->library, string_model_array_get(arr, row));
+    }
   }
+
+  tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_genre_aspect"));
+  sel = gtk_tree_view_get_selection(tview);
+  if (gtk_tree_selection_count_selected_rows(sel) > 0) {
+    gtk_tree_selection_unselect_all(sel);
+  }  
+  
+  tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_album_aspect"));
+  sel = gtk_tree_view_get_selection(tview);
+  if (gtk_tree_selection_count_selected_rows(sel) > 0) {
+    gtk_tree_selection_unselect_all(sel);
+  }  
+
   library_set_aspect_filter(view, ARTIST_ASPECT);
   
+  return FALSE;
 }
 
-void library_view_album_sel_changed(GtkTreeSelection *sel, GObject* lview)
+gboolean library_view_album_clicked(GtkTreeView* tview, GdkEvent* event, GObject* lview)
 {
-  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  log_debug("Artist clicked");
 
-  log_debug("sel changed");
-  if (view->ignore_sel_changed) {
-    view->ignore_sel_changed = el_false;
-    log_debug("ignored");
-    return;
+  GdkEventButton* ebtn = (GdkEventButton*) event; 
+  if (ebtn->button != 1) {
+    return FALSE;
   }
   
-  GtkTreeModel* model;
-  GtkTreeIter iter;
-  if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
-    int row = gtk_list_model_iter_to_row(GTK_LIST_MODEL(model), iter);
-    string_model_array arr = string_model_get_array(view->album_model);
-    library_filter_album_title(view->library, string_model_array_get(arr, row));
-    library_filter_album_artist(view->library, NULL);
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  
+  GtkTreeSelection* sel = gtk_tree_view_get_selection(tview);
+  if (gtk_tree_selection_count_selected_rows(sel) == 0) {
+    library_filter_none(view->library);
   } else {
-    library_filter_album_artist(view->library, NULL);
-    library_filter_album_title(view->library, NULL);
+    GtkTreeModel* model;
+    GtkTreeIter iter;
+    if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
+      int row = gtk_list_model_iter_to_row(GTK_LIST_MODEL(model), iter);
+      string_model_array arr = string_model_get_array(view->album_model);
+      library_filter_album_title(view->library, string_model_array_get(arr, row));
+    }
   }
+
+  tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_genre_aspect"));
+  sel = gtk_tree_view_get_selection(tview);
+  if (gtk_tree_selection_count_selected_rows(sel) > 0) {
+    gtk_tree_selection_unselect_all(sel);
+  }  
+  
+  tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_artist_aspect"));
+  sel = gtk_tree_view_get_selection(tview);
+  if (gtk_tree_selection_count_selected_rows(sel) > 0) {
+    gtk_tree_selection_unselect_all(sel);
+  }  
+
   library_set_aspect_filter(view, ALBUM_ASPECT);
+  
+  return FALSE;
 }
 
 
@@ -372,11 +442,6 @@ void library_view_artists(GtkToggleToolButton *btn, GObject* lview)
   
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
   library_view_aspect_page(view, ARTIST_ASPECT);
-
-  view->ignore_sel_changed = el_true;
-  GtkTreeView* tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_artist_aspect"));
-  GtkTreeSelection* sel = gtk_tree_view_get_selection(tview);
-  gtk_tree_selection_unselect_all(sel);
 }
 
 void library_view_albums(GtkToggleToolButton *btn, GObject* lview)
@@ -386,11 +451,6 @@ void library_view_albums(GtkToggleToolButton *btn, GObject* lview)
 
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
   library_view_aspect_page(view, ALBUM_ASPECT);
-  
-  view->ignore_sel_changed = el_true;
-  GtkTreeView* tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_album_aspect"));
-  GtkTreeSelection* sel = gtk_tree_view_get_selection(tview);
-  gtk_tree_selection_unselect_all(sel);
 }
 
 void library_view_genres(GtkToggleToolButton *btn, GObject* lview)
@@ -400,12 +460,8 @@ void library_view_genres(GtkToggleToolButton *btn, GObject* lview)
 
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
   library_view_aspect_page(view, GENRE_ASPECT);
-  
-  view->ignore_sel_changed = el_true;
-  GtkTreeView* tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_genre_aspect"));
-  GtkTreeSelection* sel = gtk_tree_view_get_selection(tview);
-  gtk_tree_selection_unselect_all(sel);
 }
+
 
 static void library_view_play_at(library_view_t* view, int track)
 {
@@ -418,9 +474,12 @@ static void library_view_play_at(library_view_t* view, int track)
     playlist_player_set_repeat(player, PLP_NO_REPEAT);
     view->library_list_changed = el_false;
     view->time_in_ms = -1;
+    playlist_player_set_track(player, track);
+  } else {
+    if (!playlist_player_is_paused(player)) {
+      playlist_player_set_track(player, track);
+    }
   }
-
-  playlist_player_set_track(player, track);
   
   if (!playlist_player_is_playing(player)) {
     playlist_player_play(player);
@@ -559,19 +618,19 @@ static void library_view_process_lyric(char* lyric, void* data)
   mc_free(cb);
 
   view->current_lyric_track = t;
-  track_set_lyric(t, lyric);
+  if (strcmp(lyric, "") != 0) {
+    track_set_lyric(t, lyric);
+  }
   
   char* s = (char*) mc_malloc(strlen(track_get_artist(t))+sizeof(", ")+strlen(track_get_title(t))+200);
-  sprintf(s,"<span size=\"x-small\"><i><b>%s, %s</b></i></span>", track_get_artist(t), track_get_title(t));
+  sprintf(s,"<span size=\"x-small\"><i><b>%s\n%s</b></i></span>", track_get_artist(t), track_get_title(t));
   gtk_label_set_markup(view->lbl_lyric_track,s);
   mc_free(s);
   
-  if (strcmp(lyric,"") != 0) {
-    char* html = lyric_text_to_html(lyric);
-    write_lyric(t, lyric, el_false); // write but don't overwrite
-    webkit_web_view_load_string(view->lyric_view, html, NULL, NULL, "");
-    mc_free(html);
-  }
+  char* html = lyric_text_to_html(lyric);
+  write_lyric(t, lyric, el_false); // write but don't overwrite
+  webkit_web_view_load_string(view->lyric_view, html, NULL, NULL, "");
+  mc_free(html);
   
   mc_free(lyric);
 }
@@ -581,7 +640,16 @@ void library_view_edit_lyric(GtkToolButton *btn, GObject *lview)
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
   
   if (view->current_lyric_track != NULL) {
+    track_t* t = view->current_lyric_track;
+    GtkLabel* lbl = GTK_LABEL(gtk_builder_get_object(view->builder, "lbl_lyr_edit_track"));
+    char* s = (char*) mc_malloc(strlen(track_get_artist(t))+sizeof(", ")+strlen(track_get_title(t))+200);
+    sprintf(s,"<span size=\"x-small\"><i><b>%s\n%s</b></i></span>", track_get_artist(t), track_get_title(t));
+    gtk_label_set_markup(lbl,s);
+    mc_free(s);
+    
     GtkDialog* dlg = GTK_DIALOG(gtk_builder_get_object(view->builder, "dlg_edit_lyric"));
+    g_object_set_data(G_OBJECT(dlg), "track", (gpointer) t );
+    
     GtkTextView* tv = GTK_TEXT_VIEW(gtk_builder_get_object(view->builder, "txt_lyric_edit"));
     GtkTextBuffer* buf = gtk_text_view_get_buffer(tv);
     const char* lyric = track_get_lyric(view->current_lyric_track);
@@ -594,6 +662,9 @@ void library_view_edit_lyric(GtkToolButton *btn, GObject *lview)
       char* txt = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
       write_lyric(view->current_lyric_track, txt, el_true);
       track_set_lyric(view->current_lyric_track, txt);
+      char* html = lyric_text_to_html(txt);
+      webkit_web_view_load_string(view->lyric_view, html, NULL, NULL, "");
+      mc_free(html);
       g_free(txt);
     }
     gtk_widget_hide(GTK_WIDGET(dlg));

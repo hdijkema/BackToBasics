@@ -203,7 +203,7 @@ int main(char *argv[],int argc) {
       printf("scanning %s\n", hre_match_str(match));
       library_t* library = library_new();
       printf("calling scan_library\n");
-      scan_library(library, hre_match_str(match), library_cb);
+      //scan_library(library, hre_match_str(match), library_cb);
       printf("\n");
       printf("library: %d tracks\n", library_count(library));
       printf("done scanning, destroying library\n");

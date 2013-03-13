@@ -1,5 +1,7 @@
 #include <audio/audio.h>
 #include <audio/mp3.h>
+#include <audio/ogg.h>
+#include <audio/flac.h>
 
 /******************************************************************************************
  * Event fifo
@@ -48,16 +50,66 @@ long audio_event_ms(audio_event_t* event)
 /******************************************************************************************
  * Audio worker implementation
  ******************************************************************************************/
- 
-static el_bool can_seek(void* w) { return el_false; }
-static audio_result_t play(void* w) { return AUDIO_OK; }
-static audio_result_t seek(void* w, long p) { return AUDIO_OK; }
-static audio_result_t guard(void* w, long p) { return AUDIO_OK; }
-static audio_result_t pause(void* w) { return AUDIO_OK; }
-static audio_result_t load_file(void* w, const char* p) { return AUDIO_OK; }
-static audio_result_t load_url(void* w, const char* p) { return AUDIO_OK; }
+
+static void post_event(audio_event_fifo* fifo, audio_state_t state, long position_in_ms)
+{
+  audio_event_t e = {state, position_in_ms};
+  audio_event_fifo_enqueue(fifo, &e);
+}
+  
+typedef struct {
+  audio_event_fifo *client_notify;
+} none_worker_t;
+
+#define NONE_WORKER(x) ((none_worker_t*) x)
+
+static el_bool can_seek(void* w) { 
+  return el_false; 
+}
+
+static audio_result_t play(void* w) {
+  post_event(NONE_WORKER(w)->client_notify, AUDIO_PLAYING, -1);
+  post_event(NONE_WORKER(w)->client_notify, AUDIO_EOS, -1);
+  return AUDIO_OK; 
+}
+
+static audio_result_t seek(void* w, long p) { 
+  post_event(NONE_WORKER(w)->client_notify, AUDIO_SEEKED, -1);
+  post_event(NONE_WORKER(w)->client_notify, AUDIO_PLAYING, -1);
+  post_event(NONE_WORKER(w)->client_notify, AUDIO_EOS, -1);
+  return AUDIO_OK; 
+}
+
+static audio_result_t guard(void* w, long p) {
+  post_event(NONE_WORKER(w)->client_notify, AUDIO_EOS, -1);
+  return AUDIO_OK; 
+}
+
+static audio_result_t pause(void* w) {
+  post_event(NONE_WORKER(w)->client_notify, AUDIO_PAUSED, -1);
+  return AUDIO_OK; 
+}
+
+static audio_result_t load_file(void* w, const char* p) { 
+  post_event(NONE_WORKER(w)->client_notify, AUDIO_LENGTH, 0);
+  post_event(NONE_WORKER(w)->client_notify, AUDIO_EOS, -1);
+  return AUDIO_OK; 
+}
+
+static audio_result_t load_url(void* w, const char* p) { 
+  post_event(NONE_WORKER(w)->client_notify, AUDIO_LENGTH, 0);
+  post_event(NONE_WORKER(w)->client_notify, AUDIO_EOS, -1);
+  return AUDIO_OK; 
+}
+
+static audio_result_t set_volume(void* w, double percentage) {
+  return AUDIO_OK;
+}
+
 static long length_in_ms(void* w) { return 0; }
-static void destroy(void* w) { }
+static void destroy(void* w) {
+  mc_free(w);
+}
  
 audio_worker_t* media_new_from_file(const char *local_path, audio_result_t *err) 
 {
@@ -71,6 +123,7 @@ audio_worker_t* media_new_from_url(const char* url,  audio_result_t* err)
   *err = AUDIO_NOT_IMPLEMENTED;
   return NULL;
 }
+static audio_result_t worker_none(audio_worker_t* worker);
 
 audio_worker_t* media_new(void)
 {
@@ -78,6 +131,13 @@ audio_worker_t* media_new(void)
   worker->fifo = audio_event_fifo_new();
   worker->worker_data = NULL;
 
+  worker_none(worker);
+
+  return worker;
+}
+
+static audio_result_t worker_none(audio_worker_t* worker)
+{
   worker->can_seek = can_seek;
   worker->play = play;
   worker->pause = pause;
@@ -87,10 +147,13 @@ audio_worker_t* media_new(void)
   worker->length_in_ms = length_in_ms;
   worker->load_file = load_file;
   worker->load_url = load_url;
-  worker->worker_data = NULL;
+  worker->set_volume = set_volume;
+  none_worker_t* w = (none_worker_t*) mc_malloc(sizeof(none_worker_t));
+  w->client_notify = worker->fifo;
+  worker->worker_data = w;
   worker->decoder = AUDIO_DECODER_NONE;
   worker->source = AUDIO_SOURCE_NONE;
-  return worker;
+  return AUDIO_CANNOT_INITIALIZE;
 }
 
 static audio_decoder_t get_decoder(file_info_t* info)
@@ -121,6 +184,8 @@ audio_result_t media_load_file(audio_worker_t* worker, const char* local_path) {
   
   file_info_destroy(info);
   
+  log_debug2("decoder = %d", decoder);
+  
   if (decoder == AUDIO_DECODER_NONE) {
     result = AUDIO_NOT_SUPPORTED;
     if (worker->worker_data != NULL) {
@@ -131,9 +196,9 @@ audio_result_t media_load_file(audio_worker_t* worker, const char* local_path) {
     worker->decoder = AUDIO_DECODER_NONE;
     worker->source = AUDIO_SOURCE_FILE;
   } else if (decoder == worker->decoder && worker->source == AUDIO_SOURCE_FILE) {
-    printf("loading %s\n",local_path);
     worker->load_file(worker->worker_data, local_path);
   } else {
+    log_debug2("loading %s", local_path);
     if (worker->worker_data != NULL) {
       worker->destroy(worker->worker_data);
       worker->worker_data = NULL;
@@ -145,9 +210,15 @@ audio_result_t media_load_file(audio_worker_t* worker, const char* local_path) {
       case AUDIO_DECODER_MPG123: 
         result = mp3_new_from_file(worker, local_path);
       break;
+      case AUDIO_DECODER_OGG:
+        result = ogg_new_from_file(worker, local_path);
+      break;
+      case AUDIO_DECODER_FLAC:
+        result = flac_new_from_file(worker, local_path);
+      break;
       default: 
         result = AUDIO_NOT_SUPPORTED;
-        worker->decoder = AUDIO_DECODER_NONE;
+        result = worker_none(worker);
       break;
     }
   }
@@ -188,6 +259,11 @@ audio_result_t media_guard(audio_worker_t* worker, long position_in_ms)
 audio_result_t media_pause(audio_worker_t* worker)
 {
   return worker->pause(worker->worker_data);
+}
+
+audio_result_t media_set_volume(audio_worker_t* worker, double percentage)
+{
+  return worker->set_volume(worker->worker_data, percentage);
 }
 
 long media_length_in_ms(audio_worker_t* worker)

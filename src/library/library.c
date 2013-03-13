@@ -46,6 +46,7 @@ library_t* library_new(void)
   l->genres = genre_array_new();
   l->artists = artist_array_new();
   l->albums = album_array_new();
+  l->library_path = mc_strdup("");
   
   l->filtered_artists = set_new(SET_CASE_INSENSITIVE);
   l->filtered_albums = set_new(SET_CASE_INSENSITIVE);
@@ -67,6 +68,7 @@ void library_destroy(library_t* l)
   set_destroy(l->filtered_albums);
   set_destroy(l->filtered_tracks);
   library_db_destroy(l->tracks_db);
+  mc_free(l->library_path);
   mc_free(l);
 }
 
@@ -112,7 +114,9 @@ library_result_t library_load(library_t* l, const char* localpath)
         for(i = 0;i < ntracks; ++i) {
           track_t* trk = track_new();
           track_fread(trk, f);
-          playlist_append(l->all_tracks, trk);
+          library_add(l, trk);
+          track_destroy(trk);
+          //playlist_append(l->all_tracks, trk);
         }
       } else {
         fclose(f);
@@ -383,21 +387,30 @@ set_t* library_filtered_tracks(library_t* l)
 }
 
 static void scanlib(library_t* l, file_info_t* path, scanned_hash *hash,
-                      void (*cb)(int c, int t), int *count, int total)
+                      scan_job_t* job, ScanJobCBFunc cb, int *count, int total)
 {
   hre_t re_cue = hre_compile("[.]cue$","i");
   hre_t re_music = hre_compile("[.](mp3|flac|m4a|ape|aac|ogg)$","i");
   
   file_info_array cues = file_info_scandir(path, re_cue);
   
+  const char* msg=_("Scanning media files");
+  
+  scan_result_t scan_res = SCAN_CONTINUE;
+  
   int i, N;
-  for(i = 0, N = file_info_array_count(cues);i < N; ++i) {
-    
-    *count += 1;
-    if (cb) cb(*count, total);
+  for(i = 0, N = file_info_array_count(cues);scan_res == SCAN_CONTINUE && i < N; ++i) {
     
     file_info_t* info = file_info_array_get(cues, i);
-    if (!file_info_is_hidden(info)) {
+
+    *count += 1;
+    if (cb) {
+      char submsg[2048];
+      sprintf(submsg, "scanning %s", file_info_filename(info));
+      scan_res = cb(job, el_false, msg, submsg, *count, total);
+    }
+    
+    if (scan_res == SCAN_CONTINUE && !file_info_is_hidden(info)) {
       track_array tracks = tracks_from_cue(file_info_absolute_path(info));
   
       int k, M;
@@ -425,13 +438,18 @@ static void scanlib(library_t* l, file_info_t* path, scanned_hash *hash,
   file_info_array_destroy(cues);
   file_info_array musics = file_info_scandir(path, re_music);
 
-  for(i = 0, N = file_info_array_count(musics);i < N; ++i) {
-    
-    *count += 1;
-    if(cb) cb(*count, total);
+  for(i = 0, N = file_info_array_count(musics);scan_res == SCAN_CONTINUE && i < N; ++i) {
     
     file_info_t* info = file_info_array_get(musics, i);
-    if (!file_info_is_hidden(info)) {
+
+    *count += 1;
+    if (cb) {
+      char submsg[2048];
+      sprintf(submsg, "scanning %s", file_info_filename(info));
+      scan_res = cb(job, el_false, msg, submsg, *count, total);
+    }
+    
+    if (scan_res == SCAN_CONTINUE && !file_info_is_hidden(info)) {
       const char* p = file_info_absolute_path(info);
       
       if (!scanned_hash_exists(hash, p)) {
@@ -451,8 +469,8 @@ static void scanlib(library_t* l, file_info_t* path, scanned_hash *hash,
   file_info_array_destroy(musics);
   file_info_array subdirs = file_info_subdirs(path);
   
-  for(i = 0, N = file_info_array_count(subdirs);i < N; ++i) {
-    scanlib(l, file_info_array_get(subdirs, i), hash, cb, count, total);
+  for(i = 0, N = file_info_array_count(subdirs);scan_res == SCAN_CONTINUE && i < N; ++i) {
+    scanlib(l, file_info_array_get(subdirs, i), hash, job, cb, count, total);
   }
   
   file_info_array_destroy(subdirs);
@@ -461,36 +479,67 @@ static void scanlib(library_t* l, file_info_t* path, scanned_hash *hash,
   hre_destroy(re_music);
 }
 
-int count_files(const file_info_t* path)
-{
+int count_files(const file_info_t* path,scan_job_t* job, ScanJobCBFunc cb)
+{ 
   hre_t re_music = hre_compile("[.](cue|mp3|flac|m4a|ape|aac|ogg)$","i");
-  file_info_array A = file_info_scandir(path, re_music);
-  int count = file_info_array_count(A);
-  file_info_array_destroy(A);
-  hre_destroy(re_music);
+
+  scan_result_t scan_res = SCAN_CONTINUE; 
   
-  file_info_array subdirs = file_info_subdirs(path);
-  int i, N;
-  for(i = 0, N = file_info_array_count(subdirs);i < N; ++i) {
-    count += count_files(file_info_array_get(subdirs, i));
+  const char* msg =_("Counting media files");
+  char submsg[2048];
+  sprintf(submsg,_("Scanning directory %s"), file_info_filename(path));
+  if (cb) {
+    scan_res = cb(job, el_false, msg, submsg, 0, 100);
   }
-  file_info_array_destroy(subdirs);
+
   
-  return count;
+  if (scan_res == SCAN_CONTINUE) {
+    file_info_array A = file_info_scandir(path, re_music);
+    int count = file_info_array_count(A);
+    file_info_array_destroy(A);
+    hre_destroy(re_music);
+    
+    file_info_array subdirs = file_info_subdirs(path);
+    int i, N;
+    for(i = 0, N = file_info_array_count(subdirs);i < N; ++i) {
+      count += count_files(file_info_array_get(subdirs, i), job, cb);
+    }
+    file_info_array_destroy(subdirs);
+    
+    return count;
+  } else {
+    return 0;
+  }
+  
 }
 
-void scan_library(library_t* library, const char* path, void (*cb)(int c, int tot))
+void library_set_basedir(library_t* library, const char* path)
 {
+  mc_free(library->library_path);
+  library->library_path = mc_strdup(path);
+}
+
+const char* library_get_basedir(library_t* l)
+{
+  return l->library_path;
+}
+
+void scan_library(scan_job_t* job, ScanJobCBFunc cb, void* lib) 
+{
+  library_t* library = (library_t*) lib;
+  char* path = library->library_path;
   scanned_hash *h = scanned_hash_new(100, HASH_CASE_SENSITIVE);
   file_info_t* info = file_info_new(path);
   
+  log_info2("Scanning library, %s", path); 
+  
   log_info("counting total files");
-  int total_files = count_files(info);
+  int total_files = count_files(info, job, cb);
   if (total_files == 0) { total_files = 1; }
   log_info2("total files = %d", total_files);
   
   int count = 0;
-  scanlib(library, info, h, cb, &count, total_files);
+  scanlib(library, info, h, job, cb, &count, total_files);
   log_debug("scanlib done");
   
   file_info_destroy(info);
@@ -501,7 +550,15 @@ void scan_library(library_t* library, const char* path, void (*cb)(int c, int to
   library->dirty = el_true;
   log_debug("hash destroyed");
   
+  if (cb) {
+    cb(job, el_false, _("Scanning media library"), _("Sorting library"), count, total_files);
+  }
+  
   library_sort(library);
+
+  if (cb) {   
+    cb(job, el_true, _("Scanning media library"), _("Finished"), count, total_files);
+  }
 }
 
 void library_sort(library_t* library)

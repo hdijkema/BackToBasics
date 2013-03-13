@@ -22,6 +22,7 @@
 
 #include <gtk/gtk.h>
 #include <library/library.h>
+#include <library/radio.h>
 #include <playlist/playlist_player.h>
 #include <libconfig.h>
 
@@ -39,6 +40,7 @@ typedef struct _Backtobasics Backtobasics;
 typedef struct _BacktobasicsPrivate BacktobasicsPrivate;
 
 #include <gui/library_view.h>
+#include <gui/radio_view.h>
 
 struct _BacktobasicsClass
 {
@@ -56,12 +58,21 @@ struct _Backtobasics
   // My GUI data	
 	GtkBuilder* builder;
 	library_view_t* library_view;
+	radio_view_t* radio_view;
 	
 	// Audio player
 	playlist_player_t* player;
 	
 	// My data
 	library_t*  library;
+	radio_library_t* radio_library;
+	
+	// Active view
+	void* active_view;
+	
+	// volume setter actve
+  el_bool volume_setter_active;	
+	
 };
 
 GType backtobasics_get_type (void) G_GNUC_CONST;
@@ -75,6 +86,8 @@ const char* backtobasics_logo(Backtobasics* app);
 config_t* btb_config(Backtobasics* app);
 void btb_config_set_int(Backtobasics* app, const char* path, int val);
 int btb_config_get_int(Backtobasics* app, const char* path, int default_val);
+void btb_config_set_string(Backtobasics* app, const char* path, const char* val);
+char* btb_config_get_string(Backtobasics* app, const char* path, const char* default_val);
 
 /* Callbacks */
 

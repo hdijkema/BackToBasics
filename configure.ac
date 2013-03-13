@@ -26,11 +26,8 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [GETTEXT package name])
 AM_GLIB_GNU_GETTEXT
 
 
-
-
-
-PKG_CHECK_MODULES(BACKTOBASICS, [gtk+-3.0 >= 2.90.3 ao libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig libtagcoverart libcurl webkitgtk-3.0])
-PKG_CHECK_MODULES(BTB_PLAY, [ao libmpg123 taglib_c libpcre elementals libtagcoverart])
+PKG_CHECK_MODULES(BACKTOBASICS, [gtk+-3.0 >= 2.90.3 ao vorbisfile flac libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig libtagcoverart libcurl webkitgtk-3.0])
+PKG_CHECK_MODULES(BTB_PLAY, [ao vorbisfile flac libmpg123 taglib_c libpcre elementals libtagcoverart])
 
 
 ##########
@@ -99,7 +96,6 @@ fi
 AC_SUBST(TARGET_READLINE_LIBS)
 AC_SUBST(TARGET_READLINE_INC)
 AC_SUBST(TARGET_HAVE_READLINE)
-
 
 
 AC_OUTPUT([

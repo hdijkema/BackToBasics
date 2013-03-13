@@ -13,11 +13,12 @@ static audio_result_t guard(void* mp3_info, long position_in_ms);
 static long length_in_ms(void* mp3_info);
 static audio_result_t load_file(void* mp3_info, const char* file);
 static audio_result_t load_url(void* mp3_info, const char* url);
+static audio_result_t set_volume(void* mp3_info, double percentage);
 static void destroy(void* mp3_info);
 
 static void* player_thread(void* mp3_info);
 
-void post_event(audio_event_fifo* fifo, audio_state_t state, long position_in_ms)
+static void post_event(audio_event_fifo* fifo, audio_state_t state, long position_in_ms)
 {
   audio_event_t e = {state, position_in_ms};
   audio_event_fifo_enqueue(fifo, &e);
@@ -52,12 +53,16 @@ static audio_result_t init(audio_worker_t* worker, const char* file_or_url, el_b
   worker->length_in_ms = length_in_ms;
   worker->load_file = load_file;
   worker->load_url = load_url;
+  worker->set_volume = set_volume;
   worker->worker_data = (void*) mp3;
     
   int error;
   mp3->handle = mpg123_new(NULL, &error);
   mp3->buffer_size = mpg123_outblock(mp3->handle);
   mp3->buffer = mc_malloc(mp3->buffer_size * sizeof(char));
+  
+  mpg123_volume(mp3->handle, 1.0);
+  
   mp3->client_notification = worker->fifo;
   mp3->player_control = audio_event_fifo_new();
   
@@ -105,6 +110,8 @@ audio_result_t mp3_new_from_url(audio_worker_t* worker, const char* url)
  
 void* player_thread(void* _mp3_info) 
 {
+  log_debug("player thread started");
+  
   mp3_t* mp3_info = (mp3_t* ) _mp3_info;
   long current_position_in_ms = 0;
   long previous_position_in_ms = -1; 
@@ -170,6 +177,10 @@ void* player_thread(void* _mp3_info)
         guard_position_in_ms = event_position;
       }
       break;
+      case INTERNAL_CMD_SET_VOLUME: {
+        double volume = ((double) event_position) / 1000.0;
+        mpg123_volume(mp3_info->handle, volume);
+      }
       case INTERNAL_CMD_NONE:
       break;
       default:
@@ -289,6 +300,14 @@ static audio_result_t guard(void* _mp3_info, long position_in_ms)
 {
   mp3_t* mp3_info = (mp3_t* ) _mp3_info;
   post_event(mp3_info->player_control, INTERNAL_CMD_GUARD, position_in_ms);
+  return AUDIO_OK;
+}
+
+static audio_result_t set_volume(void* _mp3_info, double percentage)
+{
+  mp3_t* mp3_info = (mp3_t* ) _mp3_info;
+  long perc_times_10 = (long) (percentage*10.0);
+  post_event(mp3_info->player_control, INTERNAL_CMD_SET_VOLUME, perc_times_10);
   return AUDIO_OK;
 }
 

@@ -46,6 +46,7 @@ typedef enum {
   INTERNAL_CMD_GUARD,
   INTERNAL_CMD_LOAD_FILE,
   INTERNAL_CMD_LOAD_URL,
+  INTERNAL_CMD_SET_VOLUME,
   INTERNAL_CMD_NONE
 
 } audio_state_t;
@@ -65,6 +66,7 @@ typedef struct {
   audio_result_t (*pause)(void* w);
   audio_result_t (*load_file)(void* w, const char* local_path);
   audio_result_t (*load_url)(void* w, const char* url);
+  audio_result_t (*set_volume)(void* w, double percentage);
   long (*length_in_ms)(void* w);
   void (*destroy)(void* worker_data);
   audio_event_fifo *fifo;
@@ -87,6 +89,9 @@ el_bool media_can_seek(audio_worker_t* worker);
 audio_result_t media_seek(audio_worker_t* worker, long position_in_ms);
 audio_result_t media_guard(audio_worker_t* worker, long position_in_ms);
 audio_result_t media_pause(audio_worker_t* worker);
+
+// 0 - 100%
+audio_result_t media_set_volume(audio_worker_t* worker, double percentage);
 
 long media_length_in_ms(audio_worker_t* worker);
 

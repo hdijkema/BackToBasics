@@ -29,6 +29,10 @@ GENERICSRC = \
 	audio/audio.h \
 	audio/mp3.c \
 	audio/mp3.h \
+	audio/ogg.c \
+	audio/ogg.h \
+	audio/flac.c \
+	audio/flac.h \
 	metadata/track.c \
 	metadata/track.h \
 	metadata/cue.c \
@@ -42,7 +46,9 @@ GENERICSRC = \
 	i18n/i18n.c \
 	i18n/i18n.h \
 	library/library.c \
-	library/library.h
+	library/library.h \
+	library/radio.c \
+	library/radio.h
 
 
 backtobasics_SOURCES = \
@@ -58,6 +64,12 @@ backtobasics_SOURCES = \
 	gui/string_model.h \
 	gui/async_call.c \
 	gui/async_call.h \
+	gui/scanjob.c \
+	gui/scanjob.h \
+	gui/radio_view.c \
+	gui/radio_view.h \
+	gui/station_model.c \
+	gui/station_model.h \
 	lyrics/lyrics.c \
 	lyrics/lyrics.h
 

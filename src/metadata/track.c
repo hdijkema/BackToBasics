@@ -238,7 +238,7 @@ void track_fwrite(track_t* t, FILE* f)
   WSTR(t->album_artist, f);
   WSTR(t->album_composer, f);
   WSTR(t->genre, f);
-  WSTR(t->lyric, f);
+  //WSTR(t->lyric, f);
   WNR(t->year, f);
   WNR(t->nr, f);
   WSTR(t->artid, f);
@@ -272,6 +272,7 @@ el_bool track_fread(track_t* t, FILE* f)
   if (track_magic_number == TRACK_MAGIC_NUMBER) {
     el_bool result = el_true;
     RNR(result, t->id, f);
+    track_set_id(t, t->id);
     RSTR(result, t->title, f);
     RSTR(result, t->artist, f);
     RSTR(result, t->composer, f);
@@ -280,7 +281,9 @@ el_bool track_fread(track_t* t, FILE* f)
     RSTR(result, t->album_artist, f);
     RSTR(result, t->album_composer, f);
     RSTR(result, t->genre, f);
-    RSTR(result, t->lyric, f);
+    //RSTR(result, t->lyric, f);
+    mc_free(t->lyric);
+    t->lyric = mc_strdup(""); // lyrics are read from the music library when needed
     RNR(result, t->year, f);
     RNR(result, t->nr, f);
     RSTR(result, t->artid, f);

@@ -3,6 +3,7 @@
 
 #include <playlist/playlist.h>
 #include <elementals.h>
+#include <gui/scanjob.h>
 
 DECLARE_EL_ARRAY(genre_array, char);
 DECLARE_EL_ARRAY(artist_array, char);
@@ -24,6 +25,7 @@ typedef struct {
   set_t* filtered_artists;
   set_t* filtered_albums;
   set_t* filtered_tracks;
+  char* library_path;
   
 } library_t;
 
@@ -58,7 +60,10 @@ void library_filter_genre(library_t* library, const char* genre);
 void library_filter_album_artist(library_t* library, const char* album_artist);
 void library_filter_album_title(library_t* library, const char* album_title);
 
-void scan_library(library_t* library, const char* path, void (*cb)(int c, int tot));
+void library_set_basedir(library_t* library, const char* path);
+const char* library_get_basedir(library_t* library);
+
+void scan_library(scan_job_t* job, ScanJobCBFunc func, void* library);
 void library_sort(library_t* library);
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef GUI_LIBRARY_VIEW
-#define GUI_LIBRARY_VIEW
+#ifndef GUI_LIBRARY_VIEW_H
+#define GUI_LIBRARY_VIEW_H
 
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
@@ -10,6 +10,7 @@
 #include <elementals.h>
 
 typedef enum {
+  NONE_ASPECT = -1,
   GENRE_ASPECT = 0,
   ARTIST_ASPECT,
   ALBUM_ASPECT
@@ -29,6 +30,7 @@ typedef struct {
   
   library_t* library;
   aspect_enum aspect;
+  aspect_enum previous_aspect;
   
   el_bool run_timeout;
   
@@ -62,6 +64,7 @@ void library_view_destroy(library_view_t* view);
 void library_view_genre_aspect(library_view_t* view);
 void library_view_artist_aspect(library_view_t* view);
 void library_view_album_aspect(library_view_t* view);
+void library_view_reset_models(library_view_t* view);
 
 void library_view_stop_info_updater(library_view_t* view);
 

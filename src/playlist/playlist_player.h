@@ -28,7 +28,9 @@ typedef enum {
   
   PLP_CMD_SET_PLAYLIST = 11,
   
-  PLP_CMD_NONE = 12
+  PLP_CMD_SET_VOLUME = 14,
+  
+  PLP_CMD_NONE = 20
   
 } playlist_player_cmd_enum;
 
@@ -59,6 +61,8 @@ typedef struct {
   el_bool track_changed;
   playlist_player_state_t player_state;
   playlist_player_repeat_t repeat;
+  
+  double volume_percentage;
   
   pthread_mutex_t *mutex;
   pthread_t playlist_player_thread;
@@ -94,6 +98,10 @@ el_bool playlist_player_is_paused(playlist_player_t* plp);
 el_bool playlist_player_does_nothing(playlist_player_t* plp);
 
 playlist_player_repeat_t playlist_player_get_repeat(playlist_player_t* plp);
+
+double playlist_player_get_volume(playlist_player_t* plp);
+void playlist_player_set_volume(playlist_player_t* plp, double percentage);
+
 
 
 #endif

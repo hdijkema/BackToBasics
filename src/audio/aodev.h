@@ -11,6 +11,7 @@ typedef struct {
 
 ao_t* aodev_new(void);
 void aodev_set_format(ao_t* ao, int bits, int rate, int channels);
+void aodev_set_endian(ao_t* ao, int endian);
 void aodev_open(ao_t* ao);
 void aodev_play_buffer(ao_t* ao,void *buffer, long size);
 void aodev_close(ao_t* ao);

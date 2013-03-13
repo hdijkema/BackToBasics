@@ -39,7 +39,7 @@ static void cell_value(void* data, int row, int col, GValue* value)
 {
   playlist_model_t* model = (playlist_model_t*) data;
   
-  if (model->playlist ==NULL) {
+  if (model->playlist == NULL) {
     return;
   }
   

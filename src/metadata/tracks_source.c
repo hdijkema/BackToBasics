@@ -127,8 +127,9 @@ track_array tracks_from_media(const char* localfile)
       strcat(s,track_get_album_title(t));
       strcat(s,".art");
       file_info_t* art_file = file_info_combine(art_dir, s);
-      
+      //log_debug2("art file = %s", file_info_absolute_path(art_file));
       if (!file_info_exists(art_file)) {
+        //log_debug2("extracting %s", file_info_absolute_path(art_file));
         tag_cover_art_t* tag = tag_cover_art_new(file_info_absolute_path(info));
         if (tag_cover_art_extract(tag, file_info_absolute_path(art_file))) {
            TL_SET(artid, t, file_info_absolute_path(art_file));

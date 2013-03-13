@@ -90,6 +90,10 @@ static void backtobasics_new_window (GApplication *app)
   /* create views */
   btb->library_view = library_view_new(btb, btb->library);
   library_view_init(btb->library_view);
+  btb->active_view = btb->library_view;
+  
+  btb->radio_view = radio_view_new(btb, btb->radio_library);
+  radio_view_init(btb->radio_view);
 
 	/* Auto-connect signal handlers */
 	gtk_builder_connect_signals (builder, app);
@@ -106,6 +110,7 @@ static void backtobasics_new_window (GApplication *app)
   gtk_window_move(GTK_WINDOW(window), x, y);
   gtk_window_resize(GTK_WINDOW(window), w, h);
   
+  g_object_set_data(G_OBJECT(window), "btb", btb);
 	
 	/* ANJUTA: Widgets initialization for backtobasics.ui - DO NOT REMOVE */
 
@@ -113,6 +118,18 @@ static void backtobasics_new_window (GApplication *app)
 	
 	gtk_window_set_application (GTK_WINDOW (window), GTK_APPLICATION (app));
 	gtk_widget_show_all (GTK_WIDGET (window));
+
+	// Hide things we want to hide
+  GtkToolButton* normal_window = GTK_TOOL_BUTTON(gtk_builder_get_object(builder, "tbtn_normal"));
+  gtk_widget_hide(GTK_WIDGET(normal_window));
+  
+  // Initialize things we want to initialize
+  GtkScale* volume_scale = GTK_SCALE(gtk_builder_get_object(builder, "sc_volume"));
+  gtk_range_set_range(GTK_RANGE(volume_scale),0.0,100.0);
+  
+  double volperc = (double) btb_config_get_int(btb, "previous_volume", 100);  
+  gtk_range_set_value(GTK_RANGE(volume_scale), volperc);
+
 }
 
 
@@ -126,12 +143,44 @@ static void backtobasics_init (Backtobasics *btb)
 {
   config_init(btb_config(btb));
   
-  file_info_t* info = file_info_new_home(".backtobasics_cfg");
+  btb->volume_setter_active = el_false;
+  
+  file_info_t* btb_cfg_dir = file_info_new_home(".backtobasics");
+  if (!file_info_is_dir(btb_cfg_dir)) {
+    file_info_mkdir_p(btb_cfg_dir, S_IXUSR|S_IWUSR|S_IRUSR|S_IXGRP|S_IRGRP);
+  }
+  
+  file_info_t* info = file_info_combine(btb_cfg_dir, "btb.cfg");
   config_read_file(btb_config(btb), file_info_absolute_path(info));
   file_info_destroy(info);
   
+  // Library
+  info = file_info_combine(btb_cfg_dir, "btb.lib");
   btb->library = library_new();
-  scan_library(btb->library,"/home/hans/Muziek", NULL);
+  if (file_info_exists(info)) {
+    library_load(btb->library, file_info_absolute_path(info));
+  }
+  
+  file_info_t* libhome = file_info_new_home("Music");
+  char* path = btb_config_get_string(btb, "library.path", file_info_absolute_path(libhome));
+  file_info_destroy(libhome);
+  library_set_basedir(btb->library, path);
+  mc_free(path);
+  
+  //scan_library(NULL, NULL, btb->library);
+  
+  file_info_destroy(info);
+  
+  
+  // Radio library
+  btb->radio_library = radio_library_new();
+  info = file_info_combine(btb_cfg_dir, "btb_radio.cfg");
+  if (file_info_exists(info)) {
+    radio_library_load(btb->radio_library, file_info_absolute_path(info));
+  }
+  file_info_destroy(info);
+  
+  file_info_destroy(btb_cfg_dir);
   
   btb->player = playlist_player_new();
 }
@@ -142,19 +191,41 @@ static void backtobasics_finalize (GObject *object)
   
   log_debug("BackToBasics finalizing");  
   
+  // writing
+  
+	file_info_t* btb_cfg_dir = file_info_new_home(".backtobasics");
+	file_info_t* info;
+	
+  info = file_info_combine(btb_cfg_dir, "btb.lib");
+  library_save(btb->library, file_info_absolute_path(info));
+  file_info_destroy(info);
+  
+  btb_config_set_string(btb, "library.path", library_get_basedir(btb->library));
+  
+  // finalizing
+  
   GtkWidget* window = GTK_WIDGET(gtk_builder_get_object (btb->builder, TOP_WINDOW));
   gtk_widget_destroy(window);
   
   library_view_destroy(btb->library_view); 
+  radio_view_destroy(btb->radio_view);
 
   playlist_player_destroy(btb->player);
   library_destroy(btb->library);
+  radio_library_destroy(btb->radio_library);
 
-	G_OBJECT_CLASS (backtobasics_parent_class)->finalize (object);
-
-	file_info_t* info = file_info_new_home(".backtobasics_cfg");
+  // Writing configuration
+  
+	info = file_info_combine(btb_cfg_dir, "btb.cfg");
   config_write_file(btb_config(btb), file_info_absolute_path(info));
   file_info_destroy(info);
+  
+  file_info_destroy(btb_cfg_dir);
+  
+  // Finalizing rest
+  
+	G_OBJECT_CLASS (backtobasics_parent_class)->finalize (object);
+  
 }
 
 static void backtobasics_class_init (BacktobasicsClass *klass)
@@ -218,15 +289,109 @@ int btb_config_get_int(Backtobasics* btb, const char* path, int default_val)
   return v;
 }
 
+char* btb_config_get_string(Backtobasics* btb, const char* path, const char* default_val)
+{
+  const char* val = NULL;
+  config_t* config = btb_config(btb);
+  config_lookup_string(config, path, &val);
+  if (val == NULL) {
+    return mc_strdup(default_val);
+  } else {
+    return mc_strdup(val);
+  }
+}
+
 void btb_config_set_int(Backtobasics* btb, const char* path, int val)
 {
   config_setting_t* setting = btb_get_setting(btb, path, CONFIG_TYPE_INT);
   config_setting_set_int(setting, val);
 }
 
+void btb_config_set_string(Backtobasics* btb, const char* path, const char* val)
+{
+  config_setting_t* setting = btb_get_setting(btb, path, CONFIG_TYPE_STRING);
+  config_setting_set_string(setting, val);
+}
+
 /************************************************************************
  * Implementing signal handlers
  ************************************************************************/
+ 
+void btb_setup(GtkWidget* menu_item, GtkWidget* window)
+{
+  Backtobasics* btb = g_object_get_data(G_OBJECT(window), "btb");
+  GtkDialog* setupdlg = GTK_DIALOG(gtk_builder_get_object(btb->builder, "dlg_setup"));
+  gtk_dialog_run(setupdlg);
+  gtk_widget_hide(GTK_WIDGET(setupdlg));
+  
+  GtkFileChooserButton* fc = GTK_FILE_CHOOSER_BUTTON(gtk_builder_get_object(btb->builder, "btn_choose_library_loc"));
+  char* path = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(fc));
+  library_set_basedir(btb->library, path);
+}
+
+void btb_scan_library(GtkWidget* menu_item, GtkWidget* window)
+{
+  Backtobasics* btb = g_object_get_data(G_OBJECT(window), "btb");
+  GtkFileChooserButton* fc = GTK_FILE_CHOOSER_BUTTON(gtk_builder_get_object(btb->builder, "btn_choose_library_loc"));
+  char* path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fc));
+  library_set_basedir(btb->library, path);
+  log_debug2("choosen: %s", path);
+  run_scan_job_dialog(_("Scanning music library"), scan_library, btb->builder, btb->library);
+  library_view_reset_models(btb->library_view);
+}
+
+void btb_fullscreen(GtkToolButton* btn, GtkWidget* window)
+{
+  Backtobasics* btb = g_object_get_data(G_OBJECT(window), "btb");
+  GtkWidget* fbtn = GTK_WIDGET(gtk_builder_get_object(btb->builder, "tbtn_fullscreen"));
+  GtkWidget* nbtn = GTK_WIDGET(gtk_builder_get_object(btb->builder, "tbtn_normal"));
+  gtk_widget_hide(fbtn);
+  gtk_widget_show_all(nbtn);
+  gtk_window_fullscreen(GTK_WINDOW(window));
+}
+
+void btb_normal_screen(GtkToolButton* btn, GtkWidget* window)
+{
+  Backtobasics* btb = g_object_get_data(G_OBJECT(window), "btb");
+  GtkWidget* fbtn = GTK_WIDGET(gtk_builder_get_object(btb->builder, "tbtn_fullscreen"));
+  GtkWidget* nbtn = GTK_WIDGET(gtk_builder_get_object(btb->builder, "tbtn_normal"));
+  gtk_widget_show_all(fbtn);
+  gtk_widget_hide(nbtn);
+  gtk_window_unfullscreen(GTK_WINDOW(window));
+}
+
+
+static gboolean volume_setter(gpointer _btb)
+{
+  Backtobasics* btb = (Backtobasics*) _btb;
+  double perc = (double) btb_config_get_int(btb, "previous_volume", 100);
+  playlist_player_set_volume(btb->player, perc);
+  btb->volume_setter_active = el_false;
+  return FALSE;
+}
+
+void btb_set_volume(GtkRange* volume, GtkWidget* window)
+{
+  Backtobasics* btb = g_object_get_data(G_OBJECT(window), "btb");
+  double perc = gtk_range_get_value(volume);
+  if (!btb->volume_setter_active == el_true) {
+    btb->volume_setter_active = el_true;
+    g_timeout_add(100, volume_setter, btb);
+  }
+  btb_config_set_int(btb, "previous_volume", (int) perc);
+}
+
+
+void btb_volume_mute(GtkToggleButton* volume, GtkWidget* window)
+{
+  Backtobasics* btb = g_object_get_data(G_OBJECT(window), "btb");
+  if (gtk_toggle_button_get_active(volume)) {
+    playlist_player_set_volume(btb->player, 0.0);
+  } else {
+    double perc = (double) btb_config_get_int(btb, "previous_volume", 100);
+    playlist_player_set_volume(btb->player, perc);
+  }
+}
  
 static void select_view(gpointer data, const char* name)
 {
@@ -239,12 +404,17 @@ static void select_view(gpointer data, const char* name)
  
 void go_radio(GObject* object, gpointer data)
 {
+  Backtobasics* btb = (Backtobasics*) data;
   select_view(data, "radio_view");
+  //btb->active_view = btb->radio_view;
 }
 
 void go_library(GObject* object, gpointer data) 
 {
+  Backtobasics* btb = (Backtobasics*) data;
   select_view(data, "view_library");
+  btb->active_view = btb->library_view;
+  
 }
 
 void menu_quit(GObject* object, gpointer data)

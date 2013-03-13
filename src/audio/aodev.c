@@ -4,6 +4,7 @@
 
 ao_t* aodev_new(void) 
 {
+  log_debug("new");
   static int initialize = 1;
   if (initialize) {
     initialize = 0;
@@ -19,6 +20,7 @@ ao_t* aodev_new(void)
 
 void aodev_set_format(ao_t* handle, int bits, int rate, int channels) 
 {
+  log_debug("format");
   handle->format.bits = bits;
   handle->format.rate = rate;
   handle->format.channels = channels;
@@ -26,8 +28,14 @@ void aodev_set_format(ao_t* handle, int bits, int rate, int channels)
   handle->format.matrix = 0;
 }
 
+void aodev_set_endian(ao_t* handle, int ao_fmt) {
+  log_debug("endian");
+  handle->format.byte_format = ao_fmt;
+}
+
 void aodev_open(ao_t* handle)
 {
+  log_debug("open");
   handle->device = ao_open_live(handle->driver, &handle->format, NULL);
 }
 
@@ -38,12 +46,14 @@ void aodev_play_buffer(ao_t* handle, void* buffer, long size)
 
 void aodev_close(ao_t* handle)
 {
+  log_debug("close");
   ao_close(handle->device);
   handle->device = NULL;
 }
 
 void aodev_destroy(ao_t* handle)
 {
+  log_debug("destroy");
   if (handle->device != NULL) {
     aodev_close(handle);
   }
