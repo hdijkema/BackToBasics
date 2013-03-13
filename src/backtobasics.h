@@ -24,7 +24,7 @@
 #include <library/library.h>
 #include <library/radio.h>
 #include <playlist/playlist_player.h>
-#include <libconfig.h>
+#include <util/config.h>
 
 G_BEGIN_DECLS
 
@@ -53,7 +53,7 @@ struct _Backtobasics
 	BacktobasicsPrivate *priv;
 	
 	// Config
-	config_t config;
+	el_config_t *config;
 
   // My GUI data	
 	GtkBuilder* builder;
@@ -83,7 +83,7 @@ library_t* backtobasics_library(Backtobasics* app);
 playlist_player_t* backtobasics_player(Backtobasics* app);
 const char* backtobasics_logo(Backtobasics* app);
 
-config_t* btb_config(Backtobasics* app);
+el_config_t* btb_config(Backtobasics* btb);
 void btb_config_set_int(Backtobasics* app, const char* path, int val);
 int btb_config_get_int(Backtobasics* app, const char* path, int default_val);
 void btb_config_set_string(Backtobasics* app, const char* path, const char* val);

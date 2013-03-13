@@ -54,7 +54,7 @@ static gboolean filter(void* strmodel, int row)
 string_model_t* string_model_new()
 {
   string_model_t* model = (string_model_t*) mc_malloc(sizeof(string_model_t));
-  model->array = string_model_array_new();
+  model->array = mc_take_over(string_model_array_new());
   model->model = gtk_list_model_new(model, n_columns, column_type, n_rows, cell_value);
   model->destroy = el_true;
   model->valid_strings = NULL;

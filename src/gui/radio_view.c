@@ -1,7 +1,11 @@
 #include <gui/radio_view.h>
 #include <i18n/i18n.h>
+#include <curl/curl.h>
 #include <metadata/track.h>
+#include <util/config.h>
 
+
+static void radio_determine_stream_url(radio_t* radio, const char* start_url);
 
 radio_view_t* radio_view_new(Backtobasics* btb, radio_library_t* library)
 {
@@ -16,6 +20,24 @@ radio_view_t* radio_view_new(Backtobasics* btb, radio_library_t* library)
   return view;
 }
 
+static void start_stop_recording(GtkCellRendererToggle* cell,
+                                 gchar* path_str,
+                                 radio_view_t* view)
+{
+  GtkTreeIter iter;
+  GtkTreeModel* model = station_model_gtk_model(view->station_model);
+  gtk_tree_model_get_iter_from_string(model, &iter, path_str);
+  int row = gtk_list_model_iter_to_row(GTK_LIST_MODEL(model), iter);
+  radio_t* station = radio_library_get(view->library, row);
+  gtk_list_model_begin_change(GTK_LIST_MODEL(model));
+  if (radio_is_recording(station)) {
+    radio_stop_recording(station);
+  } else {
+    radio_start_recording(station, radio_library_rec_location(view->library));
+  }
+  gtk_list_model_commit_change(GTK_LIST_MODEL(model));
+}
+
 void radio_view_init(radio_view_t* view)
 {
   GObject* object = gtk_builder_get_object(view->builder, "view_radio");
@@ -27,17 +49,27 @@ void radio_view_init(radio_view_t* view)
   
   GtkTreeViewColumn* col;
   GtkCellRenderer* renderer;
+  GtkCellRenderer* toggle;
   
   renderer = gtk_cell_renderer_text_new();
+  toggle = gtk_cell_renderer_toggle_new();
+  g_object_set(toggle, "editable", TRUE, NULL);
+  g_signal_connect(toggle, "toggled", (GCallback) start_stop_recording, (gpointer) view);
+  
   view->cols = (GtkTreeViewColumn**) mc_malloc(sizeof(GtkTreeViewColumn*) * STATION_MODEL_N_COLUMNS);
   station_column_enum e;
   for(e = STATION_MODEL_COL_NAME; e < STATION_MODEL_N_COLUMNS; ++e) {
-    col = gtk_tree_view_column_new_with_attributes(station_model_i18n_column_name(e), 
-                                                   renderer, "text", e, NULL);
+    if (e != STATION_MODEL_COL_RECORDING) {
+      col = gtk_tree_view_column_new_with_attributes(station_model_i18n_column_name(e), 
+                                                     renderer, "text", e, NULL);
+    } else {
+      col = gtk_tree_view_column_new_with_attributes(station_model_i18n_column_name(e), 
+                                                     toggle, "active", e, NULL);
+    }
     gtk_tree_view_column_set_sizing(col, GTK_TREE_VIEW_COLUMN_FIXED);
     char path[500];
     sprintf(path, "radio.column.%s.width", station_model_column_id(e));
-    int width = btb_config_get_int(view->btb, path, 100);
+    int width = el_config_get_int(btb_config(view->btb), path, 100);
     gtk_tree_view_column_set_fixed_width(col, width);
     gtk_tree_view_column_set_reorderable(col, TRUE);
     gtk_tree_view_column_set_resizable(col, TRUE);
@@ -64,7 +96,7 @@ void radio_view_destroy(radio_view_t* view)
     char path [500];
     sprintf(path, "radio.column.%s.width", station_model_column_id(e));
     int w = gtk_tree_view_column_get_width(view->cols[e]);
-    btb_config_set_int(view->btb, path, w);
+    el_config_set_int(btb_config(view->btb), path, w);
     g_object_unref(view->cols[e]);  
   }
   mc_free(view->cols);
@@ -77,7 +109,7 @@ void radio_view_destroy(radio_view_t* view)
   mc_free(view);
 }
 
-void radio_view_station_clicked(GtkTreeView* tview, GdkEvent* event, GObject* rview)
+gboolean radio_view_station_clicked(GtkTreeView* tview, GdkEvent* event, GObject* rview)
 {
   radio_view_t* view = (radio_view_t*) g_object_get_data(rview, "radio_view_t");
   GtkTreeSelection* sel = gtk_tree_view_get_selection(tview);
@@ -90,9 +122,12 @@ void radio_view_station_clicked(GtkTreeView* tview, GdkEvent* event, GObject* rv
       int row = gtk_list_model_iter_to_row(GTK_LIST_MODEL(model), iter);
       radio_t* station = radio_library_get(view->library, row);
       const char* web_url = radio_webpage_url(station);
-      webkit_web_view_load_uri(view->web_view, web_url);
+      if (web_url != NULL) 
+        webkit_web_view_load_uri(view->web_view, web_url);
     }
   }
+  
+  return FALSE;
 }
 
 void radio_view_station_activated(GtkTreeView* tview, GtkTreePath* path, GtkTreeViewColumn* col, GObject* rview)
@@ -130,30 +165,36 @@ void radio_view_add_station(GtkMenuItem* item, GObject* rview)
   while (go_on) {
     int response = gtk_dialog_run(dlg);
     if (response) {
-      char* r_url = (char*) gtk_entry_get_text(url);
-      char* r_name = (char*) gtk_entry_get_text(name);
-      char* r_web = (char*) gtk_entry_get_text(web);
+      char* r_url = mc_strdup(gtk_entry_get_text(url));
+      char* r_name = mc_strdup(gtk_entry_get_text(name));
+      char* r_web = mc_strdup(gtk_entry_get_text(web));
       hre_trim(r_url);
       hre_trim(r_name);
       hre_trim(r_web);
+      
+      log_debug4("url = %s, name = %s, web = %s", r_url, r_name, r_web);
       if (strcmp(r_url, "") == 0 || strcmp(r_name, "") == 0) {
         // notify the user that this is not correct? 
       } else {
+        
         radio_t* station = radio_new(r_url, r_name, r_web);
+        radio_determine_stream_url(station, r_url);
+        
         radio_library_append(view->library, station);
         radio_destroy(station);
         gtk_list_model_refilter(GTK_LIST_MODEL(station_model_gtk_model(view->station_model)));
         go_on = el_false;
       }
-      g_free(r_url);
-      g_free(r_name);
-      g_free(r_web);
+      log_debug("refilter done");
+      mc_free(r_url);
+      mc_free(r_name);
+      mc_free(r_web);
     } else {
       go_on = el_false;
     }
   }
   gtk_widget_hide(GTK_WIDGET(dlg));
-  
+  log_debug("Done");
 }
 
 void radio_view_edit_station(GtkMenuItem* item, GObject* rview)
@@ -168,3 +209,59 @@ void radio_view_remove_station(GtkMenuItem* item, GObject* rview)
   log_debug("Remove");
 }
 
+static size_t write_data(void *buffer, size_t size, size_t nmemb, void *userp)
+{
+  memblock_t* block = (memblock_t*) userp;
+  size_t s = size * nmemb;
+  memblock_write(block, buffer, s);
+  if (memblock_size(block) >= 1024) {
+    return 0; 
+  } else {
+    return nmemb;
+  }
+}
+
+// determines the real stream urls.
+// Checks if we got a playlist, or m3u file, by getting the first 
+// 1024 bytes from the given url and checking if it is valid 
+// stuff. 
+static void radio_determine_stream_url(radio_t* radio, const char* start_url) 
+{
+  CURL *curl;
+  
+  memblock_t* block = memblock_new();
+ 
+  curl = curl_easy_init();
+  curl_easy_setopt(curl, CURLOPT_URL, start_url);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, block);
+  curl_easy_setopt(curl, CURLOPT_RANGE, "0-500");
+  curl_easy_perform(curl); /* ignores error */ 
+  curl_easy_cleanup(curl);
+  
+  char c = '\0';
+  memblock_write(block, &c, sizeof(char));
+  
+  log_debug2("buffer: '%s'", memblock_as_str(block));
+  char* buffer = mc_strdup(memblock_as_str(block));
+  memblock_destroy(block);
+  
+  hre_trim(buffer);
+  if (strncasecmp(buffer, "http://", 7) == 0) {
+    radio_set_stream_url(radio, buffer);
+  } else if (strncasecmp(buffer, "[playlist]", 10) == 0) {
+    log_debug("playlist");
+    hre_t re_get_url = hre_compile("file1\\s*=(.*)","im");
+    if (hre_has_match(re_get_url, buffer)) {
+      log_debug("HAS MATCH");
+      hre_matches m = hre_match(re_get_url, buffer);
+      const char* url = hre_match_string(hre_matches_get(m, 1));
+      radio_set_stream_url(radio, url);
+      hre_matches_destroy(m);
+    }
+    hre_destroy(re_get_url);
+  }
+  mc_free(buffer);
+    
+  log_debug2("real radio stream = %s", radio_stream_url(radio));
+}

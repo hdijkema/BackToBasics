@@ -38,7 +38,7 @@ static gboolean callback(gpointer p) {
   return FALSE;
 }
 
-size_t write_data(void *buffer, size_t size, size_t nmemb, void *userp)
+static size_t write_data(void *buffer, size_t size, size_t nmemb, void *userp)
 {
   memblock_t* block = (memblock_t*) userp;
   size_t s = size * nmemb;

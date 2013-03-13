@@ -499,9 +499,9 @@ void* playlist_player_thread(void* _plp)
       }
       break;
       case PLP_CMD_SET_TRACK: {
-          log_debug("settrack");
+        log_debug("settrack");
         pthread_mutex_lock(plp->mutex);
-          log_debug("settrack");
+        log_debug("settrack");
         if (plp->player_state == PLAYLIST_PLAYER_PLAYING ||
               plp->player_state == PLAYLIST_PLAYER_PAUSED) {
           int nr = *((int*) data);

@@ -14,6 +14,7 @@ ao_t* aodev_new(void)
   
   ao_t* handle = (ao_t*) mc_malloc(sizeof(ao_t));
   handle->driver = ao_default_driver_id();
+  handle->device = NULL;
   
   return handle;
 }
@@ -60,3 +61,7 @@ void aodev_destroy(ao_t* handle)
   mc_free(handle);
 }
 
+el_bool aodev_is_open(ao_t* handle)
+{
+  return handle->device != NULL;
+}

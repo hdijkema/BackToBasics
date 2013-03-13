@@ -23,6 +23,8 @@ bin_PROGRAMS = backtobasics \
 	btb_playlist
 	
 GENERICSRC = \
+	util/config.c \
+	util/config.h \
 	audio/aodev.c \
 	audio/aodev.h \
 	audio/audio.c \

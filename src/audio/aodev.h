@@ -2,6 +2,7 @@
 #define __AO__HOD
 
 #include <ao/ao.h>
+#include <elementals.h>
 
 typedef struct {
   ao_device *device;
@@ -16,5 +17,6 @@ void aodev_open(ao_t* ao);
 void aodev_play_buffer(ao_t* ao,void *buffer, long size);
 void aodev_close(ao_t* ao);
 void aodev_destroy(ao_t* ao);
+el_bool aodev_is_open(ao_t* ao);
 
 #endif

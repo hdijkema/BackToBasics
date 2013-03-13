@@ -5,6 +5,7 @@
 #include <i18n/i18n.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <lyrics/lyrics.h>
+#include <util/config.h>
 
 static gboolean library_view_update_info(library_view_t* view);
 
@@ -66,7 +67,7 @@ void library_view_destroy(library_view_t* view)
     sprintf(path, "library.column.%s.width", column_id(e));
     int w = gtk_tree_view_column_get_width(view->cols[e]);
     log_debug3("%s = %d", path, w);
-    btb_config_set_int(view->btb, path, w);
+    el_config_set_int(btb_config(view->btb), path, w);
     g_object_unref(view->cols[e]);
   }
   mc_free(view->cols);
@@ -75,6 +76,7 @@ void library_view_destroy(library_view_t* view)
     log_error("timeout has not been stopped before destroying!");
     library_view_stop_info_updater(view);
   }
+  
   playlist_model_destroy(view->playlist_model);
   string_model_destroy(view->genre_model);
   string_model_destroy(view->artist_model);
@@ -112,7 +114,7 @@ void library_view_init(library_view_t* view)
     gtk_tree_view_column_set_sizing(col, GTK_TREE_VIEW_COLUMN_FIXED);
     char path [500];
     sprintf(path, "library.column.%s.width", column_id(e));
-    int width = btb_config_get_int(view->btb, path, 100);
+    int width = el_config_get_int(btb_config(view->btb), path, 100);
     gtk_tree_view_column_set_fixed_width(col, width);
     gtk_tree_view_column_set_reorderable(col, TRUE);
     gtk_tree_view_column_set_resizable(col, TRUE);
@@ -132,7 +134,7 @@ void library_view_init(library_view_t* view)
   tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_genre_aspect"));
   col = gtk_tree_view_column_new_with_attributes(_("Genre"), renderer, "text", 0, NULL);
   gtk_tree_view_column_set_sizing(col, GTK_TREE_VIEW_COLUMN_FIXED);
-  width = btb_config_get_int(view->btb, "library.aspects.column_width", 200);
+  width = el_config_get_int(btb_config(view->btb), "library.aspects.column_width", 200);
   gtk_tree_view_column_set_fixed_width(col, width);
   gtk_tree_view_append_column(tview, col);
   gtk_tree_view_set_model(tview, string_model_gtk_model(view->genre_model));
@@ -141,7 +143,7 @@ void library_view_init(library_view_t* view)
   tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_artist_aspect"));
   col = gtk_tree_view_column_new_with_attributes(_("Artists"), renderer, "text", 0, NULL);
   gtk_tree_view_column_set_sizing(col, GTK_TREE_VIEW_COLUMN_FIXED);
-  width = btb_config_get_int(view->btb, "library.aspects.column_width", 200);
+  width = el_config_get_int(btb_config(view->btb), "library.aspects.column_width", 200);
   gtk_tree_view_column_set_fixed_width(col, width);
   gtk_tree_view_append_column(tview, col);
   gtk_tree_view_set_model(tview, string_model_gtk_model(view->artist_model));
@@ -150,7 +152,7 @@ void library_view_init(library_view_t* view)
   tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_album_aspect"));
   col = gtk_tree_view_column_new_with_attributes(_("Artists"), renderer, "text", 0, NULL);
   gtk_tree_view_column_set_sizing(col, GTK_TREE_VIEW_COLUMN_FIXED);
-  width = btb_config_get_int(view->btb, "library.aspects.column_width", 200);
+  width = el_config_get_int(btb_config(view->btb), "library.aspects.column_width", 200);
   gtk_tree_view_column_set_fixed_width(col, width);
   gtk_tree_view_append_column(tview, col);
   gtk_tree_view_set_model(tview, string_model_gtk_model(view->album_model));
@@ -758,9 +760,12 @@ static gboolean library_view_update_info(library_view_t* view)
           view->track_id = track_get_id(track);
           log_debug2("artid = %s", track_get_artid(track));
           char s[100];
+          char c = ',';
+          if (strcmp(track_get_artist(track), "") == 0) { c = ' '; }
           snprintf(s, 100,
-                   "%s, %s", 
+                   "%s%c %s", 
                    track_get_artist(track),
+                   c,
                    track_get_title(track)
                    );
           char ss[300];

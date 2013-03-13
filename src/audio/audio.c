@@ -176,6 +176,12 @@ static audio_decoder_t get_decoder(file_info_t* info)
   }
 }
 
+static audio_decoder_t get_url_decoder(const char* url)
+{
+  // Guess it's mp3.
+  return AUDIO_DECODER_MPG123;
+}
+
 audio_result_t media_load_file(audio_worker_t* worker, const char* local_path) {
   file_info_t* info = file_info_new(local_path);
   
@@ -226,14 +232,29 @@ audio_result_t media_load_file(audio_worker_t* worker, const char* local_path) {
   return result;
 }
 
-audio_result_t media_load_url(audio_worker_t* worker, const char* url) {
+audio_result_t media_load_url(audio_worker_t* worker, const char* url) 
+{
   if (worker->worker_data != NULL) {
     worker->destroy(worker->worker_data);
     worker->worker_data = NULL;
     audio_event_fifo_clear(worker->fifo);
   }
   
-  return AUDIO_NOT_IMPLEMENTED;
+  audio_result_t result = AUDIO_OK;
+  
+  log_debug2("Loading stream %s", url);
+  
+  audio_decoder_t decoder = get_url_decoder(url);
+  switch (decoder) {
+    case AUDIO_DECODER_MPG123:
+      result = mp3_new_from_url(worker, url);
+    break;
+    default:
+      result = worker_none(worker);
+    break;
+  }
+  
+  return result;
 }
 
 audio_result_t media_play(audio_worker_t* worker)

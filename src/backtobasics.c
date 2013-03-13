@@ -103,10 +103,10 @@ static void backtobasics_new_window (GApplication *app)
   if (!window) {
     g_critical ("Widget \"%s\" is missing in file %s.", TOP_WINDOW, UI_FILE);
   }
-  int x = btb_config_get_int(btb, "main.window.x", 25);
-  int y = btb_config_get_int(btb, "main.window.y", 25);
-  int w = btb_config_get_int(btb, "main.window.w", 500);
-  int h = btb_config_get_int(btb, "main.window.h", 400);
+  int x = el_config_get_int(btb->config, "main.window.x", 25);
+  int y = el_config_get_int(btb->config, "main.window.y", 25);
+  int w = el_config_get_int(btb->config, "main.window.w", 500);
+  int h = el_config_get_int(btb->config, "main.window.h", 400);
   gtk_window_move(GTK_WINDOW(window), x, y);
   gtk_window_resize(GTK_WINDOW(window), w, h);
   
@@ -127,7 +127,7 @@ static void backtobasics_new_window (GApplication *app)
   GtkScale* volume_scale = GTK_SCALE(gtk_builder_get_object(builder, "sc_volume"));
   gtk_range_set_range(GTK_RANGE(volume_scale),0.0,100.0);
   
-  double volperc = (double) btb_config_get_int(btb, "previous_volume", 100);  
+  double volperc = (double) el_config_get_int(btb->config, "previous_volume", 100);  
   gtk_range_set_value(GTK_RANGE(volume_scale), volperc);
 
 }
@@ -141,7 +141,8 @@ static void backtobasics_activate (GApplication *application)
 
 static void backtobasics_init (Backtobasics *btb)
 {
-  config_init(btb_config(btb));
+  btb->config = el_config_new();
+  log_debug("config created");
   
   btb->volume_setter_active = el_false;
   
@@ -151,7 +152,7 @@ static void backtobasics_init (Backtobasics *btb)
   }
   
   file_info_t* info = file_info_combine(btb_cfg_dir, "btb.cfg");
-  config_read_file(btb_config(btb), file_info_absolute_path(info));
+  el_config_load(btb->config, file_info_absolute_path(info));
   file_info_destroy(info);
   
   // Library
@@ -160,9 +161,10 @@ static void backtobasics_init (Backtobasics *btb)
   if (file_info_exists(info)) {
     library_load(btb->library, file_info_absolute_path(info));
   }
+  log_debug("config loaded");
   
   file_info_t* libhome = file_info_new_home("Music");
-  char* path = btb_config_get_string(btb, "library.path", file_info_absolute_path(libhome));
+  char* path = el_config_get_string(btb->config, "library.path", file_info_absolute_path(libhome));
   file_info_destroy(libhome);
   library_set_basedir(btb->library, path);
   mc_free(path);
@@ -170,12 +172,20 @@ static void backtobasics_init (Backtobasics *btb)
   //scan_library(NULL, NULL, btb->library);
   
   file_info_destroy(info);
+  log_debug("ok?");
   
   
   // Radio library
-  btb->radio_library = radio_library_new();
-  info = file_info_combine(btb_cfg_dir, "btb_radio.cfg");
+  file_info_t* rechome = file_info_new_home(NULL);
+  log_debug("rechome");
+  char* rec_path = el_config_get_string(btb->config, "recordings.path", file_info_absolute_path(rechome));
+  file_info_destroy(rechome);
+  btb->radio_library = radio_library_new(rec_path);
+  mc_free(rec_path);
+  
+  info = file_info_combine(btb_cfg_dir, "btb.radio");
   if (file_info_exists(info)) {
+    log_debug("btb radio loading");
     radio_library_load(btb->radio_library, file_info_absolute_path(info));
   }
   file_info_destroy(info);
@@ -199,8 +209,13 @@ static void backtobasics_finalize (GObject *object)
   info = file_info_combine(btb_cfg_dir, "btb.lib");
   library_save(btb->library, file_info_absolute_path(info));
   file_info_destroy(info);
+  el_config_set_string(btb->config, "library.path", library_get_basedir(btb->library));
   
-  btb_config_set_string(btb, "library.path", library_get_basedir(btb->library));
+  info = file_info_combine(btb_cfg_dir, "btb.radio");
+  radio_library_save(btb->radio_library, file_info_absolute_path(info));
+  file_info_destroy(info);
+  el_config_set_string(btb->config, "recordings.path", radio_library_rec_location(btb->radio_library));
+  
   
   // finalizing
   
@@ -217,10 +232,12 @@ static void backtobasics_finalize (GObject *object)
   // Writing configuration
   
 	info = file_info_combine(btb_cfg_dir, "btb.cfg");
-  config_write_file(btb_config(btb), file_info_absolute_path(info));
+	el_config_save(btb->config, file_info_absolute_path(info));
   file_info_destroy(info);
-  
   file_info_destroy(btb_cfg_dir);
+  
+  // destroy config
+  el_config_destroy(btb->config);
   
   // Finalizing rest
   
@@ -243,74 +260,9 @@ Backtobasics *backtobasics_new (void)
 	                     NULL);
 }
 
-config_t* btb_config(Backtobasics* btb)
+el_config_t* btb_config(Backtobasics* btb)
 {
-  return &btb->config;
-}
-
-config_setting_t* btb_get_setting(Backtobasics* btb, const char* path, int type)
-{
-  config_setting_t *root, *setting;
-  
-  root = config_root_setting(btb_config(btb));
-  char* pt = mc_strdup(path);
-  char* p[100];
-  int k = 0, i, l;
-  p[k++] = &pt[0];
-  for(i = 0, l = strlen(pt);i < l; ++i) {
-    if (pt[i] == '.') {
-      pt[i] = '\0';
-      p[k] = &pt[i+1];
-      k += 1;
-    }
-  }
-  p[k++] = NULL;
-  
-  setting = root;
-  for(i = 0; p[i] != NULL; ++i) {
-    int t = CONFIG_TYPE_GROUP;
-    if (p[i+1] == NULL) { t = type; }
-    config_setting_t* tmp = setting;
-    setting = config_setting_get_member(tmp, p[i]);
-    if (!setting) 
-      setting = config_setting_add(tmp, p[i], t);
-  }
-  
-  mc_free(pt);
-
-  return setting;
-}
-
-int btb_config_get_int(Backtobasics* btb, const char* path, int default_val)
-{
-  int v = default_val;
-  config_t* config = btb_config(btb);
-  config_lookup_int(config, path, (long*) &v);
-  return v;
-}
-
-char* btb_config_get_string(Backtobasics* btb, const char* path, const char* default_val)
-{
-  const char* val = NULL;
-  config_t* config = btb_config(btb);
-  config_lookup_string(config, path, &val);
-  if (val == NULL) {
-    return mc_strdup(default_val);
-  } else {
-    return mc_strdup(val);
-  }
-}
-
-void btb_config_set_int(Backtobasics* btb, const char* path, int val)
-{
-  config_setting_t* setting = btb_get_setting(btb, path, CONFIG_TYPE_INT);
-  config_setting_set_int(setting, val);
-}
-
-void btb_config_set_string(Backtobasics* btb, const char* path, const char* val)
-{
-  config_setting_t* setting = btb_get_setting(btb, path, CONFIG_TYPE_STRING);
-  config_setting_set_string(setting, val);
+  return btb->config;
 }
 
 /************************************************************************
@@ -327,6 +279,15 @@ void btb_setup(GtkWidget* menu_item, GtkWidget* window)
   GtkFileChooserButton* fc = GTK_FILE_CHOOSER_BUTTON(gtk_builder_get_object(btb->builder, "btn_choose_library_loc"));
   char* path = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(fc));
   library_set_basedir(btb->library, path);
+}
+
+void btb_recordings_loc_set(GtkWidget* btn, GtkWidget* window)
+{
+  Backtobasics* btb = g_object_get_data(G_OBJECT(window), "btb");
+  GtkFileChooserButton* fc = GTK_FILE_CHOOSER_BUTTON(gtk_builder_get_object(btb->builder, "btn_choose_record_loc"));
+  char* path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fc));
+  radio_library_set_rec_location(btb->radio_library, path);
+  log_debug2("choosen: %s", path);
 }
 
 void btb_scan_library(GtkWidget* menu_item, GtkWidget* window)
@@ -364,7 +325,7 @@ void btb_normal_screen(GtkToolButton* btn, GtkWidget* window)
 static gboolean volume_setter(gpointer _btb)
 {
   Backtobasics* btb = (Backtobasics*) _btb;
-  double perc = (double) btb_config_get_int(btb, "previous_volume", 100);
+  double perc = (double) el_config_get_int(btb->config, "previous_volume", 100);
   playlist_player_set_volume(btb->player, perc);
   btb->volume_setter_active = el_false;
   return FALSE;
@@ -378,7 +339,7 @@ void btb_set_volume(GtkRange* volume, GtkWidget* window)
     btb->volume_setter_active = el_true;
     g_timeout_add(100, volume_setter, btb);
   }
-  btb_config_set_int(btb, "previous_volume", (int) perc);
+  el_config_set_int(btb->config, "previous_volume", (int) perc);
 }
 
 
@@ -388,7 +349,7 @@ void btb_volume_mute(GtkToggleButton* volume, GtkWidget* window)
   if (gtk_toggle_button_get_active(volume)) {
     playlist_player_set_volume(btb->player, 0.0);
   } else {
-    double perc = (double) btb_config_get_int(btb, "previous_volume", 100);
+    double perc = (double) el_config_get_int(btb->config, "previous_volume", 100);
     playlist_player_set_volume(btb->player, perc);
   }
 }
@@ -428,10 +389,10 @@ void menu_quit(GObject* object, gpointer data)
   gtk_window_get_position(window, &x, &y);
   gint w,h;
   gtk_window_get_size(window, &w, &h);
-  btb_config_set_int(btb, "main.window.x", x);
-  btb_config_set_int(btb, "main.window.y", y);
-  btb_config_set_int(btb, "main.window.w", w);
-  btb_config_set_int(btb, "main.window.h", h);
+  el_config_set_int(btb->config, "main.window.x", x);
+  el_config_set_int(btb->config, "main.window.y", y);
+  el_config_set_int(btb->config, "main.window.w", w);
+  el_config_set_int(btb->config, "main.window.h", h);
   
   g_application_quit(app);
   g_object_unref(app);

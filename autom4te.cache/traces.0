@@ -1266,12 +1266,12 @@ m4trace:configure.ac:29: -1- PKG_CHECK_EXISTS([gtk+-3.0 >= 2.90.3 ao vorbisfile 
 m4trace:configure.ac:29: -1- PKG_CHECK_EXISTS([gtk+-3.0 >= 2.90.3 ao vorbisfile flac libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig libtagcoverart libcurl webkitgtk-3.0], [pkg_cv_[]BACKTOBASICS_LIBS=`$PKG_CONFIG --[]libs "gtk+-3.0 >= 2.90.3 ao vorbisfile flac libmpg123 taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig libtagcoverart libcurl webkitgtk-3.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
 m4trace:configure.ac:29: -1- _PKG_SHORT_ERRORS_SUPPORTED
-m4trace:configure.ac:30: -1- PKG_CHECK_MODULES([BTB_PLAY], [ao vorbisfile flac libmpg123 taglib_c libpcre elementals libtagcoverart])
+m4trace:configure.ac:30: -1- PKG_CHECK_MODULES([BTB_PLAY], [ao vorbisfile flac libmpg123 taglib_c libpcre elementals libtagcoverart libcurl libconfig])
 m4trace:configure.ac:30: -1- m4_pattern_allow([^BTB_PLAY_CFLAGS$])
 m4trace:configure.ac:30: -1- m4_pattern_allow([^BTB_PLAY_LIBS$])
-m4trace:configure.ac:30: -1- PKG_CHECK_EXISTS([ao vorbisfile flac libmpg123 taglib_c libpcre elementals libtagcoverart], [pkg_cv_[]BTB_PLAY_CFLAGS=`$PKG_CONFIG --[]cflags "ao vorbisfile flac libmpg123 taglib_c libpcre elementals libtagcoverart" 2>/dev/null`
+m4trace:configure.ac:30: -1- PKG_CHECK_EXISTS([ao vorbisfile flac libmpg123 taglib_c libpcre elementals libtagcoverart libcurl libconfig], [pkg_cv_[]BTB_PLAY_CFLAGS=`$PKG_CONFIG --[]cflags "ao vorbisfile flac libmpg123 taglib_c libpcre elementals libtagcoverart libcurl libconfig" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
-m4trace:configure.ac:30: -1- PKG_CHECK_EXISTS([ao vorbisfile flac libmpg123 taglib_c libpcre elementals libtagcoverart], [pkg_cv_[]BTB_PLAY_LIBS=`$PKG_CONFIG --[]libs "ao vorbisfile flac libmpg123 taglib_c libpcre elementals libtagcoverart" 2>/dev/null`
+m4trace:configure.ac:30: -1- PKG_CHECK_EXISTS([ao vorbisfile flac libmpg123 taglib_c libpcre elementals libtagcoverart libcurl libconfig], [pkg_cv_[]BTB_PLAY_LIBS=`$PKG_CONFIG --[]libs "ao vorbisfile flac libmpg123 taglib_c libpcre elementals libtagcoverart libcurl libconfig" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes ], [pkg_failed=yes])
 m4trace:configure.ac:30: -1- _PKG_SHORT_ERRORS_SUPPORTED
 m4trace:configure.ac:40: -1- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
