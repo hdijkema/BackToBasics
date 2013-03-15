@@ -8,6 +8,7 @@
 DECLARE_EL_ARRAY(genre_array, char);
 DECLARE_EL_ARRAY(artist_array, char);
 DECLARE_EL_ARRAY(album_array, char);
+DECLARE_EL_ARRAY(playlists_array, playlist_t);
 DECLARE_HASH(library_db, track_t);
 
 typedef struct {
@@ -25,6 +26,9 @@ typedef struct {
   set_t* filtered_artists;
   set_t* filtered_albums;
   set_t* filtered_tracks;
+  
+  playlist_array playlists;
+  
   char* library_path;
   
 } library_t;
@@ -65,6 +69,10 @@ const char* library_get_basedir(library_t* library);
 
 void scan_library(scan_job_t* job, ScanJobCBFunc func, void* library);
 void library_sort(library_t* library);
+
+playlist_t* library_playlists_get(library_t* l, int index);
+int library_playlists_count(library_t* l);
+void library_playlists_append(library_t* l, playlist_t *pl);
 
 #endif
 

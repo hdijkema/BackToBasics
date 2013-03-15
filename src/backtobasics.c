@@ -219,8 +219,8 @@ static void backtobasics_finalize (GObject *object)
   
   // finalizing
   
-  GtkWidget* window = GTK_WIDGET(gtk_builder_get_object (btb->builder, TOP_WINDOW));
-  gtk_widget_destroy(window);
+  //GtkWidget* window = GTK_WIDGET(gtk_builder_get_object (btb->builder, TOP_WINDOW));
+  //gtk_widget_destroy(window);
   
   library_view_destroy(btb->library_view); 
   radio_view_destroy(btb->radio_view);
@@ -266,6 +266,25 @@ el_config_t* btb_config(Backtobasics* btb)
 }
 
 /************************************************************************
+ * some gtk utilities
+ ************************************************************************/
+ 
+void widgets_show(GtkBuilder* builder, char *widgets[], el_bool show)
+{
+  int i;
+  for(i = 0; widgets[i] != NULL; ++i) {
+    GtkWidget* w = GTK_WIDGET(gtk_builder_get_object (builder, widgets[i]));
+    if (w != NULL) {
+      if (show) {
+        gtk_widget_show_all(w);
+      } else {
+        gtk_widget_hide(w);
+      }
+    }
+  }
+}
+
+/************************************************************************
  * Implementing signal handlers
  ************************************************************************/
  
@@ -273,11 +292,16 @@ void btb_setup(GtkWidget* menu_item, GtkWidget* window)
 {
   Backtobasics* btb = g_object_get_data(G_OBJECT(window), "btb");
   GtkDialog* setupdlg = GTK_DIALOG(gtk_builder_get_object(btb->builder, "dlg_setup"));
+  GtkFileChooserButton* fcl = GTK_FILE_CHOOSER_BUTTON(gtk_builder_get_object(btb->builder, "btn_choose_library_loc"));
+  GtkFileChooserButton* fcr = GTK_FILE_CHOOSER_BUTTON(gtk_builder_get_object(btb->builder, "btn_choose_record_loc"));
+  
+  gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(fcl), library_get_basedir(btb->library));
+  gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(fcr), radio_library_rec_location(btb->radio_library));
+  
   gtk_dialog_run(setupdlg);
   gtk_widget_hide(GTK_WIDGET(setupdlg));
   
-  GtkFileChooserButton* fc = GTK_FILE_CHOOSER_BUTTON(gtk_builder_get_object(btb->builder, "btn_choose_library_loc"));
-  char* path = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(fc));
+  char* path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fcl));
   library_set_basedir(btb->library, path);
 }
 
@@ -353,6 +377,17 @@ void btb_volume_mute(GtkToggleButton* volume, GtkWidget* window)
     playlist_player_set_volume(btb->player, perc);
   }
 }
+
+void btb_play(GtkToolButton* btn, GObject* window)
+{
+  Backtobasics* btb = g_object_get_data(G_OBJECT(window), "btb");
+  if (btb->active_view == btb->library_view) {
+    library_view_play(btn, btb->library_view);
+  } else {
+    radio_view_play(btn, btb->radio_view);
+  }
+}
+
  
 static void select_view(gpointer data, const char* name)
 {
@@ -367,7 +402,15 @@ void go_radio(GObject* object, gpointer data)
 {
   Backtobasics* btb = (Backtobasics*) data;
   select_view(data, "radio_view");
-  //btb->active_view = btb->radio_view;
+  btb->active_view = btb->radio_view;
+  
+  char* btns[] = { 
+      "tbtn_library_next", "tbtn_library_previous", 
+      "lbl_total", "sc_library_playback",
+      NULL
+  };
+  
+  widgets_show(btb->builder, btns, el_false);
 }
 
 void go_library(GObject* object, gpointer data) 
@@ -375,7 +418,14 @@ void go_library(GObject* object, gpointer data)
   Backtobasics* btb = (Backtobasics*) data;
   select_view(data, "view_library");
   btb->active_view = btb->library_view;
+
+  char* btns[] = { 
+      "tbtn_library_next", "tbtn_library_previous", 
+      "lbl_total", "sc_library_playback",
+      NULL
+  };
   
+  widgets_show(btb->builder, btns, el_true);
 }
 
 void menu_quit(GObject* object, gpointer data)
@@ -393,7 +443,8 @@ void menu_quit(GObject* object, gpointer data)
   el_config_set_int(btb->config, "main.window.y", y);
   el_config_set_int(btb->config, "main.window.w", w);
   el_config_set_int(btb->config, "main.window.h", h);
-  
-  g_application_quit(app);
-  g_object_unref(app);
+
+
+  // Quit the application by detroying the main window  
+  gtk_widget_destroy(GTK_WIDGET(window));
 }

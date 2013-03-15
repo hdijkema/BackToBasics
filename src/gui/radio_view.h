@@ -31,4 +31,6 @@ radio_view_t* radio_view_new(Backtobasics* btb, radio_library_t* library);
 void radio_view_destroy(radio_view_t* view);
 void radio_view_init(radio_view_t* view);
 
+void radio_view_play(GtkToolButton* btn, radio_view_t* view);
+
 #endif

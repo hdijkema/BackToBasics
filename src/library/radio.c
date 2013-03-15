@@ -14,6 +14,7 @@ radio_t* radio_new(const char* url, const char* name, const char* webpage_url)
   r->name = mc_strdup(name);
   r->webpage_url = (webpage_url == NULL) ? NULL : mc_strdup(webpage_url);
   r->is_recording = el_false;
+  r->rip = mc_take_over(rip_stream_new());
   r->from_time = time(NULL);
   return r;
 }
@@ -23,6 +24,7 @@ void radio_destroy(radio_t* radio)
   if (radio_is_recording(radio)) {
     radio_stop_recording(radio);
   }
+  rip_stream_destroy(radio->rip);
   mc_free(radio->webpage_url);
   mc_free(radio->name);
   mc_free(radio->url);
@@ -31,9 +33,11 @@ void radio_destroy(radio_t* radio)
 
 radio_t* radio_copy(radio_t* r)
 {
-  radio_t* rr =radio_new(r->url, r->name, r->webpage_url);
+  radio_t* rr = mc_take_over(radio_new(r->url, r->name, r->webpage_url));
+  rip_stream_destroy(rr->rip);
   rr->is_recording = r->is_recording;
   rr->from_time = r->from_time;
+  rr->rip = rip_stream_copy(r->rip);
   return rr;
 }
 
@@ -53,9 +57,25 @@ const char* radio_name(radio_t* radio)
   return radio->name;
 }
 
+void radio_set_name(radio_t* radio, const char* name)
+{
+  mc_free(radio->name);
+  radio->name = mc_strdup(name);
+}
+
 const char* radio_webpage_url(radio_t* radio)
 {
   return radio->webpage_url;
+}
+
+void radio_set_webpage_url(radio_t* radio, const char* url)
+{
+  mc_free(radio->webpage_url);
+  if (url == NULL) {
+    radio->webpage_url = NULL;
+  } else {
+    radio->webpage_url = mc_strdup(url);
+  }
 }
 
 el_bool radio_has_webpage(radio_t* radio)
@@ -67,13 +87,18 @@ void radio_start_recording(radio_t* radio, const char* location)
 {
   radio->is_recording = el_true;
   radio->from_time = time(NULL);
-  // use libstreamripper
+  if (rip_stream_is_recording(radio->rip)) {
+    rip_stream_stop_recording(radio->rip);
+  }
+  rip_stream_start_recording(radio->rip, location, radio->name, radio->url);
 }
 
 void radio_stop_recording(radio_t* radio)
 {
   radio->is_recording = el_false;
-  // stop streamripper
+  if (rip_stream_is_recording(radio->rip)) {
+    rip_stream_stop_recording(radio->rip);
+  }
 }
 
 el_bool radio_is_recording(radio_t* radio)
@@ -88,7 +113,7 @@ el_bool radio_is_recording(radio_t* radio)
 
 static radio_t* copy(radio_t* r) 
 {
-  return radio_copy(r);
+  return mc_take_over(radio_copy(r));
 }
 
 static void destroy(radio_t* r)
@@ -133,6 +158,9 @@ void radio_library_load(radio_library_t* lib, const char* filename)
     sprintf(station_cfg, "%s.web", path);
     char* web = el_config_get_string(cfg, station_cfg, "");
     radio_t* station = radio_new(url, name, web);
+    mc_free(name);
+    mc_free(url);
+    mc_free(web);
     radio_library_append(lib, station);
     radio_destroy(station);
   }

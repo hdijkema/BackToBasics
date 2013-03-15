@@ -144,17 +144,26 @@ audio_result_t mp3_new_from_url(audio_worker_t* worker, const char* url)
 #define STATE_REPORT_THRESHOLD 10   // every 1 hundred of a second
 #define MAX_STREAM_BUFFER 1000*4096  // 4000K
 
-static size_t write_data(void *buffer, size_t size, size_t nmemb, void *userp)
+static int progress(void* userp, double dltotal, double dlnow, double ultotal, double ulnow)
 {
   mp3_t* mp3_info = (mp3_t*) userp;
-  
-  
+  if (mp3_info->continue_streaming) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+static size_t write_data(void *buffer, size_t size, size_t nmemb, void* userp)
+{
+  mp3_t* mp3_info = (mp3_t*) userp;
   
   if (mp3_info->current_block == NULL) {
     mp3_info->current_block = memblock_new();
   }
   
   if (mp3_info->continue_streaming) {
+    //log_debug2("got %d bytes", size*nmemb);
     memblock_write(mp3_info->current_block, buffer, size * nmemb);
     if (memblock_size(mp3_info->current_block) >= 4096) {
       mp3_stream_fifo_enqueue(mp3_info->stream_fifo, mp3_info->current_block);
@@ -167,15 +176,6 @@ static size_t write_data(void *buffer, size_t size, size_t nmemb, void *userp)
     }
     return nmemb;
   } else {
-    // stop streaming
-    memblock_destroy(mp3_info->current_block);
-    mp3_info->current_block = NULL;
-    // clear the fifo
-    while (mp3_stream_fifo_peek(mp3_info->stream_fifo) != NULL) {
-      memblock_t* b = mp3_stream_fifo_dequeue(mp3_info->stream_fifo);
-      memblock_destroy(b);
-    }
-    
     return 0;
   }
   
@@ -192,8 +192,22 @@ void* stream_thread(void* data)
   curl_easy_setopt(curl, CURLOPT_URL, mp3_info->file_or_url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, mp3_info);
+  curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
+  curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress);
+  curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, mp3_info);
   curl_easy_perform(curl); /* ignores error */ 
   curl_easy_cleanup(curl);
+
+  // stopped streaming
+  if (mp3_info->current_block != NULL) 
+      memblock_destroy(mp3_info->current_block);
+  mp3_info->current_block = NULL;
+  
+  // cleanup the fifo
+  while (mp3_stream_fifo_peek(mp3_info->stream_fifo) != NULL) {
+    memblock_t* b = mp3_stream_fifo_dequeue(mp3_info->stream_fifo);
+    memblock_destroy(b);
+  }
   
   sem_post(&mp3_info->stream_ready);
   mp3_info->streaming = el_false;
@@ -211,6 +225,7 @@ void* player_thread(void* _mp3_info)
   long guard_position_in_ms = -1;
   el_bool playing = el_false;
   pthread_t thread_id;
+  int no_count = 0;
   
   post_event(mp3_info->client_notification, AUDIO_READY, current_position_in_ms);
  
@@ -218,7 +233,8 @@ void* player_thread(void* _mp3_info)
   event = audio_event_fifo_dequeue(mp3_info->player_control);
   while (event->state != INTERNAL_CMD_DESTROY) {
     
-    //log_debug2("event = %d", event->state);
+    if (event->state != INTERNAL_CMD_NONE)
+          log_debug2("event = %d", event->state);
     
     audio_state_t event_state = event->state;
     long event_position = event->position_in_ms;
@@ -232,7 +248,6 @@ void* player_thread(void* _mp3_info)
         if (!mp3_info->is_file) {
           mp3_info->continue_streaming = el_false;
           sem_wait(&mp3_info->stream_ready);
-          mc_free(mp3_info->file_or_url);
         }
         
         if (mp3_info->is_open) {
@@ -240,7 +255,6 @@ void* player_thread(void* _mp3_info)
           aodev_close(mp3_info->ao_handle);
         }
         mpg123_open(mp3_info->handle, mp3_info->file_or_url);
-        mc_free(mp3_info->file_or_url);
         mpg123_getformat(mp3_info->handle, &mp3_info->rate, &mp3_info->channels, &mp3_info->encoding);
         mp3_info->buffer_size = mpg123_outblock(mp3_info->handle);
         mc_free(mp3_info->buffer);
@@ -264,12 +278,11 @@ void* player_thread(void* _mp3_info)
       break;
       case INTERNAL_CMD_LOAD_URL: {
         playing = el_false;
-        log_debug("loading url");
+        log_debug2("loading url %s", mp3_info->file_or_url);
         // Wait for feeding streams to end
         if (!mp3_info->is_file) {
           mp3_info->continue_streaming = el_false;
           sem_wait(&mp3_info->stream_ready);
-          mc_free(mp3_info->file_or_url);
         }
         mp3_info->is_file = el_false;
         log_debug("current stream ended");
@@ -402,6 +415,10 @@ void* player_thread(void* _mp3_info)
         } else {
           // no streaming data, prevent race conditions
           // sleep for a small time (50 ms);
+          no_count += 1;
+          if (no_count > 10) { 
+            post_event(mp3_info->client_notification, AUDIO_BUFFERING, current_position_in_ms);
+          }
           sleep_ms(50);
         }
       } 
@@ -428,7 +445,6 @@ void* player_thread(void* _mp3_info)
   if (mp3_info->streaming) {
     mp3_info->continue_streaming = el_false;
     sem_wait(&mp3_info->stream_ready);
-    mc_free(mp3_info->file_or_url);
   }
   
   audio_event_destroy(event);
@@ -444,6 +460,7 @@ void* player_thread(void* _mp3_info)
 static audio_result_t load_file(void* _mp3_info, const char* file)
 {
   mp3_t* mp3_info = (mp3_t*) _mp3_info;
+  mc_free(mp3_info->file_or_url);
   mp3_info->file_or_url = mc_strdup(file);
   post_event(mp3_info->player_control, INTERNAL_CMD_LOAD_FILE, -1);
   sem_wait(&mp3_info->length_set);
@@ -453,6 +470,7 @@ static audio_result_t load_file(void* _mp3_info, const char* file)
 static audio_result_t load_url(void* _mp3_info, const char* url)
 {
   mp3_t* mp3_info = (mp3_t*) _mp3_info;
+  mc_free(mp3_info->file_or_url);
   mp3_info->file_or_url = mc_strdup(url);
   post_event(mp3_info->player_control, INTERNAL_CMD_LOAD_URL, -1);
   sem_wait(&mp3_info->length_set);
@@ -527,6 +545,8 @@ static void destroy(void* _mp3_info)
   audio_event_fifo_destroy(mp3_info->player_control);
   
   mp3_stream_fifo_destroy(mp3_info->stream_fifo);
+  
+  mc_free(mp3_info->file_or_url);
   
   mc_free(mp3_info->buffer);
   

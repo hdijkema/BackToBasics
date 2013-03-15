@@ -41,7 +41,6 @@ library_view_t* library_view_new(Backtobasics* btb, library_t* library)
   view->track_index = -1;
   view->track_id = -1;
   view->sliding = 0;
-  view->playing_list_hash = -1;
   view->repeat = -1;
   
   view->img_w = 200;
@@ -52,6 +51,8 @@ library_view_t* library_view_new(Backtobasics* btb, library_t* library)
   view->cols = NULL;
   
   view->ignore_sel_changed = el_false;
+  
+  view->playlists_model = playlists_model_new(view->library);
   
   view->current_lyric_track = NULL;
   
@@ -98,6 +99,10 @@ void library_view_init(library_view_t* view)
   // library view.
   GObject* object = gtk_builder_get_object(view->builder,"view_library");
   g_object_set_data(object, "library_view_t", (gpointer) view);
+  
+  // playlists (initially not viewed)
+  //GtkWidget* scw_playlists = GTK_WIDGET(gtk_builder_get_object(view->builder,"scw_playlists"));
+  //gtk_widget_hide(scw_playlists);
 
   // library list
   GtkTreeView* tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_library"));
@@ -193,6 +198,16 @@ void library_view_init(library_view_t* view)
     }
     file_info_destroy(info);
   }
+  
+  // Playlists
+  tview = GTK_TREE_VIEW(gtk_builder_get_object(view->builder, "tv_playlists"));
+  col = gtk_tree_view_column_new_with_attributes(_("Playlist"), renderer, "text", 0, NULL);
+  gtk_tree_view_column_set_sizing(col, GTK_TREE_VIEW_COLUMN_FIXED);
+  width = el_config_get_int(btb_config(view->btb), "library.playlists.column_width", 200);
+  gtk_tree_view_column_set_fixed_width(col, width);
+  gtk_tree_view_append_column(tview, col);
+  
+  gtk_tree_view_set_model(tview, playlists_model_gtk_model(view->playlists_model));
   
   // Lyric view
   view->lyric_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
@@ -464,14 +479,12 @@ void library_view_genres(GtkToggleToolButton *btn, GObject* lview)
   library_view_aspect_page(view, GENRE_ASPECT);
 }
 
-
 static void library_view_play_at(library_view_t* view, int track)
 {
   playlist_player_t* player = backtobasics_player(view->btb);
 
   if (view->library_list_changed) {
     playlist_t* pl = playlist_model_get_selected_playlist(view->playlist_model);
-    view->playing_list_hash = playlist_tracks_hash(pl);
     playlist_player_set_playlist(player, pl);
     playlist_player_set_repeat(player, PLP_NO_REPEAT);
     view->library_list_changed = el_false;
@@ -489,9 +502,9 @@ static void library_view_play_at(library_view_t* view, int track)
   
 }
 
-void library_view_play(GtkToolButton *btn, GObject* lview)
+void library_view_play(GtkToolButton *btn, library_view_t* view)
 {
-  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  //library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
   playlist_player_t* player = backtobasics_player(view->btb);
   if (!playlist_player_is_playing(player)) {
     GtkTreeView* tview = view->tview;
@@ -810,10 +823,10 @@ static gboolean library_view_update_info(library_view_t* view)
         
       }
 
-      log_debug3("lib hash = %lld, pl hash = %lld", view->library_list_hash, view->playing_list_hash);
+      log_debug3("lib hash = %lld, pl hash = %lld", view->library_list_hash, playlist_player_get_hash(player));
       
       if (view->library_list_changed) { // This is called too often really
-        if (view->library_list_hash == view->playing_list_hash) {
+        if (view->library_list_hash == playlist_player_get_hash(player)) {
           view->library_list_changed = el_false;
           view->track_index = -1;
         } else {
@@ -869,4 +882,21 @@ static void library_view_library_col_sort(GtkTreeViewColumn* col, library_view_t
   for( e = 0; view->cols[e] != col; ++e);
   playlist_model_sort(view->playlist_model, e);
   view->library_list_changed = el_true;
+}
+
+/*************************************************************************************
+ * Playlists functionality
+ *************************************************************************************/
+
+void library_view_playlists_toggle(GtkToggleButton* btn, GObject* lview)
+{
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  GtkWidget* scw_playlists = GTK_WIDGET(gtk_builder_get_object(view->builder,"scw_playlists"));
+  
+  if (gtk_toggle_button_get_active(btn)) {
+    gtk_widget_set_no_show_all(scw_playlists, FALSE);
+    gtk_widget_show_all(scw_playlists);
+  } else {
+    gtk_widget_hide(scw_playlists);
+  }
 }

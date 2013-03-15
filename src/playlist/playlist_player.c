@@ -44,6 +44,7 @@ playlist_player_t* playlist_player_new(void)
   plp->current_track = -1;
   plp->current_position_in_ms = 0;
   plp->track_position_in_ms = -1;
+  plp->playlist_hash = -1;
   plp->player_control = playlist_player_command_fifo_new();
   plp->playlist = playlist_new(_("Untitled"));
   plp->mutex=(pthread_mutex_t*) mc_malloc(sizeof(pthread_mutex_t));
@@ -69,8 +70,14 @@ void playlist_player_destroy(playlist_player_t* plp)
   mc_free(plp);
 }
 
+long long playlist_player_get_hash(playlist_player_t* plp)
+{
+  return plp->playlist_hash;
+}
+
 void playlist_player_set_playlist(playlist_player_t* plp, playlist_t* pl)
 {
+  plp->playlist_hash = playlist_tracks_hash(pl);
   post_command(plp, PLP_CMD_SET_PLAYLIST, (void*) pl);
 }
 

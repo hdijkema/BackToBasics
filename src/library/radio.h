@@ -3,6 +3,7 @@
 
 #include <elementals.h>
 #include <time.h>
+#include <audio/ripstream.h>
 
 /*************************************************************************
  * Radio  
@@ -13,6 +14,7 @@ typedef struct {
   char* name;
   char* webpage_url;
   el_bool is_recording;
+  rip_stream_t* rip;
   time_t from_time;
 } radio_t;
 
@@ -26,6 +28,8 @@ const char* radio_webpage_url(radio_t* radio);
 el_bool radio_has_webpage(radio_t* radio);
 
 void radio_set_stream_url(radio_t* radio, const char* url);
+void radio_set_name(radio_t* radio, const char* name);
+void radio_set_webpage_url(radio_t* radio, const char* url);
 
 void radio_start_recording(radio_t* radio, const char* location);
 void radio_stop_recording(radio_t* radio);

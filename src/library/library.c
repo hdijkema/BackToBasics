@@ -27,9 +27,20 @@ static void destroy_trk(track_t* trk)
   track_destroy(trk);
 }
 
+static playlist_t* copy_pl(playlist_t* pl)
+{
+  return playlist_copy(pl);
+}
+
+static void destroy_pl(playlist_t* pl)
+{
+  playlist_destroy(pl);
+}
+
 IMPLEMENT_EL_ARRAY(genre_array, char, copy_str, destroy_str);
 IMPLEMENT_EL_ARRAY(artist_array, char, copy_str, destroy_str);
 IMPLEMENT_EL_ARRAY(album_array, char, copy_str, destroy_str);
+IMPLEMENT_EL_ARRAY(playlists_array, playlist_t, copy_pl, destroy_pl);
 IMPLEMENT_HASH(library_db, track_t, copy_trk, destroy_trk); 
 
 library_t* library_new(void)
@@ -52,11 +63,15 @@ library_t* library_new(void)
   l->filtered_albums = set_new(SET_CASE_INSENSITIVE);
   l->filtered_tracks = set_new(SET_CASE_SENSITIVE);
   
+  l->playlists = playlist_array_new();
+  
   return l;
 }
 
 void library_destroy(library_t* l) 
 {
+  playlist_array_destroy(l->playlists);
+  
   playlist_destroy(l->all_tracks);
   mc_free(l->filter_genre);
   mc_free(l->filter_album_artist);
@@ -565,3 +580,25 @@ void library_sort(library_t* library)
 {
   playlist_sort_standard(library->all_tracks);
 }
+
+/*******************************************************************
+ * playlists
+ *******************************************************************/
+ 
+playlist_t* library_playlists_add(library_t* l, const char* name)
+{
+  playlist_t* pl = playlist_new(name);
+  playlists_array_append(l->playlists, pl);
+  return pl;
+}
+
+int library_playlists_count(library_t* l)
+{
+  return playlists_array_count(l->playlists);
+}
+
+playlist_t* library_playlists_get(library_t* l, int index)
+{
+  return playlists_array_get(l->playlists, index);
+}
+

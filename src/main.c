@@ -29,6 +29,7 @@ int main (int argc, char *argv[])
 	
   app = backtobasics_new ();
   status = g_application_run (G_APPLICATION (app), argc, argv);
+  g_application_quit(G_APPLICATION(app));
   g_object_unref (app);
 
   return status;

@@ -64,6 +64,8 @@ typedef struct {
   
   double volume_percentage;
   
+  long long playlist_hash;
+  
   pthread_mutex_t *mutex;
   pthread_t playlist_player_thread;
   
@@ -88,6 +90,8 @@ track_t* playlist_player_get_track(playlist_player_t* player);
 
 long playlist_player_get_current_position_in_ms(playlist_player_t* player);
 long playlist_player_get_track_position_in_ms(playlist_player_t* player);
+
+long long playlist_player_get_hash(playlist_player_t* player);
 
 el_bool playlist_player_get_track_changed(playlist_player_t* player);
 

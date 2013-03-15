@@ -1,0 +1,12 @@
+Source: BackToBasics
+Section: sound
+Priority: extra
+Maintainer: Hans Oesterholt (Lives in the Netherlands) <debian@oesterholt.net>
+Build-Depends: debhelper (>= 7.0.0), %%BUILDDEPENDS%%
+Standards-Version: 3.9.2
+Homepage: https://github.com/hoesterholt/BackToBasics
+
+Package: BackToBasics
+Architecture: any
+Depends: %%DEPENDS%%
+Description: an other music player for Linux

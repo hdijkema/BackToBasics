@@ -35,6 +35,8 @@ GENERICSRC = \
 	audio/ogg.h \
 	audio/flac.c \
 	audio/flac.h \
+	audio/ripstream.c \
+	audio/ripstream.h \
 	metadata/track.c \
 	metadata/track.h \
 	metadata/cue.c \
@@ -72,6 +74,8 @@ backtobasics_SOURCES = \
 	gui/radio_view.h \
 	gui/station_model.c \
 	gui/station_model.h \
+	gui/playlists_model.c \
+	gui/playlists_model.h \
 	lyrics/lyrics.c \
 	lyrics/lyrics.h
 

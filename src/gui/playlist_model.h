@@ -28,7 +28,7 @@ typedef struct {
   playlist_column_enum sort_col;
 } playlist_model_t;
 
-playlist_model_t* playlist_model_new();
+playlist_model_t* playlist_model_new(void);
 void playlist_model_destroy(playlist_model_t* model);
 GtkTreeModel* playlist_model_gtk_model(playlist_model_t* model);
 void playlist_model_set_playlist(playlist_model_t* model, playlist_t* playlist);

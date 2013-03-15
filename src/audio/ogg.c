@@ -260,6 +260,7 @@ static void* player_thread(void* _minfo)
 static audio_result_t load_file(void* _minfo, const char* file)
 {
   ogg_t* minfo = (ogg_t*) _minfo;
+  mc_free(minfo->file_or_url);
   minfo->file_or_url = mc_strdup(file);
   post_event(minfo->player_control, INTERNAL_CMD_LOAD_FILE, -1);
   sem_wait(&minfo->length_set);
@@ -342,7 +343,8 @@ static void destroy(void* _minfo)
   
   audio_event_fifo_destroy(minfo->player_control);
   
-  //mc_free(minfo->buffer);
+  mc_free(minfo->file_or_url);
+  mc_free(minfo->buffer);
   
   mc_free(minfo);
 }

@@ -6,6 +6,7 @@
 
 #include <backtobasics.h>
 #include <gui/playlist_model.h>
+#include <gui/playlists_model.h>
 #include <gui/string_model.h>
 #include <elementals.h>
 
@@ -32,6 +33,8 @@ typedef struct {
   aspect_enum aspect;
   aspect_enum previous_aspect;
   
+  playlists_model_t* playlists_model;
+  
   el_bool run_timeout;
   
   long time_in_ms;
@@ -39,7 +42,6 @@ typedef struct {
   int track_index;
   long track_id;
   int sliding;
-  long long playing_list_hash;
   playlist_player_repeat_t repeat;
   
   el_bool ignore_sel_changed;
@@ -67,5 +69,7 @@ void library_view_album_aspect(library_view_t* view);
 void library_view_reset_models(library_view_t* view);
 
 void library_view_stop_info_updater(library_view_t* view);
+
+void library_view_play(GtkToolButton* btn, library_view_t* view); 
 
 #endif

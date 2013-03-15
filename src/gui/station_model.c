@@ -49,7 +49,7 @@ const char* station_model_i18n_column_name(station_column_enum col)
 {
   switch(col) {
     case STATION_MODEL_COL_NAME: return _("Name");
-    case STATION_MODEL_COL_RECORDING: return _("Rec");
+    case STATION_MODEL_COL_RECORDING: return _("Record");
     default: return "";
   }
 }

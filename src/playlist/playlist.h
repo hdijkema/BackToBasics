@@ -17,7 +17,12 @@ void playlist_destroy(playlist_t* pl);
 void playlist_append(playlist_t* pl,track_t* t);
 void playlist_insert(playlist_t* pl,int index, track_t* t);
 void playlist_set(playlist_t* pl,int index, track_t* t);
+
 track_t* playlist_get(playlist_t* pl,int index);
+const char* playlist_name(playlist_t* pl);
+
+playlist_t* playlist_copy(playlist_t* pl);
+
 
 int playlist_count(playlist_t* pl);
 
