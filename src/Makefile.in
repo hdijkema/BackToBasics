@@ -33,7 +33,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = backtobasics$(EXEEXT)
+bin_PROGRAMS = backtobasics_bin$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -44,26 +44,27 @@ mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(iconsdir)" \
-	"$(DESTDIR)$(menu1dir)" "$(DESTDIR)$(menu2dir)" \
-	"$(DESTDIR)$(pixmapsdir)" "$(DESTDIR)$(uidir)"
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(btbdir)" \
+	"$(DESTDIR)$(iconsdir)" "$(DESTDIR)$(menu1dir)" \
+	"$(DESTDIR)$(menu2dir)" "$(DESTDIR)$(pixmapsdir)" \
+	"$(DESTDIR)$(uidir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__objects_1 = config.$(OBJEXT) aodev.$(OBJEXT) audio.$(OBJEXT) \
 	mp3.$(OBJEXT) ogg.$(OBJEXT) flac.$(OBJEXT) ripstream.$(OBJEXT) \
 	track.$(OBJEXT) cue.$(OBJEXT) tracks_source.$(OBJEXT) \
 	playlist.$(OBJEXT) playlist_player.$(OBJEXT) i18n.$(OBJEXT) \
 	library.$(OBJEXT) radio.$(OBJEXT)
-am_backtobasics_OBJECTS = $(am__objects_1) main.$(OBJEXT) \
+am_backtobasics_bin_OBJECTS = $(am__objects_1) main.$(OBJEXT) \
 	backtobasics.$(OBJEXT) library_view.$(OBJEXT) \
 	playlist_model.$(OBJEXT) string_model.$(OBJEXT) \
 	async_call.$(OBJEXT) scanjob.$(OBJEXT) radio_view.$(OBJEXT) \
 	station_model.$(OBJEXT) playlists_model.$(OBJEXT) \
 	lyrics.$(OBJEXT)
-backtobasics_OBJECTS = $(am_backtobasics_OBJECTS)
+backtobasics_bin_OBJECTS = $(am_backtobasics_bin_OBJECTS)
 am__DEPENDENCIES_1 =
-backtobasics_DEPENDENCIES = $(am__DEPENDENCIES_1)
-backtobasics_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(backtobasics_LDFLAGS) $(LDFLAGS) -o $@
+backtobasics_bin_DEPENDENCIES = $(am__DEPENDENCIES_1)
+backtobasics_bin_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(backtobasics_bin_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -87,8 +88,8 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(backtobasics_SOURCES)
-DIST_SOURCES = $(backtobasics_SOURCES)
+SOURCES = $(backtobasics_bin_SOURCES)
+DIST_SOURCES = $(backtobasics_bin_SOURCES)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -116,8 +117,8 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-DATA = $(icons_DATA) $(menu1_DATA) $(menu2_DATA) $(pixmaps_DATA) \
-	$(ui_DATA)
+DATA = $(btb_DATA) $(icons_DATA) $(menu1_DATA) $(menu2_DATA) \
+	$(pixmaps_DATA) $(ui_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -257,6 +258,8 @@ pixmapsdir = $(datarootdir)/pixmaps
 pixmaps_DATA = share/pixmaps/*
 iconsdir = $(datarootdir)/icons/64x64/apps
 icons_DATA = share/icons/64x64/apps/*
+btbdir = $(prefix)/bin
+btb_DATA = backtobasics
 AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
@@ -300,7 +303,7 @@ GENERICSRC = \
 	library/radio.c \
 	library/radio.h
 
-backtobasics_SOURCES = \
+backtobasics_bin_SOURCES = \
 	$(GENERICSRC) \
 	main.c \
 	backtobasics.h \
@@ -324,10 +327,10 @@ backtobasics_SOURCES = \
 	lyrics/lyrics.c \
 	lyrics/lyrics.h
 
-backtobasics_LDFLAGS = \
+backtobasics_bin_LDFLAGS = \
 	-Wl,--export-dynamic
 
-backtobasics_LDADD = $(BACKTOBASICS_LIBS)
+backtobasics_bin_LDADD = $(BACKTOBASICS_LIBS)
 EXTRA_DIST = $(ui_DATA) $(icons_DATA) $(pixmaps_DATA) $(menu1_DATA) $(menu2_DATA)
 all: all-am
 
@@ -400,9 +403,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-backtobasics$(EXEEXT): $(backtobasics_OBJECTS) $(backtobasics_DEPENDENCIES) $(EXTRA_backtobasics_DEPENDENCIES) 
-	@rm -f backtobasics$(EXEEXT)
-	$(AM_V_CCLD)$(backtobasics_LINK) $(backtobasics_OBJECTS) $(backtobasics_LDADD) $(LIBS)
+backtobasics_bin$(EXEEXT): $(backtobasics_bin_OBJECTS) $(backtobasics_bin_DEPENDENCIES) $(EXTRA_backtobasics_bin_DEPENDENCIES) 
+	@rm -f backtobasics_bin$(EXEEXT)
+	$(AM_V_CCLD)$(backtobasics_bin_LINK) $(backtobasics_bin_OBJECTS) $(backtobasics_bin_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -786,6 +789,24 @@ lyrics.obj: lyrics/lyrics.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='lyrics/lyrics.c' object='lyrics.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o lyrics.obj `if test -f 'lyrics/lyrics.c'; then $(CYGPATH_W) 'lyrics/lyrics.c'; else $(CYGPATH_W) '$(srcdir)/lyrics/lyrics.c'; fi`
+install-btbDATA: $(btb_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(btbdir)" || $(MKDIR_P) "$(DESTDIR)$(btbdir)"
+	@list='$(btb_DATA)'; test -n "$(btbdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(btbdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(btbdir)" || exit $$?; \
+	done
+
+uninstall-btbDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(btb_DATA)'; test -n "$(btbdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(btbdir)'; $(am__uninstall_files_from_dir)
 install-iconsDATA: $(icons_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(iconsdir)" || $(MKDIR_P) "$(DESTDIR)$(iconsdir)"
@@ -963,7 +984,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(PROGRAMS) $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(iconsdir)" "$(DESTDIR)$(menu1dir)" "$(DESTDIR)$(menu2dir)" "$(DESTDIR)$(pixmapsdir)" "$(DESTDIR)$(uidir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(btbdir)" "$(DESTDIR)$(iconsdir)" "$(DESTDIR)$(menu1dir)" "$(DESTDIR)$(menu2dir)" "$(DESTDIR)$(pixmapsdir)" "$(DESTDIR)$(uidir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -1018,8 +1039,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-iconsDATA install-menu1DATA install-menu2DATA \
-	install-pixmapsDATA install-uiDATA
+install-data-am: install-btbDATA install-iconsDATA install-menu1DATA \
+	install-menu2DATA install-pixmapsDATA install-uiDATA
 
 install-dvi: install-dvi-am
 
@@ -1064,9 +1085,9 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-iconsDATA \
-	uninstall-local uninstall-menu1DATA uninstall-menu2DATA \
-	uninstall-pixmapsDATA uninstall-uiDATA
+uninstall-am: uninstall-binPROGRAMS uninstall-btbDATA \
+	uninstall-iconsDATA uninstall-local uninstall-menu1DATA \
+	uninstall-menu2DATA uninstall-pixmapsDATA uninstall-uiDATA
 
 .MAKE: install-am install-strip
 
@@ -1074,17 +1095,18 @@ uninstall-am: uninstall-binPROGRAMS uninstall-iconsDATA \
 	clean-generic ctags distclean distclean-compile \
 	distclean-generic distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-iconsDATA install-info install-info-am install-man \
-	install-menu1DATA install-menu2DATA install-pdf install-pdf-am \
-	install-pixmapsDATA install-ps install-ps-am install-strip \
-	install-uiDATA installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-iconsDATA uninstall-local uninstall-menu1DATA \
-	uninstall-menu2DATA uninstall-pixmapsDATA uninstall-uiDATA
+	install-btbDATA install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-iconsDATA install-info install-info-am \
+	install-man install-menu1DATA install-menu2DATA install-pdf \
+	install-pdf-am install-pixmapsDATA install-ps install-ps-am \
+	install-strip install-uiDATA installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
+	ps ps-am tags uninstall uninstall-am uninstall-binPROGRAMS \
+	uninstall-btbDATA uninstall-iconsDATA uninstall-local \
+	uninstall-menu1DATA uninstall-menu2DATA uninstall-pixmapsDATA \
+	uninstall-uiDATA
 
 
 # Remove ui directory on uninstall

@@ -18,6 +18,9 @@ pixmaps_DATA = share/pixmaps/*
 iconsdir = $(datarootdir)/icons/64x64/apps
 icons_DATA = share/icons/64x64/apps/*
 
+btbdir = $(prefix)/bin
+btb_DATA = backtobasics
+
 AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
@@ -29,7 +32,7 @@ AM_CFLAGS =\
 	 -Wall\
 	 -g
 
-bin_PROGRAMS = backtobasics 
+bin_PROGRAMS = backtobasics_bin 
 	
 GENERICSRC = \
 	util/config.c \
@@ -64,7 +67,7 @@ GENERICSRC = \
 	library/radio.h
 
 
-backtobasics_SOURCES = \
+backtobasics_bin_SOURCES = \
 	$(GENERICSRC) \
 	main.c \
 	backtobasics.h \
@@ -89,12 +92,10 @@ backtobasics_SOURCES = \
 	lyrics/lyrics.h
 
 
-backtobasics_LDFLAGS = \
+backtobasics_bin_LDFLAGS = \
 	-Wl,--export-dynamic
 
-backtobasics_LDADD = $(BACKTOBASICS_LIBS)
-
-
+backtobasics_bin_LDADD = $(BACKTOBASICS_LIBS)
 
 EXTRA_DIST = $(ui_DATA) $(icons_DATA) $(pixmaps_DATA) $(menu1_DATA) $(menu2_DATA)
 
