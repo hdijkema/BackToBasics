@@ -4,8 +4,19 @@
 
 
 uidir = $(pkgdatadir)/ui
-ui_DATA = backtobasics.ui
+ui_DATA = backtobasics.ui btb.png ../images/*
 
+menu1dir = $(datarootdir)/applications
+menu1_DATA = share/applications/*
+
+menu2dir = $(datarootdir)/menu
+menu2_DATA = share/menu/*
+
+pixmapsdir = $(datarootdir)/pixmaps
+pixmaps_DATA = share/pixmaps/*
+
+iconsdir = $(datarootdir)/icons/64x64/apps
+icons_DATA = share/icons/64x64/apps/*
 
 AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
@@ -18,9 +29,7 @@ AM_CFLAGS =\
 	 -Wall\
 	 -g
 
-bin_PROGRAMS = backtobasics \
-	btb_play \
-	btb_playlist
+bin_PROGRAMS = backtobasics 
 	
 GENERICSRC = \
 	util/config.c \
@@ -85,25 +94,9 @@ backtobasics_LDFLAGS = \
 
 backtobasics_LDADD = $(BACKTOBASICS_LIBS)
 
-btb_play_SOURCES =  \
-  $(GENERICSRC) \
-  btb_play.c
 
-btb_play_CFLAGS = $(TARGET_READLINE_INC)
-  
-btb_play_LDADD = \
-	$(BTB_PLAY_LIBS) $(TARGET_READLINE_LIBS)
 
-btb_playlist_SOURCES =  \
-  $(GENERICSRC) \
-  btb_playlist.c
-
-btb_playlist_CFLAGS = $(TARGET_READLINE_INC)
-  
-btb_playlist_LDADD = \
-	$(BTB_PLAY_LIBS) $(TARGET_READLINE_LIBS)
-
-EXTRA_DIST = $(ui_DATA)
+EXTRA_DIST = $(ui_DATA) $(icons_DATA) $(pixmaps_DATA) $(menu1_DATA) $(menu2_DATA)
 
 # Remove ui directory on uninstall
 uninstall-local:

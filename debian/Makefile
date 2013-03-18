@@ -1,14 +1,14 @@
 VERSION=$(shell ./get_version.sh)
 MYDIST=$(shell cat /etc/lsb-release | grep CODENAME | sed -e 's/[^=]*[=]//')
-SUBVERSION=2
-PACKAGE=libgtklistmodel
-DEPENDS=libpcre3,elementals,gtk+-3.0
+SUBVERSION=1
+PACKAGE=backtobasics
+DEPENDS=libpcre3,elementals,libstreamripper,libmad0,libid3tag0,libvorbisfile3,libao4,libflac8,libmpg123-0,libgtklistmodel,libgtk+-3.0,libwebkitgtk-3.0-0,libtagcoverart,libtagc0,libconfig8,libcurl3-gnutls
 DEPENDS1=
-BUILDDEPENDS=automake,autoconf,intltool,libpthread-stubs0-dev,libpcre3-dev,pkg-config,elementals,libgtk-3-dev
+BUILDDEPENDS=gawk,automake,autoconf,intltool,libpthread-stubs0-dev,libpcre3-dev,pkg-config,elementals,libstreamripper,libglib2.0-dev,libao-dev,libflac-dev,libmpg123-dev,libmad0-dev,libid3tag0-dev,libvorbis-dev,libgtk-3-dev,libwebkitgtk-3.0-dev,libtag1-dev,libtagcoverart,libtagc0-dev,libconfig8-dev,libcurl3-gnutls-dev,libgtklistmodel
 DISTROS=oneiric precise quantal
 DISTROS1=maverick lucid
 DVERSION=${VERSION}.${DISTRO}.${SUBVERSION}
-UBUNTU=/tmp/libgtklistmodel_ppa
+UBUNTU=/tmp/backtobasics_ppa
 UDIR=${UBUNTU}/${PACKAGE}-${DVERSION}
 DDIR=${UDIR}/debian
 PPA=ppa:0k-hans-f8/ppa

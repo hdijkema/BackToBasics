@@ -40,7 +40,7 @@ typedef struct {
   long time_in_ms;
   long len_in_ms;
   int track_index;
-  long track_id;
+  const char* track_id;
   int sliding;
   playlist_player_repeat_t repeat;
   

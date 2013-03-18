@@ -287,7 +287,6 @@ DISTCLEANFILES = intltool-extract \
 	intltool-update \
 	po/.intltool-merge-cache
 
-CLEANFILES = $(shell find . -name "*~")
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -715,7 +714,6 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
-	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -814,6 +812,8 @@ uninstall-am: uninstall-backtobasicsdocDATA uninstall-local
 	pdf-am ps ps-am tags tags-recursive uninstall uninstall-am \
 	uninstall-backtobasicsdocDATA uninstall-local
 
+
+#CLEANFILES = $(shell find . -name "*~")
 
 # Remove doc directory on uninstall
 uninstall-local:

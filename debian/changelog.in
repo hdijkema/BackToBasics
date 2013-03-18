@@ -1,4 +1,4 @@
-BackToBasics (%%VERSION%%.%%DISTRO%%.%%SUBVERSION%%) %%DISTRO%%; urgency=low
+backtobasics (%%VERSION%%.%%DISTRO%%.%%SUBVERSION%%) %%DISTRO%%; urgency=low
 
   * Initial release 
 

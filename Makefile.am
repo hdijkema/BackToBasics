@@ -25,7 +25,7 @@ DISTCLEANFILES = intltool-extract \
 	intltool-update \
 	po/.intltool-merge-cache
 
-CLEANFILES = $(shell find . -name "*~")
+#CLEANFILES = $(shell find . -name "*~")
 
 # Remove doc directory on uninstall
 uninstall-local:

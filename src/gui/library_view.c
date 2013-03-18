@@ -39,7 +39,7 @@ library_view_t* library_view_new(Backtobasics* btb, library_t* library)
   view->time_in_ms = -1;
   view->len_in_ms = -1;
   view->track_index = -1;
-  view->track_id = -1;
+  view->track_id = NULL;
   view->sliding = 0;
   view->repeat = -1;
   
@@ -82,6 +82,7 @@ void library_view_destroy(library_view_t* view)
   string_model_destroy(view->genre_model);
   string_model_destroy(view->artist_model);
   string_model_destroy(view->album_model);
+  playlists_model_destroy(view->playlists_model);
   mc_free(view);
 }
 
@@ -179,7 +180,9 @@ void library_view_init(library_view_t* view)
   
   // Set logo
   {
-    file_info_t* info = file_info_new(backtobasics_logo(view->btb)); 
+    char *path = backtobasics_logo(view->btb); 
+    file_info_t* info = file_info_new(path);
+    mc_free(path);
     if (file_info_is_file(info)) {
       GError *err = NULL;
       GdkPixbuf* pb = gdk_pixbuf_new_from_file_at_scale(file_info_path(info),
@@ -753,7 +756,7 @@ static gboolean library_view_update_info(library_view_t* view)
 
       // update track info
       if (index != view->track_index || 
-            (track != NULL && track_get_id(track) != view->track_id) ) {
+            (track != NULL && track_get_id(track) != view->track_id)) {
         view->track_index = index;
         if (track != NULL) {
           // fetch lyric if possible
@@ -789,6 +792,9 @@ static gboolean library_view_update_info(library_view_t* view)
           file_info_t* info = file_info_new(track_get_artid(track));
           if (!file_info_is_file(info)) {
             file_info_destroy(info);
+            char *path = backtobasics_logo(view->btb); 
+            info = file_info_new(path);
+            mc_free(path);
             info = file_info_new(backtobasics_logo(view->btb));
           }
           if (file_info_is_file(info)) {

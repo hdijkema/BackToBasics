@@ -84,7 +84,7 @@ void radio_view_init(radio_view_t* view)
   
   // Web page
   view->web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
-  WebKitWebContext* c = webkit_web_context_get_default();
+  //WebKitWebContext* c = webkit_web_context_get_default();
   GtkBox* webp = GTK_BOX(gtk_builder_get_object(view->builder, "scw_radio"));
   //gtk_box_pack_start(webp, GTK_WIDGET(view->web_view), TRUE, TRUE, 4);
   gtk_container_add(GTK_CONTAINER(webp), GTK_WIDGET(view->web_view));
@@ -138,7 +138,6 @@ static void play_station(radio_view_t* view, radio_t* station)
   track_t* radio_track = track_new();
   track_set_title(radio_track, radio_name(station));
   track_set_stream(radio_track, radio_stream_url(station));
-  track_set_id(radio_track, time(NULL));
   playlist_t* pl = playlist_new(_("Internet Radio Stream"));
   playlist_append(pl, radio_track);
   Backtobasics* btb = view->btb;
@@ -183,7 +182,7 @@ void radio_view_edit_station(GtkMenuItem* item, GObject* rview)
   if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
 
     GtkDialog *dlg = GTK_DIALOG(gtk_builder_get_object(view->builder, "dlg_radio"));
-    gtk_window_set_title(GTK_WINDOW(dlg), _("Add an internet radio station"));
+    gtk_window_set_title(GTK_WINDOW(dlg), _("Edit an internet radio station"));
     GtkEntry *url = GTK_ENTRY(gtk_builder_get_object(view->builder, "txt_radio_url"));
     GtkEntry *name = GTK_ENTRY(gtk_builder_get_object(view->builder, "txt_radio_name"));
     GtkEntry *web = GTK_ENTRY(gtk_builder_get_object(view->builder, "txt_radio_web"));
@@ -229,6 +228,7 @@ void radio_view_edit_station(GtkMenuItem* item, GObject* rview)
         go_on = el_false;
       }
     }
+    gtk_widget_hide(GTK_WIDGET(dlg));
   }
 }
 
@@ -263,7 +263,6 @@ void radio_view_add_station(GtkMenuItem* item, GObject* rview)
         
         radio_t* station = radio_new(r_url, r_name, r_web);
         radio_determine_stream_url(station, r_url);
-        
         radio_library_append(view->library, station);
         radio_destroy(station);
         gtk_list_model_refilter(GTK_LIST_MODEL(station_model_gtk_model(view->station_model)));

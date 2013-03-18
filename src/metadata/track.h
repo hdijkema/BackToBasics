@@ -7,7 +7,6 @@
 
 
 typedef struct {
-  long id;
   char* id_str;
   char* title;
   char* artist;
@@ -46,9 +45,8 @@ void track_fwrite(track_t* t, FILE* f);
 
 void log_track(track_t* t);
 
-void track_set_id(track_t* t, long id);
-long track_get_id(track_t* t);
 const char* track_get_id_as_str(track_t* t);
+const char* track_get_id(track_t* t);
 
 void track_set_file_size(track_t* t, long long size);
 long long track_get_file_size(track_t* t);

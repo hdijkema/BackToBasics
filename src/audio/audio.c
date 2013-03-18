@@ -297,6 +297,7 @@ void media_destroy(audio_worker_t* worker)
   worker->destroy(worker->worker_data);
   audio_event_fifo_destroy(worker->fifo);
   mc_free(worker);
+  log_debug("media destroy done");
 }
 
 audio_source_t audio_source(audio_worker_t* worker)

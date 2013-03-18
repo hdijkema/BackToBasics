@@ -22,7 +22,6 @@ track_t* track_new()
   t->is_file = 0;
   t->year = -1;
   t->nr = -1;
-  t->id = -1;
   t->id_str = mc_strdup("-1");
   t->begin_offset_in_ms = -1;
   t->end_offset_in_ms = -1;
@@ -33,7 +32,7 @@ track_t* track_new()
 
 el_bool track_valid_id(track_t* t)
 {
-  return t->id >= 0;
+  return strcmp(t->id_str,"-1") != 0;
 }
 
 #define C(a) t->/**/a = mc_strdup(s->/**/a)
@@ -58,7 +57,6 @@ track_t* track_copy(track_t* s)
   CC(is_file);
   CC(year);
   CC(nr);
-  CC(id);
   C(id_str);
   CC(begin_offset_in_ms);
   CC(end_offset_in_ms);
@@ -120,18 +118,9 @@ SET_GET_T(source_mtime, time_t);
 SET_GET_T(year, int)
 SET_GET_T(nr, int)
 
-void track_set_id(track_t* t, long val)
+const char* track_get_id(track_t* t) 
 {
-  t->id = val;
-  char s[100];
-  sprintf(s, "%ld", val);
-  mc_free(t->id_str);
-  t->id_str = mc_strdup(s);
-}
-
-long track_get_id(track_t* t) 
-{
-  return t->id;
+  return t->id_str;
 }
 
 const char* track_get_id_as_str(track_t* t)
@@ -162,6 +151,12 @@ void track_set_file(track_t* t, const char* file, long length_in_ms, long begin_
     t->file_size = (long long) (((double) length_in_ms / (double) t->length_in_ms) * s);
   }
   t->is_file = el_true;
+  {
+    char s[10240];
+    sprintf(s, "%s-%ld-%ld-%ld", t->file_or_url, t->length_in_ms, t->begin_offset_in_ms, t->end_offset_in_ms);
+    mc_free(t->id_str);
+    t->id_str = mc_strdup(s);
+  }
 }
 
 void track_set_stream(track_t* t,const char* url)
@@ -198,7 +193,7 @@ el_bool track_get_is_stream(track_t* t)
 void log_track(track_t* t)
 {
   log_debug("begin track");
-  LD(id);
+  L(id_str);
   LD(nr);
   L(title);
   L(artist);
@@ -227,9 +222,10 @@ void log_track(track_t* t)
 
 void track_fwrite(track_t* t, FILE* f) 
 {
+  // Don't store lyrics.
   long track_magic_number = TRACK_MAGIC_NUMBER;
   fwrite(&track_magic_number, sizeof(long), 1, f);
-  WNR(t->id, f);
+  WSTR(t->id_str, f);
   WSTR(t->title, f);
   WSTR(t->artist, f);
   WSTR(t->composer, f);
@@ -238,7 +234,6 @@ void track_fwrite(track_t* t, FILE* f)
   WSTR(t->album_artist, f);
   WSTR(t->album_composer, f);
   WSTR(t->genre, f);
-  //WSTR(t->lyric, f);
   WNR(t->year, f);
   WNR(t->nr, f);
   WSTR(t->artid, f);
@@ -271,8 +266,7 @@ el_bool track_fread(track_t* t, FILE* f)
   
   if (track_magic_number == TRACK_MAGIC_NUMBER) {
     el_bool result = el_true;
-    RNR(result, t->id, f);
-    track_set_id(t, t->id);
+    RSTR(result, t->id_str, f);
     RSTR(result, t->title, f);
     RSTR(result, t->artist, f);
     RSTR(result, t->composer, f);
@@ -322,3 +316,4 @@ int track_cmp(track_t* t1, track_t* t2)
     return r1;
   }
 }
+

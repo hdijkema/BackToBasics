@@ -1,3 +1,14 @@
 # List of source files containing translatable strings.
 
 src/main.c
+src/backtobasics.c
+src/backtobasics.ui
+src/btb_play.c
+src/btb_playlist.c
+src/gui/library_view.c
+src/gui/playlist_model.c
+src/gui/playlists_model.c
+src/gui/radio_view.c
+src/gui/station_model.c
+src/library/library.c
+src/playlist/playlist_player.c

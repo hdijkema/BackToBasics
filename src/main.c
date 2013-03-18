@@ -13,12 +13,16 @@
 
 #include <glib/gi18n.h>
 
+static char* prgname;
+
 int main (int argc, char *argv[])
 {
 	Backtobasics *app;
 	int status;
-	
+
 	mc_init();
+	prgname = mc_strdup(argv[0]);
+	
 	curl_global_init(CURL_GLOBAL_ALL);
 
 #ifdef ENABLE_NLS
@@ -31,6 +35,13 @@ int main (int argc, char *argv[])
   status = g_application_run (G_APPLICATION (app), argc, argv);
   g_application_quit(G_APPLICATION(app));
   g_object_unref (app);
+  
+  mc_free(prgname);
 
   return status;
+}
+
+const char* dollar0(void)
+{
+  return prgname;
 }

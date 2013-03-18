@@ -1,4 +1,5 @@
 #include <playlist/playlist.h>
+#include <elementals.h>
 
 /*****************************************************************
  * playlist array
@@ -26,7 +27,7 @@ IMPLEMENT_EL_ARRAY(playlist_array, track_t, copy, destroy);
 playlist_t* playlist_new(const char* name) 
 {
   playlist_t* pl = (playlist_t*) mc_malloc(sizeof(playlist_t));
-  pl->list = playlist_array_new();
+  pl->list = mc_take_over(playlist_array_new());
   pl->name = mc_strdup(name);
   return pl;
 }
@@ -87,7 +88,7 @@ long long playlist_tracks_hash(playlist_t* pl)
   int i, N;
   long long a = 0;
   for(i = 0, N = playlist_array_count(pl->list); i < N; ++i) {
-    a += track_get_id(playlist_get(pl, i));
+    a += str_crc32(track_get_id(playlist_get(pl, i)));
     a <<= 1;
   }
   a += N;

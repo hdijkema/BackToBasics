@@ -1,0 +1,9 @@
+?package(cueplay):\
+        needs="X11"\
+        section="Applications/Sound"\
+	hints="Video"\
+	title="Back To Basics"\
+	icon="/usr/share/pixmaps/backtobasics.xpm"\
+	icon32x32="/usr/share/pixmaps/backtobasics.xpm"\
+	icon16x16="/usr/share/pixmaps/backtobasics-16.xpm"\
+	command="/usr/bin/backtobasics"

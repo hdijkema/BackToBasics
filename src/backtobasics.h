@@ -42,6 +42,8 @@ typedef struct _BacktobasicsPrivate BacktobasicsPrivate;
 #include <gui/library_view.h>
 #include <gui/radio_view.h>
 
+const char* dollar0(void);
+
 struct _BacktobasicsClass
 {
 	GtkApplicationClass parent_class;
@@ -81,7 +83,7 @@ Backtobasics *backtobasics_new (void);
 GtkBuilder* backtobasics_builder(Backtobasics* app);
 library_t* backtobasics_library(Backtobasics* app);
 playlist_player_t* backtobasics_player(Backtobasics* app);
-const char* backtobasics_logo(Backtobasics* app);
+char* backtobasics_logo(Backtobasics* app);
 
 el_config_t* btb_config(Backtobasics* btb);
 void btb_config_set_int(Backtobasics* app, const char* path, int val);

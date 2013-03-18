@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=Back To Basics
+Comment=An other music player for Linux
+Exec=backtobasics
+Type=Application
+Categories=AudioVideo;GTK;Player;
+Icon=backtobasics
+Terminal=false
+StartupNotify=true
+X-MiltipleArgs=false
+GenericName=Music player
+MimeType=audio/x-mpeg3;audio/mp3;audio/x-mp3;

@@ -3,6 +3,7 @@
 #include <time.h>
 #include <curl/curl.h>
 #include <unistd.h>
+#include <mpg123.h>
 
 static void sleep_ms(int ms)
 {
@@ -214,6 +215,25 @@ void* stream_thread(void* data)
   
   return NULL;
 }
+
+// Due to older mpg123 library in ubuntu
+// we can't use mpg123_encsize
+static int get_encsize(int encoding) 
+{
+  if(encoding & MPG123_ENC_8)
+  return 1;
+  else if(encoding & MPG123_ENC_16)
+  return 2;
+//  else if(encoding & MPG123_ENC_24)
+//  return 3;
+  else if(encoding & MPG123_ENC_32 || encoding == MPG123_ENC_FLOAT_32)
+  return 4;
+  else if(encoding == MPG123_ENC_FLOAT_64)
+  return 8;
+  else
+  return 0;
+}
+//mpg123_encsize(mp3_info->encoding)
  
 void* player_thread(void* _mp3_info) 
 {
@@ -259,7 +279,8 @@ void* player_thread(void* _mp3_info)
         mp3_info->buffer_size = mpg123_outblock(mp3_info->handle);
         mc_free(mp3_info->buffer);
         mp3_info->buffer = mc_malloc(mp3_info->buffer_size * sizeof(char) );
-        aodev_set_format(mp3_info->ao_handle, mpg123_encsize(mp3_info->encoding) * 8, mp3_info->rate, mp3_info->channels);
+        int bytes_per_sample = get_encsize(mp3_info->encoding);
+        aodev_set_format(mp3_info->ao_handle, bytes_per_sample * 8, mp3_info->rate, mp3_info->channels);
         aodev_open(mp3_info->ao_handle);
         mp3_info->is_open = el_true;
         mp3_info->is_file = el_true;
@@ -389,7 +410,7 @@ void* player_thread(void* _mp3_info)
                   if (aodev_is_open(mp3_info->ao_handle)) {
                     aodev_close(mp3_info->ao_handle);
                   }
-                  aodev_set_format(mp3_info->ao_handle, mpg123_encsize(mp3_info->encoding) * 8, mp3_info->rate, mp3_info->channels);
+                  aodev_set_format(mp3_info->ao_handle, get_encsize(mp3_info->encoding) * 8, mp3_info->rate, mp3_info->channels);
                   aodev_open(mp3_info->ao_handle);
                 break;
                 case MPG123_OK:

@@ -33,7 +33,7 @@ FILE* log_handle()
 
 /* For testing propose use the local (not installed) ui file */
 /* #define UI_FILE PACKAGE_DATA_DIR"/ui/backtobasics.ui" */
-#define UI_FILE "./backtobasics.ui"
+/*#define UI_FILE "./backtobasics.ui"*/
 #define TOP_WINDOW "window"
 
 G_DEFINE_TYPE (Backtobasics, backtobasics, GTK_TYPE_APPLICATION);
@@ -62,9 +62,47 @@ playlist_player_t* backtobasics_player(Backtobasics* app)
   return app->player;
 }
 
-const char* backtobasics_logo(Backtobasics* app)
+char* ui_file(Backtobasics* btb, const char* filename)
 {
-  return "../images/logo_vague.png";
+	file_info_t* builder_info = mc_take_over(file_info_new(dollar0()));
+	file_info_t* bi0 = mc_take_over(file_info_new(file_info_dirname(builder_info)));
+	file_info_t* bi1 = mc_take_over(file_info_new(file_info_dirname(bi0)));
+	file_info_t* t0 = mc_take_over(file_info_combine(bi0, filename));
+	file_info_t* t1 = mc_take_over(file_info_combine(bi1, filename));
+	if (file_info_exists(t0)) {
+	  char* path = mc_strdup(file_info_absolute_path(t0));
+	  file_info_destroy(t0);
+	  file_info_destroy(t1);
+	  file_info_destroy(bi1);
+	  file_info_destroy(bi0);
+	  file_info_destroy(builder_info);
+	  return path;
+	} else if (file_info_exists(t1)) {
+	  char* path = mc_strdup(file_info_absolute_path(t1));
+	  file_info_destroy(t0);
+	  file_info_destroy(t1);
+	  file_info_destroy(bi1);
+	  file_info_destroy(bi0);
+	  file_info_destroy(builder_info);
+	  return path;
+	} else {
+	  file_info_destroy(t0);
+	  file_info_destroy(t1);
+    file_info_t* bi2 = mc_take_over(file_info_combine(bi1, "share/backtobasics/ui"));
+    file_info_t* bi3 = mc_take_over(file_info_combine(bi2, filename));
+    char* path = mc_strdup(file_info_absolute_path(bi3));
+    file_info_destroy(bi3);
+    file_info_destroy(bi2);
+    file_info_destroy(bi1);
+	  file_info_destroy(bi0);
+    file_info_destroy(builder_info);
+    return path;
+  }
+}
+
+char* backtobasics_logo(Backtobasics* app)
+{
+  return mc_take_over(ui_file(app, "logo_vague.png"));
 }
 
 /* Create a new window */
@@ -78,13 +116,15 @@ static void backtobasics_new_window (GApplication *app)
 	BacktobasicsPrivate *priv = BACKTOBASICS_GET_PRIVATE(app);
 
 	/* Load UI from file */
+  Backtobasics* btb = (Backtobasics*) app;
 	builder = gtk_builder_new ();
-	if (!gtk_builder_add_from_file (builder, UI_FILE, &error)) {
+	
+	char* builder_path = ui_file(btb, "backtobasics.ui");
+	if (!gtk_builder_add_from_file (builder, builder_path, &error)) {
 		g_critical ("Couldn't load builder file: %s", error->message);
 		g_error_free (error);
 	}
 
-  Backtobasics* btb = (Backtobasics*) app;
   btb->builder = builder;
   
   /* create views */
@@ -101,8 +141,10 @@ static void backtobasics_new_window (GApplication *app)
 	/* Get the window object from the ui file */
 	window = GTK_WIDGET (gtk_builder_get_object (builder, TOP_WINDOW));
   if (!window) {
-    g_critical ("Widget \"%s\" is missing in file %s.", TOP_WINDOW, UI_FILE);
+    g_critical ("Widget \"%s\" is missing in file %s.", TOP_WINDOW, builder_path);
   }
+	mc_free(builder_path);
+	
   int x = el_config_get_int(btb->config, "main.window.x", 25);
   int y = el_config_get_int(btb->config, "main.window.y", 25);
   int w = el_config_get_int(btb->config, "main.window.w", 500);
@@ -183,12 +225,14 @@ static void backtobasics_init (Backtobasics *btb)
   btb->radio_library = radio_library_new(rec_path);
   mc_free(rec_path);
   
-  info = file_info_combine(btb_cfg_dir, "btb.radio");
+  file_info_t* libdir = file_info_new(library_get_basedir(btb->library));
+  info = file_info_combine(libdir, "btb.radio");
   if (file_info_exists(info)) {
     log_debug("btb radio loading");
     radio_library_load(btb->radio_library, file_info_absolute_path(info));
   }
   file_info_destroy(info);
+  file_info_destroy(libdir);
   
   file_info_destroy(btb_cfg_dir);
   
@@ -211,9 +255,12 @@ static void backtobasics_finalize (GObject *object)
   file_info_destroy(info);
   el_config_set_string(btb->config, "library.path", library_get_basedir(btb->library));
   
-  info = file_info_combine(btb_cfg_dir, "btb.radio");
+  file_info_t* libdir = file_info_new(library_get_basedir(btb->library));
+  info = file_info_combine(libdir, "btb.radio");
   radio_library_save(btb->radio_library, file_info_absolute_path(info));
   file_info_destroy(info);
+  file_info_destroy(libdir);
+  
   el_config_set_string(btb->config, "recordings.path", radio_library_rec_location(btb->radio_library));
   
   

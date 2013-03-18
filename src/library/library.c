@@ -54,16 +54,16 @@ library_t* library_new(void)
   l->filter_album_title = NULL;
   l->dirty = el_true;
   l->filter = el_true;
-  l->genres = genre_array_new();
-  l->artists = artist_array_new();
-  l->albums = album_array_new();
+  l->genres = mc_take_over(genre_array_new());
+  l->artists = mc_take_over(artist_array_new());
+  l->albums = mc_take_over(album_array_new());
   l->library_path = mc_strdup("");
   
   l->filtered_artists = set_new(SET_CASE_INSENSITIVE);
   l->filtered_albums = set_new(SET_CASE_INSENSITIVE);
   l->filtered_tracks = set_new(SET_CASE_SENSITIVE);
   
-  l->playlists = playlist_array_new();
+  l->playlists = mc_take_over(playlist_array_new());
   
   return l;
 }
@@ -203,7 +203,6 @@ playlist_t* library_current_selection(library_t* l, const char* name)
 library_result_t library_add(library_t* l, track_t* t)
 {
   l->current_id += 1;
-  track_set_id(t, l->current_id);
   library_db_put(l->tracks_db, track_get_id_as_str(t), t);
   track_t* nt = library_db_get(l->tracks_db, track_get_id_as_str(t));
   playlist_append(l->all_tracks, nt);
@@ -224,8 +223,7 @@ int library_find_index(library_t* l, track_t* t)
 
 library_result_t library_set(library_t* l, int index, track_t* t)
 {
-  track_t* trk = playlist_get(l->all_tracks, index);
-  track_set_id(t, track_get_id(trk));
+  //track_t* trk = playlist_get(l->all_tracks, index);
   playlist_set(l->all_tracks, index, t);
   l->dirty = el_true;
   return LIBRARY_OK;

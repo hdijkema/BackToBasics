@@ -127,7 +127,7 @@ IMPLEMENT_EL_ARRAY(radio_array, radio_t, copy, destroy);
 radio_library_t* radio_library_new(const char* recordings_location)
 {
   radio_library_t* lib = (radio_library_t*) mc_malloc(sizeof(radio_library_t));
-  lib->stations = radio_array_new();
+  lib->stations = mc_take_over(radio_array_new());
   lib->recordings_location = mc_strdup(recordings_location);
   return lib;
 }

@@ -23,7 +23,7 @@ track_array tracks_from_cue(const char* cuefile)
 {
   cue_t *cue = cue_new(cuefile);
   
-  track_array array = track_array_new();
+  track_array array = mc_take_over(track_array_new());
   
   int i, N;
   for(i = 0, N = cue_entries(cue);i < N;++i) {
@@ -91,7 +91,7 @@ track_array tracks_from_cue(const char* cuefile)
 track_array tracks_from_media(const char* localfile)
 {
   TagLib_File* fl = taglib_file_new(localfile);
-  track_array array = track_array_new();
+  track_array array = mc_take_over(track_array_new());
   
   if (fl == NULL) 
     return array;

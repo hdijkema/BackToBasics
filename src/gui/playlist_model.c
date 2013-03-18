@@ -186,7 +186,7 @@ struct data {
 
 static void iterate_func(playlist_model_t* model, int row, struct data* d)
 {
-   d->a += track_get_id(playlist_get(model->playlist, row));
+   d->a += str_crc32(track_get_id(playlist_get(model->playlist, row)));
    d->a <<= 1;
    d->N += 1;
 }
