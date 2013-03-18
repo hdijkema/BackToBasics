@@ -2,7 +2,7 @@
 Version=1.0
 Name=Back To Basics
 Comment=An other music player for Linux
-Exec=backtobasics
+Exec=/usr/bin/backtobasics
 Type=Application
 Categories=AudioVideo;GTK;Player;
 Icon=backtobasics
