@@ -1530,6 +1530,9 @@
                                                 <property name="can_focus">True</property>
                                                 <property name="fixed_height_mode">True</property>
                                                 <signal name="button-release-event" handler="library_view_genre_clicked" object="view_library" swapped="no"/>
+                                                <child internal-child="selection">
+                                                  <object class="GtkTreeSelection" id="treeview-selection1"/>
+                                                </child>
                                               </object>
                                             </child>
                                           </object>
@@ -1555,6 +1558,9 @@
                                                 <property name="can_focus">True</property>
                                                 <property name="fixed_height_mode">True</property>
                                                 <signal name="button-release-event" handler="library_view_artist_clicked" object="view_library" swapped="no"/>
+                                                <child internal-child="selection">
+                                                  <object class="GtkTreeSelection" id="treeview-selection2"/>
+                                                </child>
                                               </object>
                                             </child>
                                           </object>
@@ -1585,6 +1591,9 @@
                                                 <property name="fixed_height_mode">True</property>
                                                 <signal name="row-activated" handler="library_view_play_album" object="view_library" swapped="no"/>
                                                 <signal name="button-release-event" handler="library_view_album_clicked" object="view_library" swapped="no"/>
+                                                <child internal-child="selection">
+                                                  <object class="GtkTreeSelection" id="treeview-selection3"/>
+                                                </child>
                                               </object>
                                             </child>
                                           </object>
@@ -1664,6 +1673,9 @@
                                                 <property name="enable_grid_lines">horizontal</property>
                                                 <signal name="row-activated" handler="library_view_track_activated" object="view_library" swapped="no"/>
                                                 <signal name="drag-begin" handler="library_view_library_begin_drag" object="view_library" swapped="no"/>
+                                                <child internal-child="selection">
+                                                  <object class="GtkTreeSelection" id="treeview-selection5"/>
+                                                </child>
                                               </object>
                                             </child>
                                           </object>
@@ -1865,11 +1877,14 @@
                             <property name="can_focus">True</property>
                             <child>
                               <object class="GtkTreeView" id="tv_radio">
-                                <property name="width_request">250</property>
+                                <property name="width_request">100</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <signal name="button-release-event" handler="radio_view_station_clicked" object="view_radio" swapped="no"/>
                                 <signal name="row-activated" handler="radio_view_station_activated" object="view_radio" swapped="no"/>
+                                <child internal-child="selection">
+                                  <object class="GtkTreeSelection" id="treeview-selection6"/>
+                                </child>
                               </object>
                               <packing>
                                 <property name="resize">False</property>
