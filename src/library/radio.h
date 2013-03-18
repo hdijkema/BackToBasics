@@ -4,6 +4,7 @@
 #include <elementals.h>
 #include <time.h>
 #include <audio/ripstream.h>
+#include <library/library.h>
 
 /*************************************************************************
  * Radio  
@@ -45,6 +46,7 @@ DECLARE_EL_ARRAY(radio_array, radio_t);
 typedef struct {
   radio_array stations;
   char* recordings_location;
+  library_t* radio_lib;
 } radio_library_t;
 
 
@@ -53,6 +55,7 @@ void radio_library_destroy(radio_library_t* lib);
 
 const char* radio_library_rec_location(radio_library_t* lib);
 void radio_library_set_rec_location(radio_library_t* lib, const char* newloc);
+library_t* radio_library_lib(radio_library_t* lib);
 
 void radio_library_load(radio_library_t* lib, const char* filename);
 void radio_library_save(radio_library_t* lib, const char* filename);

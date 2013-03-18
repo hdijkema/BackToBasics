@@ -126,7 +126,7 @@ static gboolean filter(void* data, int row)
 playlist_model_t* playlist_model_new()
 {
   playlist_model_t* model = (playlist_model_t*) mc_malloc(sizeof(playlist_model_t));
-  model->playlist = playlist_new(_("Untitled"));
+  model->playlist = playlist_new(NULL, _("Untitled"));
   model->model = gtk_list_model_new(model, 
                                     n_columns,
                                     column_type,
@@ -167,7 +167,7 @@ static void playlist_assembler(playlist_model_t* model, int row, playlist_t* plp
 
 playlist_t* playlist_model_get_selected_playlist(playlist_model_t* model)
 {
-  playlist_t* plp = playlist_new(_("Untitled"));
+  playlist_t* plp = playlist_new(playlist_get_library(model->playlist),_("Untitled"));
   gtk_list_model_iterate_with_func(model->model,(GtkListModelIterFunc) playlist_assembler, plp);
   return plp;
 }

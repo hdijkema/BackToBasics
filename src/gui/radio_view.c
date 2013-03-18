@@ -138,7 +138,8 @@ static void play_station(radio_view_t* view, radio_t* station)
   track_t* radio_track = track_new();
   track_set_title(radio_track, radio_name(station));
   track_set_stream(radio_track, radio_stream_url(station));
-  playlist_t* pl = playlist_new(_("Internet Radio Stream"));
+  library_add(radio_library_lib(view->library), radio_track);
+  playlist_t* pl = playlist_new(radio_library_lib(view->library),_("Internet Radio Stream"));
   playlist_append(pl, radio_track);
   Backtobasics* btb = view->btb;
   playlist_player_set_playlist(btb->player, pl);
@@ -330,7 +331,7 @@ static void radio_determine_stream_url(radio_t* radio, const char* start_url)
     hre_t re_get_url = hre_compile("file1\\s*=(.*)","im");
     if (hre_has_match(re_get_url, buffer)) {
       log_debug("HAS MATCH");
-      hre_matches m = hre_match(re_get_url, buffer);
+      hre_matches m = mc_take_over(hre_match(re_get_url, buffer));
       const char* url = hre_match_string(hre_matches_get(m, 1));
       radio_set_stream_url(radio, url);
       hre_matches_destroy(m);

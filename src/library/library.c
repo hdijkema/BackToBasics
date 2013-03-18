@@ -47,7 +47,7 @@ library_t* library_new(void)
 {
   library_t* l = (library_t*)  mc_malloc(sizeof(library_t));
   l->current_id = 0;
-  l->all_tracks = playlist_new(_("Library"));
+  l->all_tracks = playlist_new(l, _("Library"));
   l->tracks_db = library_db_new(100, HASH_CASE_SENSITIVE);
   l->filter_genre = NULL;
   l->filter_album_artist = NULL;
@@ -87,6 +87,15 @@ void library_destroy(library_t* l)
   mc_free(l);
 }
 
+void library_clear(library_t* l)
+{
+  playlist_clear(l->all_tracks);
+  genre_array_clear(l->genres);
+  artist_array_clear(l->artists);
+  album_array_clear(l->albums);
+  library_db_clear(l->tracks_db);
+}
+
 int library_count(library_t* l)
 {
   return playlist_count(l->all_tracks);
@@ -117,7 +126,7 @@ library_result_t library_load(library_t* l, const char* localpath)
         }
         
         playlist_destroy(l->all_tracks);
-        l->all_tracks = playlist_new(_("Library"));
+        l->all_tracks = playlist_new(l, _("Library"));
         
         long ntracks;
         if (fread(&ntracks, sizeof(long), 1, f) != 1) {
@@ -176,7 +185,7 @@ library_result_t library_save(library_t* l, const char* path)
 
 playlist_t* library_current_selection(library_t* l, const char* name)
 {
-  playlist_t* pl = playlist_new(name);
+  playlist_t* pl = playlist_new(l, name);
   int i, N = playlist_count(l->all_tracks);
   for(i = 0;i < N; ++i) {
     track_t* trk = playlist_get(l->all_tracks, i);
@@ -208,6 +217,11 @@ library_result_t library_add(library_t* l, track_t* t)
   playlist_append(l->all_tracks, nt);
   l->dirty = el_true;
   return LIBRARY_OK;
+}
+
+track_t* library_get(library_t* l, const char* id)
+{
+  return library_db_get(l->tracks_db, id);
 }
 
 int library_find_index(library_t* l, track_t* t)
@@ -544,6 +558,8 @@ void scan_library(scan_job_t* job, ScanJobCBFunc cb, void* lib)
   scanned_hash *h = scanned_hash_new(100, HASH_CASE_SENSITIVE);
   file_info_t* info = file_info_new(path);
   
+  library_clear(lib);
+  
   log_info2("Scanning library, %s", path); 
   
   log_info("counting total files");
@@ -585,7 +601,7 @@ void library_sort(library_t* library)
  
 playlist_t* library_playlists_add(library_t* l, const char* name)
 {
-  playlist_t* pl = playlist_new(name);
+  playlist_t* pl = playlist_new(l, name);
   playlists_array_append(l->playlists, pl);
   return pl;
 }

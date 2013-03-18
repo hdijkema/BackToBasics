@@ -11,7 +11,7 @@ DECLARE_EL_ARRAY(album_array, char);
 DECLARE_EL_ARRAY(playlists_array, playlist_t);
 DECLARE_HASH(library_db, track_t);
 
-typedef struct {
+typedef struct __library__ {
   long current_id;
   library_db* tracks_db;
   playlist_t* all_tracks;
@@ -49,6 +49,7 @@ playlist_t* library_current_selection(library_t* library, const char* name);
 
 library_result_t library_add(library_t* library, track_t* t);
 library_result_t library_set(library_t* library, int index, track_t* t);
+track_t* library_get(library_t*, const char* track_id);
 int library_find_index(library_t* library, track_t* t);
 
 genre_array library_genres(library_t* library);

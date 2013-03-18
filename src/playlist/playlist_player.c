@@ -46,7 +46,7 @@ playlist_player_t* playlist_player_new(void)
   plp->track_position_in_ms = -1;
   plp->playlist_hash = -1;
   plp->player_control = playlist_player_command_fifo_new();
-  plp->playlist = playlist_new(_("Untitled"));
+  plp->playlist = playlist_new(NULL,_("Untitled"));
   plp->mutex=(pthread_mutex_t*) mc_malloc(sizeof(pthread_mutex_t));
   plp->player_state = PLAYLIST_PLAYER_STOPPED;
   plp->repeat = PLP_NO_REPEAT;

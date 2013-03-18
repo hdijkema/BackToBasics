@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include "backtobasics.h"
 
 #include <glib/gi18n.h>
@@ -203,6 +204,7 @@ static void backtobasics_init (Backtobasics *btb)
   if (file_info_exists(info)) {
     library_load(btb->library, file_info_absolute_path(info));
   }
+  file_info_destroy(info);
   log_debug("config loaded");
   
   file_info_t* libhome = file_info_new_home("Music");
@@ -210,11 +212,6 @@ static void backtobasics_init (Backtobasics *btb)
   file_info_destroy(libhome);
   library_set_basedir(btb->library, path);
   mc_free(path);
-  
-  //scan_library(NULL, NULL, btb->library);
-  
-  file_info_destroy(info);
-  log_debug("ok?");
   
   
   // Radio library

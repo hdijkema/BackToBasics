@@ -129,6 +129,7 @@ radio_library_t* radio_library_new(const char* recordings_location)
   radio_library_t* lib = (radio_library_t*) mc_malloc(sizeof(radio_library_t));
   lib->stations = mc_take_over(radio_array_new());
   lib->recordings_location = mc_strdup(recordings_location);
+  lib->radio_lib = library_new();
   return lib;
 }
 
@@ -136,6 +137,7 @@ void radio_library_destroy(radio_library_t* lib)
 {
   radio_array_destroy(lib->stations);
   mc_free(lib->recordings_location);
+  library_destroy(lib->radio_lib);
   mc_free(lib);
 }
 
@@ -188,6 +190,11 @@ void radio_library_save(radio_library_t* lib, const char* filename)
   el_config_save(cfg, filename);
   
   el_config_destroy(cfg);
+}
+
+library_t* radio_library_lib(radio_library_t* lib) 
+{
+  return lib->radio_lib;
 }
 
 radio_t* radio_library_station(radio_library_t* lib, int index)

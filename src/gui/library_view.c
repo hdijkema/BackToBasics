@@ -795,7 +795,7 @@ static gboolean library_view_update_info(library_view_t* view)
             char *path = backtobasics_logo(view->btb); 
             info = file_info_new(path);
             mc_free(path);
-            info = file_info_new(backtobasics_logo(view->btb));
+            //info = file_info_new(backtobasics_logo(view->btb));
           }
           if (file_info_is_file(info)) {
             GError *err = NULL;
