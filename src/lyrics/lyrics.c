@@ -128,7 +128,7 @@ static char* fetch_from_lyricsondemand_dot_com(struct fetcher* data)
     p1 = strstr(p1, "</script>");
     if (p1) {
       p1 += 9;
-      char *p2 = strstr(p1, "<p>");
+      char *p2 = strstr(p1, "<script");
       if (p2) {
         p2[0] = '\0';
         log_debug2("lyric: %s", p1);
@@ -204,13 +204,14 @@ char* lyric_html_to_text(const char* lyric)
 {
   hre_t* re_wsp = hre_compile("\\s","");
   hre_t* re_br = hre_compile("[<]br[^>]*[>]","i");
+  hre_t* re_p = hre_compile("<p>","i");
   hre_t* re_tag = hre_compile("[<][^>]*[>]","i");
   hre_t* re_amp = hre_compile("[&]amp[;]","i");
   hre_t* re_lt = hre_compile("[&]lt[;]","i");
   hre_t* re_gt = hre_compile("[&]gt[;]","i");
   hre_t* re_quot = hre_compile("[&]quot[;]","i");
-  hre_t* res[] = { re_wsp, re_br, re_tag,  re_amp, re_lt, re_gt, re_quot, NULL };
-  char* repl[] = { " ",    "\n",  "",      "&",    "<",   ">",   "\"",    NULL };
+  hre_t* res[] = { re_wsp, re_br, re_p, re_tag,  re_amp, re_lt, re_gt, re_quot, NULL };
+  char* repl[] = { " ",    "\n",  "\n\n", "",      "&",    "<",   ">",   "\"",    NULL };
   int i;
   char* r1, *r2;
   r1 = mc_strdup(lyric);
