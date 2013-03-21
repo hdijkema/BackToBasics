@@ -11,6 +11,8 @@ struct __library__;
 typedef struct {
   struct __library__* library;
   playlist_array list;
+  el_bool hash_set;
+  long long hash;
   char* name;
 } playlist_t;
 
@@ -34,5 +36,6 @@ int playlist_count(playlist_t* pl);
 long long playlist_tracks_hash(playlist_t* pl);
 
 void playlist_sort_standard(playlist_t* pl);
+void playlist_log(playlist_t* pl);
 
 #endif

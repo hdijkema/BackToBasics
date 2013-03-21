@@ -4,7 +4,7 @@
 
 
 uidir = $(pkgdatadir)/ui
-ui_DATA = backtobasics.ui btb.png ../images/*
+ui_DATA = backtobasics.ui btb.png ../images/* *.css
 
 menu1dir = $(datarootdir)/applications
 menu1_DATA = share/applications/*
@@ -35,6 +35,8 @@ AM_CFLAGS =\
 bin_PROGRAMS = backtobasics_bin 
 	
 GENERICSRC = \
+	util/simple_html.c \
+	util/simple_html.h \
 	util/config.c \
 	util/config.h \
 	audio/aodev.c \
@@ -71,7 +73,7 @@ backtobasics_bin_SOURCES = \
 	$(GENERICSRC) \
 	main.c \
 	backtobasics.h \
-	backtobasics.c \
+	backtobasics_bin.c \
 	gui/library_view.c \
 	gui/library_view.h \
 	gui/playlist_model.c \

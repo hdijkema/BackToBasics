@@ -14,6 +14,7 @@ static char* copy(char* track_id)
 
 static void destroy(char* track_id)
 {
+  //log_debug2("destroy id %s", track_id);
   mc_free(track_id);
   //track_destroy(t);
   // Do nothing here. 
@@ -32,6 +33,8 @@ playlist_t* playlist_new(library_t* library, const char* name)
   pl->list = mc_take_over(playlist_array_new());
   pl->name = mc_strdup(name);
   pl->library = library;
+  pl->hash = -1;
+  pl->hash_set = el_false;
   return pl;
 }
  
@@ -60,16 +63,19 @@ playlist_t* playlist_copy(playlist_t* pl)
 void playlist_append(playlist_t* pl, track_t* t)
 {
   playlist_array_append(pl->list, (char*) track_get_id(t));
+  pl->hash_set = el_false;
 }
 
 void playlist_insert(playlist_t* pl, int index, track_t* t)
 {
   playlist_array_insert(pl->list, index, (char*) track_get_id(t)); 
+  pl->hash_set = el_false;
 }
 
 void playlist_set(playlist_t* pl,int index, track_t* t)
 {
   playlist_array_set(pl->list, index, (char*) track_get_id(t));
+  pl->hash_set = el_false;
 }
  
 const char* playlist_name(playlist_t* pl)
@@ -99,14 +105,20 @@ int playlist_count(playlist_t* pl)
 
 long long playlist_tracks_hash(playlist_t* pl)
 {
-  int i, N;
-  long long a = 0;
-  for(i = 0, N = playlist_array_count(pl->list); i < N; ++i) {
-    a += str_crc32(track_get_id(playlist_get(pl, i)));
-    a <<= 1;
+  if (pl->hash_set) {
+    return pl->hash;
+  } else { 
+    int i, N;
+    long long a = 0;
+    for(i = 0, N = playlist_array_count(pl->list); i < N; ++i) {
+      a += str_crc32(track_get_id(playlist_get(pl, i)));
+      a <<= 1;
+    }
+    a += N;
+    pl->hash = a;
+    pl->hash_set = el_true;
+    return a;
   }
-  a += N;
-  return a;
 }
 
 
@@ -137,6 +149,17 @@ static int cmp_standaard(void* lib, char* id1, char* id2)
 
 void playlist_sort_standard(playlist_t* pl)
 {
-  playlist_array_sort1(pl->list, pl->library, cmp_standaard); 
+  playlist_array_sort1(pl->list, pl->library, cmp_standaard);
+  pl->hash_set = el_false;
 }
 
+
+void playlist_log(playlist_t* pl)
+{
+  int i;
+  log_debug2("playlist name: %s", playlist_name(pl));
+  for(i = 0; i< playlist_count(pl); ++i) {
+    track_t* t = playlist_get(pl,i);
+    log_debug2("id = %s", track_get_id(t));
+  }
+}

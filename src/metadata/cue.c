@@ -25,8 +25,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <sys/stat.h>
-#include <elementals/log.h>
-#include <elementals/memcheck.h>
+#include <elementals.h>
 
 #define T(a)  (a==NULL) ? "" : a
 
@@ -65,6 +64,8 @@ static char* readline(FILE* f)
 
 static char* mytrim(const char* line)
 {
+  return hre_trim_copy(line);
+  /*
   int i, j;
   for (i = 0; line[i] != '\0' && isspace(line[i]); i++) ;
   char* k = mystrdup(&line[i]);
@@ -72,7 +73,7 @@ static char* mytrim(const char* line)
   if (j >= 0) {
     k[j + 1] = '\0';
   }
-  return k;
+  return k;*/
 }
 
 #define trim(a) (char* ) mc_take_over(mytrim(a))
@@ -101,6 +102,9 @@ static int eq(const char* s, const char* e)
     mc_free(r);
     return 0;
   }
+  
+  log_debug6("%-15s %s, %d, %d %d", r, e, lr, le, strncasecmp(r, e, le));
+  log_debug3("%d, %d", r[0], e[0]);
   
   if (strncasecmp(r, e, le) == 0) {
     mc_free(r);
@@ -161,6 +165,7 @@ static cue_entry_t* cue_entry_new(cue_t* s)
   r->end_offset_in_ms = -1;
   r->sheet = (void* )s;
   r->vfile = NULL;
+  r->audio_file = NULL;
   return r;
 }
 
@@ -229,7 +234,6 @@ cue_t* cue_new(const char* file)
 {
   cue_t* r = (cue_t* ) mc_malloc(sizeof(cue_t));
 
-  r->audio_file = NULL;
   r->album_title = NULL;
   r->album_performer = NULL;
   r->album_composer = NULL;
@@ -242,6 +246,7 @@ cue_t* cue_new(const char* file)
 
   FILE*f = fopen(file, "rt");
   time_t _audio_mtime=0;
+  char* audio_file = NULL;
 
   if (f == NULL) {
     r->_errno = ENOFILECUE;
@@ -263,12 +268,12 @@ cue_t* cue_new(const char* file)
             mc_free(r->album_title);
             r->album_title = unquote(line, "title");
           } else if (eq(line, "file")) {
-            mc_free(r->audio_file);
+            mc_free(audio_file);
             char* fl = getFilePart(line);
             char* af = unquote(fl, "");
             if (strlen(af) > 0) {
               if (af[0] == '/') {
-                r->audio_file = af;
+                audio_file = af;
               } else {
                 char* cf = mc_strdup(r->cuefile);
                 int ii;
@@ -277,21 +282,21 @@ cue_t* cue_new(const char* file)
                   cf[ii] = '\0';
                   char* aaf = (char* )mc_malloc(strlen(cf) + strlen(af) + strlen("/") + 1);
                   sprintf(aaf, "%s/%s", cf, af);
-                  r->audio_file = aaf;
+                  audio_file = aaf;
                   mc_free(cf);
                   mc_free(af);
                 } else {
-                  r->audio_file = af;
+                  audio_file = af;
                 }
               }
             } else {
-              r->audio_file = af;
+              audio_file = af;
             }
             // We have a full path audio file now.
             // get the mtime.
             {
               struct stat st;
-              stat(r->audio_file,&st);
+              stat(audio_file,&st);
               _audio_mtime=st.st_mtime;
             }
 
@@ -300,6 +305,9 @@ cue_t* cue_new(const char* file)
             if (eq(&line[3], "date")) {
               mc_free(year);
               year = unquote(&line[3], "date");
+            } else if (eq(&line[3], "year")) {
+              mc_free(year);
+              year = unquote(&line[3], "year");
             } else if (eq(&line[3], "image")) {
               mc_free(r->image_file);
               r->image_file = unquote(&line[3], "image");
@@ -324,6 +332,7 @@ cue_t* cue_new(const char* file)
             }
             entry = cue_entry_new(r);
             entry->audio_mtime=_audio_mtime;
+            entry->audio_file = mystrdup(audio_file);
             entry->year = mystrdup(year);
             entry->performer = mystrdup(r->album_performer);
             entry->composer = mystrdup(r->album_composer);
@@ -350,7 +359,46 @@ cue_t* cue_new(const char* file)
               year = unquote(&line[3], "year");
               mc_free(entry->year);
               entry->year = mystrdup(year);
+            } else if (eq(&line[3], "date")) {
+              mc_free(year);
+              year = unquote(&line[3], "date");
+              mc_free(entry->year);
+              entry->year = mystrdup(year);
             }
+          } else if (eq(line, "file")) {
+            mc_free(audio_file);
+            char* fl = getFilePart(line);
+            char* af = unquote(fl, "");
+            if (strlen(af) > 0) {
+              if (af[0] == '/') {
+                audio_file = af;
+              } else {
+                char* cf = mc_strdup(r->cuefile);
+                int ii;
+                for (ii = strlen(cf) - 1; ii >= 0 && cf[ii] != '/'; ii--) ;
+                if (ii >= 0) {
+                  cf[ii] = '\0';
+                  char* aaf = (char* )mc_malloc(strlen(cf) + strlen(af) + strlen("/") + 1);
+                  sprintf(aaf, "%s/%s", cf, af);
+                  audio_file = aaf;
+                  mc_free(cf);
+                  mc_free(af);
+                } else {
+                  audio_file = af;
+                }
+              }
+            } else {
+              audio_file = af;
+            }
+            // We have a full path audio file now.
+            // get the mtime.
+            {
+              struct stat st;
+              stat(audio_file,&st);
+              _audio_mtime=st.st_mtime;
+            }
+
+            mc_free(fl);
           }
         }
       }
@@ -367,7 +415,9 @@ cue_t* cue_new(const char* file)
     if (r->count > 0) {
       int i, N;
       for (i = 0, N = r->count-1; i < N; i++) {
-        r->entries[i]->end_offset_in_ms = r->entries[i + 1]->begin_offset_in_ms;
+        if (strcmp(r->entries[i+1]->audio_file, r->entries[i]->audio_file) == 0) {
+          r->entries[i]->end_offset_in_ms = r->entries[i + 1]->begin_offset_in_ms;
+        }
         r->entries[i]->tracknr = i + 1;
       }
       r->entries[i]->tracknr = i + 1;
@@ -377,12 +427,13 @@ cue_t* cue_new(const char* file)
     
   }
   
+  mc_free(audio_file);
+  
   return r;
 }
 
 static void cue_destroy1(cue_t* c)
 {
-  mc_free(c->audio_file);
   mc_free(c->album_title);
   mc_free(c->album_performer);
   mc_free(c->album_composer);
@@ -447,7 +498,11 @@ const char* cue_genre(cue_t* cue)
 
 const char* cue_audio_file(cue_t* cue)
 {
-  return T(cue->audio_file);
+  if (cue->count > 0) {
+    return cue_entry_audio_file(cue_entry(cue, 0));
+  } else {
+    return T(NULL);
+  }
 }
 
 int cue_count(cue_t* cue)
@@ -484,6 +539,11 @@ const char* cue_entry_performer(cue_entry_t* ce)
 const char* cue_entry_composer(cue_entry_t* ce)
 {
   return T(ce->composer);
+}
+
+const char* cue_entry_audio_file(cue_entry_t* ce)
+{
+  return T(ce->audio_file);
 }
 
 const char* cue_entry_piece(cue_entry_t* ce)
@@ -551,6 +611,7 @@ void cue_entry_destroy(cue_entry_t* ce)
   log_assert(i != N);
 
   cue_entry_t* e = ce;
+  mc_free(e->audio_file);
   mc_free(e->title);
   mc_free(e->performer);
   mc_free(e->year);

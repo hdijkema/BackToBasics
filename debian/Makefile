@@ -1,6 +1,6 @@
 VERSION=$(shell ./get_version.sh)
 MYDIST=$(shell cat /etc/lsb-release | grep CODENAME | sed -e 's/[^=]*[=]//')
-SUBVERSION=3
+SUBVERSION=4
 PACKAGE=backtobasics
 DEPENDS=libpcre3,elementals,libstreamripper,libmad0,libid3tag0,libvorbisfile3,libao4,libflac8,libmpg123-0,libgtklistmodel,libgtk-3-0,libwebkitgtk-3.0-0,libtagcoverart,libtagc0,libconfig8,libcurl3-gnutls
 DEPENDS1=

@@ -94,6 +94,8 @@ void library_clear(library_t* l)
   artist_array_clear(l->artists);
   album_array_clear(l->albums);
   library_db_clear(l->tracks_db);
+  l->filter = el_true;
+  l->dirty = el_true;
 }
 
 int library_count(library_t* l)
@@ -485,7 +487,7 @@ static void scanlib(library_t* l, file_info_t* path, scanned_hash *hash,
         int k, M;
         for(k = 0, M = track_array_count(tracks); k < M; ++k) {
           track_t* t = track_array_get(tracks, k);
-          library_add(l, t);  
+          library_add(l, t);
         }
         
         track_array_destroy(tracks);
@@ -558,7 +560,7 @@ void scan_library(scan_job_t* job, ScanJobCBFunc cb, void* lib)
   scanned_hash *h = scanned_hash_new(100, HASH_CASE_SENSITIVE);
   file_info_t* info = file_info_new(path);
   
-  library_clear(lib);
+  library_clear(library);
   
   log_info2("Scanning library, %s", path); 
   
@@ -570,6 +572,8 @@ void scan_library(scan_job_t* job, ScanJobCBFunc cb, void* lib)
   int count = 0;
   scanlib(library, info, h, job, cb, &count, total_files);
   log_debug("scanlib done");
+
+  log_debug2("library count: %d", library_count(library));
   
   file_info_destroy(info);
   log_debug("info destroyed");
@@ -584,10 +588,13 @@ void scan_library(scan_job_t* job, ScanJobCBFunc cb, void* lib)
   }
   
   library_sort(library);
+  
+  log_debug2("library count: %d", library_count(library));
 
   if (cb) {   
     cb(job, el_true, _("Scanning media library"), _("Finished"), count, total_files);
   }
+  
 }
 
 void library_sort(library_t* library)

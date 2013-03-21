@@ -1,0 +1,16 @@
+/* lkdsjfldska */
+
+GtkTreeView {
+  font: sans 8;
+}
+
+GtkTreeViewColumn header {
+  font: sans 6;
+}
+
+column-header GtkButton GtkLabel {
+  font: serif 6;
+  color: red;
+}
+
+

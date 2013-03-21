@@ -304,3 +304,22 @@ audio_source_t audio_source(audio_worker_t* worker)
 {
   return worker->source;
 }
+
+const char* audio_event_name(audio_state_t s)
+{
+  static const char* events[] = {
+    "none", "playing", "seeked", "guard_reached", "paused", "eos", "ready",
+    "state_error", "length", "buffering",
+    
+    "cmd_destroy", "cmd_play", "cmd_seek", "cmd_pause", "cmd_guard", 
+    "cmd_load_file", "cmd_load_url", "cmd_set_volume", "cmd_none"
+  };
+  
+  int ss = (int) s;
+  if (ss >= 0 && ss <= INTERNAL_CMD_NONE) {
+    return events[ss];
+  } else {
+    return "-unknown-";
+  }
+  
+}

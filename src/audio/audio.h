@@ -29,7 +29,7 @@ typedef enum {
 } audio_result_t;
 
 typedef enum {
-  AUDIO_NONE,
+  AUDIO_NONE = 0,
   AUDIO_PLAYING,
   AUDIO_SEEKED,
   AUDIO_GUARD_REACHED,
@@ -103,5 +103,7 @@ audio_state_t audio_event_state(audio_event_t* event);
 long audio_event_ms(audio_event_t* event);
 
 audio_source_t audio_source(audio_worker_t* worker);
+
+const char* audio_event_name(audio_state_t s);
 
 #endif

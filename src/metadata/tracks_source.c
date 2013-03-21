@@ -55,7 +55,7 @@ track_array tracks_from_cue(const char* cuefile)
     long be = cue_entry_end_offset_in_ms(entry);
     long le = -1;
     {
-      TagLib_File* fl = taglib_file_new(cue_audio_file(cue));
+      TagLib_File* fl = taglib_file_new(cue_entry_audio_file(entry));
       if (fl != NULL && taglib_file_is_valid(fl)) {
         const TagLib_AudioProperties* ap = taglib_file_audioproperties(fl);
         le = taglib_audioproperties_length(ap) * 1000;
@@ -65,11 +65,13 @@ track_array tracks_from_cue(const char* cuefile)
     }
     if (be < 0) be = le;
 
-    track_set_file(t, cue_audio_file(cue), le, bo, be);
+    log_debug5("audio file: %s, le = %ld, bo = %ld, be = %ld", cue_entry_audio_file(entry), le, bo, be);
+    track_set_file(t, cue_entry_audio_file(entry), le, bo, be);
     
     TL_SET(title,t, cue_entry_title(entry));
     TL_SET(artist,t, cue_entry_performer(entry));
-    TL_SET(composer,t, cue_entry_piece(entry));
+    TL_SET(composer,t, cue_entry_composer(entry));
+    TL_SET(piece,t, cue_entry_piece(entry));
     TL_SETT(year,t, atoi(cue_entry_year(entry)));
     TL_SETT(nr, t, cue_entry_tracknr(entry));
     
@@ -108,6 +110,7 @@ track_array tracks_from_media(const char* localfile)
     TL_SET(genre, t, taglib_tag_genre(tg));
     TL_SETT(year, t, (int) taglib_tag_year(tg));
     TL_SETT(nr, t, (int) taglib_tag_track(tg));
+    TL_SET(piece, t, taglib_tag_comment(tg));
     
     if (strcmp(track_get_title(t),"") == 0) {
       TL_SET(title, t, file_info_basename(info)); 
@@ -119,7 +122,7 @@ track_array tracks_from_media(const char* localfile)
     TL_SET(source_id, t, file_info_absolute_path(info));
     TL_SETT(source_mtime, t, file_info_mtime(info));
     
-    // cover art
+    // cover art & other tags not there in tag_c.h
     {
       file_info_t* art_dir = file_info_new(file_info_dirname(info));
       char *s = (char*) mc_malloc(sizeof(char) * (strlen(track_get_album_title(t)) + 4 + 4 + 1));
@@ -128,16 +131,31 @@ track_array tracks_from_media(const char* localfile)
       strcat(s,".art");
       file_info_t* art_file = file_info_combine(art_dir, s);
       //log_debug2("art file = %s", file_info_absolute_path(art_file));
+      
+      // TAG
+      tag_cover_art_t* tag = tag_cover_art_new(file_info_absolute_path(info));
+      
+      // ART
       if (!file_info_exists(art_file)) {
         //log_debug2("extracting %s", file_info_absolute_path(art_file));
-        tag_cover_art_t* tag = tag_cover_art_new(file_info_absolute_path(info));
         if (tag_cover_art_extract(tag, file_info_absolute_path(art_file))) {
            TL_SET(artid, t, file_info_absolute_path(art_file));
         }
-        tag_cover_art_destroy(tag);
       } else {
         TL_SET(artid, t, file_info_absolute_path(art_file));
       }
+      
+      // Composer
+      {
+        char* _composer;
+        if (tag_cover_art_get_composer(tag, &_composer)) {
+          TL_SET(composer, t, _composer);
+          mc_free(_composer);
+        }
+      }
+
+      // Destroy tag
+      tag_cover_art_destroy(tag);
       file_info_destroy(art_file);
       file_info_destroy(art_dir);
       mc_free(s);

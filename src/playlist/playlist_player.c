@@ -78,6 +78,7 @@ long long playlist_player_get_hash(playlist_player_t* plp)
 void playlist_player_set_playlist(playlist_player_t* plp, playlist_t* pl)
 {
   plp->playlist_hash = playlist_tracks_hash(pl);
+  plp->current_track = -1;
   post_command(plp, PLP_CMD_SET_PLAYLIST, (void*) pl);
 }
 
@@ -223,6 +224,7 @@ el_bool playlist_player_does_nothing(playlist_player_t* plp) {
 
 void load_and_play(playlist_player_t* plp, track_t* t)
 {
+  log_debug2("loadandplay: %s", track_get_id(t));
   pthread_mutex_lock(plp->mutex);
   plp->player_state = PLAYLIST_PLAYER_PLAYING;
   pthread_mutex_unlock(plp->mutex);
@@ -231,6 +233,7 @@ void load_and_play(playlist_player_t* plp, track_t* t)
   if (track_get_is_file(t)) {
     media_load_file(plp->worker, track_get_file(t));
     if (track_get_begin_offset_in_ms(t) >= 0) {
+      log_debug("seeking");
       media_seek(plp->worker, track_get_begin_offset_in_ms(t));
       if (track_get_end_offset_in_ms(t) >= 0) {
         media_guard(plp->worker, track_get_end_offset_in_ms(t));
@@ -553,7 +556,7 @@ void* playlist_player_thread(void* _plp)
       case PLP_CMD_SET_PLAYLIST: {
         pthread_mutex_lock(plp->mutex);
         plp->player_state = PLAYLIST_PLAYER_STOPPED;
-        plp->current_track = 0;
+        plp->current_track = -1;
         media_pause(plp->worker);
         playlist_destroy(plp->playlist);
         plp->playlist = (playlist_t*) data;

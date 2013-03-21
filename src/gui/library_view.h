@@ -22,8 +22,6 @@ typedef struct {
   GtkBuilder* builder;
   
   playlist_model_t* playlist_model;
-  el_bool library_list_changed;
-  long long library_list_hash;
   
   string_model_t* genre_model;
   string_model_t* artist_model;
@@ -69,6 +67,7 @@ void library_view_album_aspect(library_view_t* view);
 void library_view_reset_models(library_view_t* view);
 
 void library_view_stop_info_updater(library_view_t* view);
+void library_view_clear_playlist(library_view_t* view);
 
 void library_view_play(GtkToolButton* btn, library_view_t* view); 
 

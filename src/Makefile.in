@@ -49,13 +49,14 @@ am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(btbdir)" \
 	"$(DESTDIR)$(menu2dir)" "$(DESTDIR)$(pixmapsdir)" \
 	"$(DESTDIR)$(uidir)"
 PROGRAMS = $(bin_PROGRAMS)
-am__objects_1 = config.$(OBJEXT) aodev.$(OBJEXT) audio.$(OBJEXT) \
-	mp3.$(OBJEXT) ogg.$(OBJEXT) flac.$(OBJEXT) ripstream.$(OBJEXT) \
-	track.$(OBJEXT) cue.$(OBJEXT) tracks_source.$(OBJEXT) \
-	playlist.$(OBJEXT) playlist_player.$(OBJEXT) i18n.$(OBJEXT) \
-	library.$(OBJEXT) radio.$(OBJEXT)
+am__objects_1 = simple_html.$(OBJEXT) config.$(OBJEXT) aodev.$(OBJEXT) \
+	audio.$(OBJEXT) mp3.$(OBJEXT) ogg.$(OBJEXT) flac.$(OBJEXT) \
+	ripstream.$(OBJEXT) track.$(OBJEXT) cue.$(OBJEXT) \
+	tracks_source.$(OBJEXT) playlist.$(OBJEXT) \
+	playlist_player.$(OBJEXT) i18n.$(OBJEXT) library.$(OBJEXT) \
+	radio.$(OBJEXT)
 am_backtobasics_bin_OBJECTS = $(am__objects_1) main.$(OBJEXT) \
-	backtobasics.$(OBJEXT) library_view.$(OBJEXT) \
+	backtobasics_bin.$(OBJEXT) library_view.$(OBJEXT) \
 	playlist_model.$(OBJEXT) string_model.$(OBJEXT) \
 	async_call.$(OBJEXT) scanjob.$(OBJEXT) radio_view.$(OBJEXT) \
 	station_model.$(OBJEXT) playlists_model.$(OBJEXT) \
@@ -249,7 +250,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 uidir = $(pkgdatadir)/ui
-ui_DATA = backtobasics.ui btb.png ../images/*
+ui_DATA = backtobasics.ui btb.png ../images/* *.css
 menu1dir = $(datarootdir)/applications
 menu1_DATA = share/applications/*
 menu2dir = $(datarootdir)/menu
@@ -272,6 +273,8 @@ AM_CFLAGS = \
 	 -g
 
 GENERICSRC = \
+	util/simple_html.c \
+	util/simple_html.h \
 	util/config.c \
 	util/config.h \
 	audio/aodev.c \
@@ -307,7 +310,7 @@ backtobasics_bin_SOURCES = \
 	$(GENERICSRC) \
 	main.c \
 	backtobasics.h \
-	backtobasics.c \
+	backtobasics_bin.c \
 	gui/library_view.c \
 	gui/library_view.h \
 	gui/playlist_model.c \
@@ -416,7 +419,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/aodev.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/async_call.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/backtobasics.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/backtobasics_bin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cue.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/flac.Po@am__quote@
@@ -435,6 +438,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radio_view.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ripstream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scanjob.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/simple_html.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/station_model.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/string_model.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/track.Po@am__quote@
@@ -453,6 +457,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+simple_html.o: util/simple_html.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT simple_html.o -MD -MP -MF $(DEPDIR)/simple_html.Tpo -c -o simple_html.o `test -f 'util/simple_html.c' || echo '$(srcdir)/'`util/simple_html.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/simple_html.Tpo $(DEPDIR)/simple_html.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='util/simple_html.c' object='simple_html.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o simple_html.o `test -f 'util/simple_html.c' || echo '$(srcdir)/'`util/simple_html.c
+
+simple_html.obj: util/simple_html.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT simple_html.obj -MD -MP -MF $(DEPDIR)/simple_html.Tpo -c -o simple_html.obj `if test -f 'util/simple_html.c'; then $(CYGPATH_W) 'util/simple_html.c'; else $(CYGPATH_W) '$(srcdir)/util/simple_html.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/simple_html.Tpo $(DEPDIR)/simple_html.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='util/simple_html.c' object='simple_html.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o simple_html.obj `if test -f 'util/simple_html.c'; then $(CYGPATH_W) 'util/simple_html.c'; else $(CYGPATH_W) '$(srcdir)/util/simple_html.c'; fi`
 
 config.o: util/config.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT config.o -MD -MP -MF $(DEPDIR)/config.Tpo -c -o config.o `test -f 'util/config.c' || echo '$(srcdir)/'`util/config.c

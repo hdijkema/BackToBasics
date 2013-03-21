@@ -1,0 +1,9 @@
+GtkTreeView {
+  font: sans 10;
+}
+
+column-header GtkButton GtkLabel {
+  font: sans 10;
+}
+
+

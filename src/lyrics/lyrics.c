@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <curl/curl.h>
 #include <gtk/gtk.h>
+#include <util/simple_html.h>
 
 /*
 Look also at:
@@ -202,49 +203,15 @@ void write_lyric(track_t* t, const char* lyric, el_bool overwrite) {
 
 char* lyric_html_to_text(const char* lyric)
 {
-  hre_t* re_wsp = hre_compile("\\s","");
-  hre_t* re_br = hre_compile("[<]br[^>]*[>]","i");
-  hre_t* re_p = hre_compile("<p>","i");
-  hre_t* re_tag = hre_compile("[<][^>]*[>]","i");
-  hre_t* re_amp = hre_compile("[&]amp[;]","i");
-  hre_t* re_lt = hre_compile("[&]lt[;]","i");
-  hre_t* re_gt = hre_compile("[&]gt[;]","i");
-  hre_t* re_quot = hre_compile("[&]quot[;]","i");
-  hre_t* res[] = { re_wsp, re_br, re_p, re_tag,  re_amp, re_lt, re_gt, re_quot, NULL };
-  char* repl[] = { " ",    "\n",  "\n\n", "",      "&",    "<",   ">",   "\"",    NULL };
-  int i;
-  char* r1, *r2;
-  r1 = mc_strdup(lyric);
-  for(i = 0;res[i] != NULL; ++i) {
-    log_debug2("replacement = '%s'",repl[i]);
-    r2 = hre_replace_all(res[i], r1, repl[i]);
-    log_debug2("r2 = %s", r2);
-    mc_free(r1);
-    hre_destroy(res[i]);
-    r1 = r2;
-  }
-  hre_trim(r1);
-  log_debug2("r1 = now %s", r1);
-  return r1;
+  log_debug("to html");
+  return html_to_text(lyric);
 }
 
-char* lyric_text_to_html(const char* lyric) {
-  hre_t* re_ret = hre_compile("\n","sm");
-  hre_t* re_amp = hre_compile("[&]","");
-  hre_t* re_lt = hre_compile("[<]","");
-  hre_t* re_gt = hre_compile("[>]","");
-  hre_t* re_quot = hre_compile("[\"]","");
-  hre_t* res[] = { re_amp, re_lt, re_gt, re_quot, re_ret, NULL };
-  char* repl[] = { "&amp;","&lt;", "&gt;", "&quot;", "<br />", NULL };
-  int i;
-  char* r1, *r2;
-  r1 = mc_strdup(lyric);
-  for(i = 0;res[i] != NULL; ++i) {
-    r2 = hre_replace_all(res[i], r1, repl[i]);
-    mc_free(r1);
-    hre_destroy(res[i]);
-    r1 = r2;
-  }
+char* lyric_text_to_html(const char* lyric) 
+{
+  char* r1;
+  char* r2;
+  r1 = text_to_html(lyric);
   r2 = hre_concat3("<html><head></head><body><span style=\"font-size: 7pt; font-family: sans;\">",
                    r1,
                    "</span></body></html>"
@@ -378,4 +345,26 @@ void lyrics_search_lyricsty(GtkButton* btn, GObject* data)
   mc_free(q);
   hre_destroy(re_wsp);
 }
+
+void lyrics_search_google(GtkButton* btn, GObject* data)
+{
+  track_t* t = g_object_get_data(data, "track");
+  char s[10240];
+  strcpy(s, "https://www.google.nl/search?q=%s+lyrics");
+  char url[20480];
+  char query[10240];
+
+  char* tt = stripped_title(t);
+  sprintf(query,"%s+%s",track_get_artist(t), tt);
+  mc_free(tt);
+  hre_t re_wsp = hre_compile("\\s+","");
+  char* q = hre_replace_all(re_wsp, query, "+");
+
+  sprintf(url, s, q);
+  open_url(GTK_WIDGET(btn), url);
+  
+  mc_free(q);
+  hre_destroy(re_wsp);
+}
+
 

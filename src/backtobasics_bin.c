@@ -77,6 +77,7 @@ char* ui_file(Backtobasics* btb, const char* filename)
 	  file_info_destroy(bi1);
 	  file_info_destroy(bi0);
 	  file_info_destroy(builder_info);
+	  log_debug3("file = %s, path =%s", filename, path);
 	  return path;
 	} else if (file_info_exists(t1)) {
 	  char* path = mc_strdup(file_info_absolute_path(t1));
@@ -85,6 +86,7 @@ char* ui_file(Backtobasics* btb, const char* filename)
 	  file_info_destroy(bi1);
 	  file_info_destroy(bi0);
 	  file_info_destroy(builder_info);
+	  log_debug3("file = %s, path =%s", filename, path);
 	  return path;
 	} else {
 	  file_info_destroy(t0);
@@ -97,9 +99,12 @@ char* ui_file(Backtobasics* btb, const char* filename)
     file_info_destroy(bi1);
 	  file_info_destroy(bi0);
     file_info_destroy(builder_info);
+	  log_debug3("file = %s, path =%s", filename, path);
     return path;
   }
 }
+
+static void set_style(Backtobasics* btb, const char* cssfile);
 
 char* backtobasics_logo(Backtobasics* app)
 {
@@ -172,7 +177,13 @@ static void backtobasics_new_window (GApplication *app)
   
   double volperc = (double) el_config_get_int(btb->config, "previous_volume", 100);  
   gtk_range_set_value(GTK_RANGE(volume_scale), volperc);
-
+  
+  // Styling
+  GtkCheckMenuItem* small = GTK_CHECK_MENU_ITEM(gtk_builder_get_object(builder, "skin_small"));
+  gtk_check_menu_item_set_active(small,el_config_get_int(btb->config, "skins.small_fonts", 0));
+  GtkCheckMenuItem* dark = GTK_CHECK_MENU_ITEM(gtk_builder_get_object(builder, "skin_dark"));
+  gtk_check_menu_item_set_active(dark, el_config_get_int(btb->config, "skins.dark", 0));
+  
 }
 
 
@@ -365,6 +376,7 @@ void btb_scan_library(GtkWidget* menu_item, GtkWidget* window)
   char* path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fc));
   library_set_basedir(btb->library, path);
   log_debug2("choosen: %s", path);
+  btb_stop_cmd(btb);
   run_scan_job_dialog(_("Scanning music library"), scan_library, btb->builder, btb->library);
   library_view_reset_models(btb->library_view);
 }
@@ -422,6 +434,16 @@ void btb_volume_mute(GtkToggleButton* volume, GtkWidget* window)
   }
 }
 
+void btb_stop_cmd(Backtobasics* btb)
+{
+  playlist_player_pause(btb->player);
+  playlist_t* pl = playlist_new(btb->library, "nil");
+  log_debug("ok");
+  playlist_player_set_playlist(btb->player,pl);
+  library_view_clear_playlist(btb->library_view);
+  log_debug("yes");
+}
+
 void btb_play(GtkToolButton* btn, GObject* window)
 {
   Backtobasics* btb = g_object_get_data(G_OBJECT(window), "btb");
@@ -470,6 +492,56 @@ void go_library(GObject* object, gpointer data)
   };
   
   widgets_show(btb->builder, btns, el_true);
+}
+
+static void set_style(Backtobasics* btb, const char* cssfile)
+{
+  GtkCssProvider *provider;
+  GdkDisplay *display;
+  GdkScreen *screen;
+  
+  log_debug2("Setting style %s", cssfile);
+  
+  provider = gtk_css_provider_new ();
+  display = gdk_display_get_default ();
+  screen = gdk_display_get_default_screen (display);
+  
+  gtk_css_provider_load_from_path(provider, cssfile, NULL);
+  gtk_style_context_add_provider_for_screen (screen,
+                                 GTK_STYLE_PROVIDER (provider),
+                                 GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  
+  g_object_unref(provider);  
+}
+
+void btb_skin_small(GtkCheckMenuItem* item, Backtobasics* btb)
+{
+  gboolean chk = gtk_check_menu_item_get_active(item);
+  el_config_set_int(btb->config, "skins.small_fonts", chk);
+  if (chk) {
+    char* small_on = ui_file(btb, "small_on.css");
+    if (small_on) { set_style(btb, small_on); }
+    mc_free(small_on);
+  } else {
+    char* small_off = ui_file(btb, "small_off.css");
+    if (small_off) { set_style(btb, small_off); }
+    mc_free(small_off);
+  }
+}
+
+void btb_skin_dark(GtkCheckMenuItem* item, Backtobasics* btb)
+{
+  gboolean chk = gtk_check_menu_item_get_active(item);
+  el_config_set_int(btb->config, "skins.dark", chk);
+  if (chk) {
+    char* dark_on = ui_file(btb, "dark_on.css");
+    if (dark_on) { set_style(btb, dark_on); }
+    mc_free(dark_on);
+  } else {
+    char* dark_off = ui_file(btb, "dark_off.css");
+    if (dark_off) { set_style(btb, dark_off); }
+    mc_free(dark_off);
+  }
 }
 
 void menu_quit(GObject* object, gpointer data)

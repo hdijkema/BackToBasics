@@ -253,8 +253,9 @@ void* player_thread(void* _mp3_info)
   event = audio_event_fifo_dequeue(mp3_info->player_control);
   while (event->state != INTERNAL_CMD_DESTROY) {
     
-    if (event->state != INTERNAL_CMD_NONE)
-          log_debug2("event = %d", event->state);
+    if (event->state != INTERNAL_CMD_NONE) {
+      log_debug4("event = %s, %ld, %s", audio_event_name(event->state), event->position_in_ms, mp3_info->file_or_url);
+    }
     
     audio_state_t event_state = event->state;
     long event_position = event->position_in_ms;
@@ -284,6 +285,7 @@ void* player_thread(void* _mp3_info)
         aodev_open(mp3_info->ao_handle);
         mp3_info->is_open = el_true;
         mp3_info->is_file = el_true;
+        mp3_info->can_seek = el_true;
         current_position_in_ms = 0;
         guard_position_in_ms = -1; 
         {
@@ -322,6 +324,7 @@ void* player_thread(void* _mp3_info)
         log_debug("stream thread started");
         
         mp3_info->is_open = el_true;
+        mp3_info->can_seek = el_false;
         current_position_in_ms = 0;
         guard_position_in_ms = -1;
         mp3_info->length = 0;

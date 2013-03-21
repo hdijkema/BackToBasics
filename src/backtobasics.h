@@ -85,6 +85,8 @@ library_t* backtobasics_library(Backtobasics* app);
 playlist_player_t* backtobasics_player(Backtobasics* app);
 char* backtobasics_logo(Backtobasics* app);
 
+void btb_stop_cmd(Backtobasics* btb);
+
 el_config_t* btb_config(Backtobasics* btb);
 void btb_config_set_int(Backtobasics* app, const char* path, int val);
 int btb_config_get_int(Backtobasics* app, const char* path, int default_val);
