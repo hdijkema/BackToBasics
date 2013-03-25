@@ -61,6 +61,8 @@ struct _Backtobasics
 	GtkBuilder* builder;
 	library_view_t* library_view;
 	radio_view_t* radio_view;
+	GtkWindow* main_window;
+	GtkStatusIcon* status_icon;
 	
 	// Audio player
 	playlist_player_t* player;
@@ -93,6 +95,7 @@ int btb_config_get_int(Backtobasics* app, const char* path, int default_val);
 void btb_config_set_string(Backtobasics* app, const char* path, const char* val);
 char* btb_config_get_string(Backtobasics* app, const char* path, const char* default_val);
 
+GtkWindow* btb_main_window(Backtobasics* btb);
 /* Callbacks */
 
 G_END_DECLS

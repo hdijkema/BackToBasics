@@ -1,7 +1,7 @@
 # List of source files containing translatable strings.
 
 src/main.c
-src/backtobasics.c
+src/backtobasics_bin.c
 src/backtobasics.ui
 src/btb_play.c
 src/btb_playlist.c

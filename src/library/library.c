@@ -29,12 +29,12 @@ static void destroy_trk(track_t* trk)
 
 static playlist_t* copy_pl(playlist_t* pl)
 {
-  return playlist_copy(pl);
+  return pl;
 }
 
 static void destroy_pl(playlist_t* pl)
 {
-  playlist_destroy(pl);
+  // does nothing
 }
 
 IMPLEMENT_EL_ARRAY(genre_array, char, copy_str, destroy_str);
@@ -63,14 +63,15 @@ library_t* library_new(void)
   l->filtered_albums = set_new(SET_CASE_INSENSITIVE);
   l->filtered_tracks = set_new(SET_CASE_SENSITIVE);
   
-  l->playlists = mc_take_over(playlist_array_new());
+  l->playlists = mc_take_over(playlists_array_new());
+  playlists_array_append(l->playlists, l->all_tracks);
   
   return l;
 }
 
 void library_destroy(library_t* l) 
 {
-  playlist_array_destroy(l->playlists);
+  playlists_array_destroy(l->playlists);
   
   playlist_destroy(l->all_tracks);
   mc_free(l->filter_genre);
@@ -127,8 +128,9 @@ library_result_t library_load(library_t* l, const char* localpath)
           return LIBRARY_ERROR;
         }
         
-        playlist_destroy(l->all_tracks);
-        l->all_tracks = playlist_new(l, _("Library"));
+        //playlist_destroy(l->all_tracks);
+        //l->all_tracks = playlist_new(l, _("Library"));
+        playlist_clear(l->all_tracks);
         
         long ntracks;
         if (fread(&ntracks, sizeof(long), 1, f) != 1) {

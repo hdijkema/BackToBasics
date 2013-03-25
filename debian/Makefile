@@ -1,11 +1,13 @@
 VERSION=$(shell ./get_version.sh)
 MYDIST=$(shell cat /etc/lsb-release | grep CODENAME | sed -e 's/[^=]*[=]//')
-SUBVERSION=4
+SUBVERSION=9
 PACKAGE=backtobasics
-DEPENDS=libpcre3,elementals,libstreamripper,libmad0,libid3tag0,libvorbisfile3,libao4,libflac8,libmpg123-0,libgtklistmodel,libgtk-3-0,libwebkitgtk-3.0-0,libtagcoverart,libtagc0,libconfig8,libcurl3-gnutls
+DEPENDS=libpcre3,elementals,libstreamripper,libmad0,libid3tag0,libvorbisfile3,libao4,libflac8,libmpg123-0,libgtklistmodel,libgtk-3-0,libwebkitgtk-3.0-0,libtagcoverart,libtagc0,libcurl3-gnutls
+DEPENDS_QUANTAL=libconfig9
+DEPENDS_PRECISE=libconfig8
 DEPENDS1=
 BUILDDEPENDS=gawk,automake,autoconf,intltool,libpthread-stubs0-dev,libpcre3-dev,pkg-config,elementals,libstreamripper,libglib2.0-dev,libao-dev,libflac-dev,libmpg123-dev,libmad0-dev,libid3tag0-dev,libvorbis-dev,libgtk-3-dev,libwebkitgtk-3.0-dev,libtag1-dev,libtagcoverart,libtagc0-dev,libconfig8-dev,libcurl3-gnutls-dev,libgtklistmodel
-DISTROS=oneiric precise quantal
+DISTROS=precise quantal
 #DISTROS=precise
 DISTROS1=maverick lucid
 DVERSION=${VERSION}.${DISTRO}.${SUBVERSION}
@@ -45,7 +47,7 @@ test: clean
 	(cd ${UBUNTU};sudo pbuilder build *.dsc)
 
 ppa: clean
-	for distro in ${DISTROS}; do make clean;make ppa1 DISTRO=$$distro DEPEND=${DEPENDS}; done
+	for distro in ${DISTROS}; do make clean;if [ "$$distro" = "quantal" ]; then make ppa1 DISTRO=$$distro DEPEND="${DEPENDS},${DEPENDS_QUANTAL}"; else make ppa1 DISTRO=$$distro DEPEND="${DEPENDS},${DEPENDS_PRECISE}"; fi; done
 
 ppa_old: clean
 	for distro in ${DISTROS1}; do make ppa1 DISTRO=$$distro DEPEND=${DEPENDS1}; done

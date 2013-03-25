@@ -816,13 +816,20 @@
       </object>
     </child>
     <child>
-      <object class="GtkMenuItem" id="menuitem8">
+      <object class="GtkSeparatorMenuItem" id="menuitem10">
         <property name="use_action_appearance">False</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">_Set image from disk</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="menuitem11">
+        <property name="use_action_appearance">False</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Search _Google for cover art</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="library_view_cover_art_from_disk" object="view_library" swapped="no"/>
+        <signal name="activate" handler="library_view_search_cover_art" object="view_library" swapped="no"/>
       </object>
     </child>
   </object>
@@ -1353,7 +1360,7 @@
                                     </child>
                                     <child>
                                       <object class="GtkScale" id="sc_library_playback">
-                                        <property name="width_request">300</property>
+                                        <property name="width_request">200</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="hexpand">True</property>

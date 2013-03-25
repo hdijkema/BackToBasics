@@ -33,6 +33,7 @@ static void cell_value(void* data, int row, int col, GValue* value)
   }
   
   playlist_t* pl = library_playlists_get(model->library, row);
+  //log_debug2("name = %s", playlist_name(pl));
   switch(col) {
     case PLAYLISTS_MODEL_COL_NAME: g_value_set_static_string(value, playlist_name(pl));
     break;

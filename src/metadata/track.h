@@ -106,5 +106,6 @@ const char* track_get_lyric(track_t* t);
 
 int track_cmp(track_t *t1, track_t* t2);
 
+
 #endif
 

@@ -56,6 +56,8 @@ typedef struct {
   GtkLabel* lbl_lyric_track;
   track_t* current_lyric_track;
   
+  el_bool column_layout_changing;
+  
 } library_view_t;
 
 library_view_t* library_view_new(Backtobasics* btb, library_t* library);

@@ -224,6 +224,7 @@ el_bool playlist_player_does_nothing(playlist_player_t* plp) {
 
 void load_and_play(playlist_player_t* plp, track_t* t)
 {
+  log_debug2("track = %p", t);
   log_debug2("loadandplay: %s", track_get_id(t));
   pthread_mutex_lock(plp->mutex);
   plp->player_state = PLAYLIST_PLAYER_PLAYING;
@@ -406,6 +407,7 @@ void* playlist_player_thread(void* _plp)
             pthread_mutex_unlock(plp->mutex);
             media_play(plp->worker);
           } else {
+            if (plp->current_track < 0) { plp->current_track = 0; }
             if (plp->current_track < playlist_count(plp->playlist)) {
               track_t* t = playlist_get(plp->playlist, plp->current_track);
               pthread_mutex_unlock(plp->mutex);

@@ -7,8 +7,10 @@
 #include <lyrics/lyrics.h>
 #include <util/config.h>
 #include <util/simple_html.h>
+#include <util/image_fetcher.h>
 
 static gboolean library_view_update_info(library_view_t* view);
+static void get_column_layout(library_view_t* view, long long hash);
 
 library_view_t* library_view_new(Backtobasics* btb, library_t* library)
 {
@@ -54,6 +56,8 @@ library_view_t* library_view_new(Backtobasics* btb, library_t* library)
   view->playlists_model = playlists_model_new(view->library);
   
   view->current_lyric_track = NULL;
+  
+  view->column_layout_changing = el_false;
   
   return view;
 }
@@ -355,6 +359,7 @@ static void library_set_aspect_filter(library_view_t* view, aspect_enum aspect)
   }
   
   playlist_model_set_valid(view->playlist_model, library_filtered_tracks(view->library));
+  get_column_layout(view, playlist_model_tracks_hash(view->playlist_model));
 }
 
 gboolean library_view_genre_clicked(GtkTreeView* tview, GdkEvent* event, GObject* lview)
@@ -942,8 +947,163 @@ static void library_view_library_col_sort(GtkTreeViewColumn* col, library_view_t
 
 void library_view_col_visible(GtkCheckMenuItem* item, GObject* lview)
 {
-  log_debug("yes");
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  
+  if (view->column_layout_changing) {
+    return;
+  }
+  
+  //long long hash = playlist_player_get_hash(backtobasics_player(view->btb));
+  long long hash = playlist_model_tracks_hash(view->playlist_model);
+  
+  const char* names[] = {
+    "chk_col_nr", "chk_col_title", "chk_col_artist", "chk_col_composer",
+    "chk_col_piece", "chk_col_album", "chk_col_albumartist", "chk_col_genre",
+    "chk_col_year", "chk_col_length", NULL
+  };
+  const playlist_column_enum es[] = {
+      PLAYLIST_MODEL_COL_NR, PLAYLIST_MODEL_COL_TITLE, PLAYLIST_MODEL_COL_ARTIST,
+      PLAYLIST_MODEL_COL_COMPOSER, PLAYLIST_MODEL_COL_PIECE, 
+      PLAYLIST_MODEL_COL_ALBUM_TITLE, PLAYLIST_MODEL_COL_ALBUM_ARTIST,
+      PLAYLIST_MODEL_COL_GENRE, PLAYLIST_MODEL_COL_YEAR, PLAYLIST_MODEL_COL_LENGTH,
+      PLAYLIST_MODEL_N_COLUMNS
+  };
+  int i;
+  const char* name = gtk_widget_get_name(GTK_WIDGET(item));
+  for(i = 0; names[i] != NULL && strcmp(name, names[i]) != 0;++i);
+  if (names[i] != NULL) {
+    char cfgitem[200];
+    sprintf(cfgitem,"library.cols.hash_%lld.%s", hash, names[i]);
+    int active =  gtk_check_menu_item_get_active(item);
+    el_config_set_int(btb_config(view->btb), cfgitem, active);
+    gtk_tree_view_column_set_visible(view->cols[es[i]], gtk_check_menu_item_get_active(item));
+  }
+}
+
+#define RIGHT_BUTTON 3
+
+gboolean library_view_set_coverart(GtkImage* img, GdkEvent* evt, GObject* lview)
+{
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  GdkEventButton *button_evt = (GdkEventButton*) evt;
+  if (button_evt->button == RIGHT_BUTTON) {
+    GtkMenu* mnu = GTK_MENU(gtk_builder_get_object(view->builder, "mnu_coverart"));
+    gtk_menu_popup (mnu, NULL, NULL, NULL, NULL, 
+                        button_evt->button, button_evt->time);
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
+static void image_fetched(void* p, el_bool fetched)
+{
+  if (fetched) {
+    library_view_t* view = (library_view_t*) p;
+    view->track_index = -1; // update the image for the current playing track
+  }
+}
+
+static void web_set_url_cover_art(GtkClipboard* board, const gchar* uri, gpointer p)
+{
+  library_view_t* view = (library_view_t* ) p;
+  if (uri != NULL) {
+    char* image_uri = mc_strdup(uri);
+    hre_trim(image_uri);
+    log_debug3("got uri %s, view = %p", image_uri, view);
+    if ((strncasecmp(image_uri, "http://", 7) == 0) ||
+      (strncasecmp(image_uri, "https://", 8) == 0)) {
+      GtkTreeSelection* sel = gtk_tree_view_get_selection(view->tview);
+      GtkTreeModel* model;
+      GtkTreeIter iter;
+      log_debug2("tree selection: %p", sel);
+      if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
+        log_debug("ok");
+        int row = gtk_list_model_iter_to_row(GTK_LIST_MODEL(model), iter);
+        track_t* track = playlist_model_get_track(view->playlist_model, row);
+        log_debug2("track = %p", track);
+        const char* artid = track_get_artid(track);
+        log_debug3("fetch image %s, %s", image_uri, artid);
+        fetch_image(image_uri, artid, image_fetched, view);
+      } else {
+        GtkMessageDialog* dialog = GTK_MESSAGE_DIALOG(
+                                    gtk_message_dialog_new(btb_main_window(view->btb),
+                                                           GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                           GTK_MESSAGE_ERROR,
+                                                           GTK_BUTTONS_CLOSE,
+                                                           _("Please select a track to set the cover art for")
+                                                           )
+                                    );
+        gtk_dialog_run (GTK_DIALOG (dialog));
+        gtk_widget_destroy (GTK_WIDGET(dialog));        
+      }
+    } else {
+      GtkMessageDialog* dialog = GTK_MESSAGE_DIALOG( 
+                                  gtk_message_dialog_new (btb_main_window(view->btb),
+                                                         GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                         GTK_MESSAGE_ERROR,
+                                                         GTK_BUTTONS_CLOSE,
+                                                         _("Copy an http URL for an image to the clipboard")
+                                                         )
+                                  );
+      gtk_dialog_run (GTK_DIALOG (dialog));
+      gtk_widget_destroy (GTK_WIDGET(dialog));        
+    }
+    mc_free(image_uri);
+  }
+}
+
+void library_view_cover_art_from_web(GtkMenuItem* item, GObject* lview)
+{
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+  GtkClipboard* board = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+  gtk_clipboard_request_text(board, web_set_url_cover_art, view);
+}
+
+
+void library_view_search_cover_art(GtkMenuItem* item, GObject* lview)
+{
+  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
+
+  GtkTreeSelection* sel = gtk_tree_view_get_selection(view->tview);
+  GtkTreeModel* model;
+  GtkTreeIter iter;
+
+  if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
+    int row = gtk_list_model_iter_to_row(GTK_LIST_MODEL(model), iter);
+    track_t* track = playlist_model_get_track(view->playlist_model, row);
+
+    char s[10240];
+    strcpy(s, "https://www.google.nl/search?tbm=isch&q=%s");
+    char url[20480];
+    char query[10240];
+  
+    sprintf(query,"%s+%s",track_get_artist(track), track_get_album_title(track));
+    char* q = to_http_get_query(query);
+  
+    sprintf(url, s, q);
+    open_url(GTK_WIDGET(item), url);
+    
+    mc_free(q);
+  } else {
+    GtkMessageDialog* dialog = GTK_MESSAGE_DIALOG(
+                                gtk_message_dialog_new(btb_main_window(view->btb),
+                                                       GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                       GTK_MESSAGE_ERROR,
+                                                       GTK_BUTTONS_CLOSE,
+                                                       _("Please select a track to set the cover art for")
+                                                       )
+                                );
+    gtk_dialog_run (GTK_DIALOG (dialog));
+    gtk_widget_destroy (GTK_WIDGET(dialog));        
+  }
+  
+}
+
+static void get_column_layout(library_view_t* view, long long hash) 
+{
+  view->column_layout_changing = el_true;
+  
   const char* names[] = {
     "chk_col_nr", "chk_col_title", "chk_col_artist", "chk_col_composer",
     "chk_col_piece", "chk_col_album", "chk_col_albumartist", "chk_col_genre",
@@ -958,32 +1118,18 @@ void library_view_col_visible(GtkCheckMenuItem* item, GObject* lview)
   };
   
   int i;
-  const char* name = gtk_widget_get_name(GTK_WIDGET(item));
-  for(i = 0; names[i] != NULL && strcmp(name, names[i]) != 0;++i);
-  if (names[i] != NULL) {
+  for(i = 0; names[i] != NULL; ++i) {
+    GtkCheckMenuItem* item = GTK_CHECK_MENU_ITEM(gtk_builder_get_object(view->builder, names[i]));
     char cfgitem[100];
-    sprintf(cfgitem,"library.cols.%s", names[i]);
-    el_config_set_int(btb_config(view->btb), cfgitem, gtk_check_menu_item_get_active(item));
-    gtk_tree_view_column_set_visible(view->cols[es[i]], gtk_check_menu_item_get_active(item));
+    sprintf(cfgitem,"library.cols.%lld, %s", hash, names[i]);
+    int visible = el_config_get_int(btb_config(view->btb), cfgitem, 1);
+    gtk_tree_view_column_set_visible(view->cols[es[i]], visible);
+    gtk_check_menu_item_set_active(item, visible);    
   }
+
+  view->column_layout_changing = el_false;
 }
 
-#define RIGHT_BUTTON 3
-
-gboolean library_view_set_coverart(GtkImage* img, GdkEvent* evt, GObject* lview)
-{
-  log_debug("set coverart");
-  library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
-  GdkEventButton *button_evt = (GdkEventButton*) evt;
-  if (button_evt->button == RIGHT_BUTTON) {
-    GtkMenu* mnu = GTK_MENU(gtk_builder_get_object(view->builder, "mnu_coverart"));
-    gtk_menu_popup (mnu, NULL, NULL, NULL, NULL, 
-                        button_evt->button, button_evt->time);
-    return TRUE;
-  } else {
-    return FALSE;
-  }
-}
 
 /*************************************************************************************
  * Playlists functionality

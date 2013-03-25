@@ -33,6 +33,7 @@ void playlist_model_destroy(playlist_model_t* model);
 GtkTreeModel* playlist_model_gtk_model(playlist_model_t* model);
 void playlist_model_set_playlist(playlist_model_t* model, playlist_t* playlist);
 playlist_t* playlist_model_get_selected_playlist(playlist_model_t* model);
+track_t* playlist_model_get_track(playlist_model_t* model, int row);
 const char* i18n_column_name(playlist_column_enum col);
 const char* column_id(playlist_column_enum col);
 void playlist_model_set_valid(playlist_model_t* model, set_t* tracks);

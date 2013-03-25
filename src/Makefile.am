@@ -37,6 +37,8 @@ bin_PROGRAMS = backtobasics_bin
 GENERICSRC = \
 	util/simple_html.c \
 	util/simple_html.h \
+	util/image_fetcher.c \
+	util/image_fetcher.h \
 	util/config.c \
 	util/config.h \
 	audio/aodev.c \

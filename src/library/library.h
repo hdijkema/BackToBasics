@@ -27,7 +27,7 @@ typedef struct __library__ {
   set_t* filtered_albums;
   set_t* filtered_tracks;
   
-  playlist_array playlists;
+  playlists_array playlists;
   
   char* library_path;
   

@@ -111,6 +111,15 @@ char* backtobasics_logo(Backtobasics* app)
   return mc_take_over(ui_file(app, "logo_vague.png"));
 }
 
+static void btb_show_hide_window(GtkStatusIcon* icon, Backtobasics* btb)
+{
+  if (gtk_widget_get_visible(GTK_WIDGET(btb->main_window))) {
+    gtk_widget_hide(GTK_WIDGET(btb->main_window));
+  } else {
+    gtk_widget_show(GTK_WIDGET(btb->main_window));
+  }
+}
+
 /* Create a new window */
 static void backtobasics_new_window (GApplication *app)
 {
@@ -149,6 +158,14 @@ static void backtobasics_new_window (GApplication *app)
   if (!window) {
     g_critical ("Widget \"%s\" is missing in file %s.", TOP_WINDOW, builder_path);
   }
+	btb->main_window = GTK_WINDOW(window);
+	g_signal_connect(window, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), NULL);
+	
+	char* s_icon = ui_file(btb, "btb_status.png");
+	btb->status_icon = gtk_status_icon_new_from_file(s_icon);
+	g_signal_connect(btb->status_icon, "activate", G_CALLBACK(btb_show_hide_window), (gpointer) btb);
+	mc_free(s_icon);
+	
 	mc_free(builder_path);
 	
   int x = el_config_get_int(btb->config, "main.window.x", 25);
@@ -563,4 +580,9 @@ void menu_quit(GObject* object, gpointer data)
 
   // Quit the application by detroying the main window  
   gtk_widget_destroy(GTK_WIDGET(window));
+}
+
+GtkWindow* btb_main_window(Backtobasics* btb)
+{
+  return btb->main_window;
 }

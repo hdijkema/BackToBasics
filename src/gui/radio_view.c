@@ -145,6 +145,7 @@ static void play_station(radio_view_t* view, radio_t* station)
   playlist_player_set_playlist(btb->player, pl);
   if (view->current_station) { track_destroy(view->current_station); }
   view->current_station = radio_track;
+  log_debug2("track = %s", track_get_id(radio_track));
   playlist_player_play(btb->player);
 }
   

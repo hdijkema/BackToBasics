@@ -255,32 +255,6 @@ void fetch_lyric(track_t* t, void (*f)(char* lyric, void* data), void* dt)
   int thread_id = pthread_create(&data->thread, NULL, fetch, data);
 }
 
-static void open_url(GtkWidget* w, const char* url)
-{
-  GdkScreen *screen;
-  GError *error;
-
-  if (gtk_widget_has_screen (w))
-    screen = gtk_widget_get_screen (w);
-  else
-    screen = gdk_screen_get_default ();
-
-  error = NULL;
-  gtk_show_uri (screen, url,
-                gtk_get_current_event_time (),
-                &error);
-  if (error) {
-    log_debug2("%s", error->message);
-  }
-}
-
-char* stripped_title(track_t* t)
-{
-  const char* title = track_get_title(t);
-  hre_t* re = hre_compile("^\\s*[0-9]*\\s*[-]\\s*","");
-  char* tt = hre_replace(re, title, "");
-  return tt;
-}
 
 
 void lyrics_search_lyricsondemand(GtkButton* btn, GObject* data)
@@ -294,14 +268,12 @@ void lyrics_search_lyricsondemand(GtkButton* btn, GObject* data)
   char* tt = stripped_title(t);
   sprintf(query,"%s+%s",track_get_artist(t), tt);
   mc_free(tt);
-  hre_t re_wsp = hre_compile("\\s+","");
-  char* q = hre_replace_all(re_wsp, query, "+");
+  char* q = to_http_get_query(query);
 
   sprintf(url, s, q);
   open_url(GTK_WIDGET(btn), url);
   
   mc_free(q);
-  hre_destroy(re_wsp);
 }
 
 void lyrics_search_lyricsworld(GtkButton* btn, GObject* data)
@@ -322,7 +294,6 @@ void lyrics_search_lyricsworld(GtkButton* btn, GObject* data)
   open_url(GTK_WIDGET(btn), url);
   
   mc_free(q);
-  hre_destroy(re_wsp);
 }
 
 void lyrics_search_lyricsty(GtkButton* btn, GObject* data)
@@ -336,14 +307,12 @@ void lyrics_search_lyricsty(GtkButton* btn, GObject* data)
   char* tt = stripped_title(t);
   sprintf(query,"%s+%s",track_get_artist(t), tt);
   mc_free(tt);
-  hre_t re_wsp = hre_compile("\\s+","");
-  char* q = hre_replace_all(re_wsp, query, "+");
+  char* q = to_http_get_query(query);
 
   sprintf(url, s, q);
   open_url(GTK_WIDGET(btn), url);
   
   mc_free(q);
-  hre_destroy(re_wsp);
 }
 
 void lyrics_search_google(GtkButton* btn, GObject* data)
@@ -357,14 +326,12 @@ void lyrics_search_google(GtkButton* btn, GObject* data)
   char* tt = stripped_title(t);
   sprintf(query,"%s+%s",track_get_artist(t), tt);
   mc_free(tt);
-  hre_t re_wsp = hre_compile("\\s+","");
-  char* q = hre_replace_all(re_wsp, query, "+");
+  char* q = to_http_get_query(query);
 
   sprintf(url, s, q);
   open_url(GTK_WIDGET(btn), url);
   
   mc_free(q);
-  hre_destroy(re_wsp);
 }
 
 

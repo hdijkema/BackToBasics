@@ -159,6 +159,11 @@ void playlist_model_set_playlist(playlist_model_t* model, playlist_t* playlist)
   gtk_list_model_refilter(model->model);
 }
 
+track_t* playlist_model_get_track(playlist_model_t* model, int row)
+{
+  return playlist_get(model->playlist, row);
+}
+
 static void playlist_assembler(playlist_model_t* model, int row, playlist_t* plp)
 {
   track_t* t = playlist_get(model->playlist, row);

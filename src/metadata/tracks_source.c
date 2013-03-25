@@ -36,7 +36,16 @@ track_array tracks_from_cue(const char* cuefile)
     TL_SET(genre, t, cue_genre(cue));
     {
       file_info_t* info = file_info_new(cue_audio_file(cue));
-      file_info_t* artfile = file_info_new(cue_image_file(cue));
+      char* imgfile = mc_strdup(cue_image_file(cue));
+      if (strcmp(imgfile, "") == 0) {
+        mc_free(imgfile);
+        char s[10240];
+        snprintf(s, 10239, "img_%s.art", cue_album_title(cue));
+        imgfile = mc_strdup(s);
+        file_info_blend(imgfile);
+      }
+        
+      file_info_t* artfile = file_info_new(imgfile);
       if (!file_info_is_absolute(artfile)) {
         const char* basedir = file_info_dirname(info);
         file_info_t* dir_info = file_info_new(basedir);
@@ -45,10 +54,12 @@ track_array tracks_from_cue(const char* cuefile)
         file_info_destroy(dir_info);
         file_info_destroy(nartfile);
       } else {
-        TL_SET(artid, t, cue_image_file(cue));
+        TL_SET(artid, t, imgfile);
       }
+      
       file_info_destroy(artfile);
       file_info_destroy(info);
+      mc_free(imgfile);
     }
     
     long bo = cue_entry_begin_offset_in_ms(entry);
@@ -129,6 +140,7 @@ track_array tracks_from_media(const char* localfile)
       strcpy(s,"img_");
       strcat(s,track_get_album_title(t));
       strcat(s,".art");
+      file_info_blend(s);
       file_info_t* art_file = file_info_combine(art_dir, s);
       //log_debug2("art file = %s", file_info_absolute_path(art_file));
       
@@ -140,6 +152,8 @@ track_array tracks_from_media(const char* localfile)
         //log_debug2("extracting %s", file_info_absolute_path(art_file));
         if (tag_cover_art_extract(tag, file_info_absolute_path(art_file))) {
            TL_SET(artid, t, file_info_absolute_path(art_file));
+        } else {
+          TL_SET(artid, t, file_info_absolute_path(art_file));
         }
       } else {
         TL_SET(artid, t, file_info_absolute_path(art_file));
