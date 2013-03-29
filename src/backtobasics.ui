@@ -1,6 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <!-- interface-requires gtk+ 3.0 -->
+  <object class="GtkAboutDialog" id="dlg_about">
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">About Back To Basics</property>
+    <property name="modal">True</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="icon">btb.png</property>
+    <property name="type_hint">dialog</property>
+    <property name="program_name">Back To Basics - Music Player</property>
+    <property name="version">v0.1</property>
+    <property name="copyright" translatable="yes">(c) Hans Oesterholt</property>
+    <property name="comments" translatable="yes">Back to basics is a music player that 
+aims to provide a good, low resource 
+usage music player.</property>
+    <property name="website">http://btbmp.oesterholt.net</property>
+    <property name="license" translatable="yes">This product is licensed under
+ GPLv2. However, it makes use 
+of libraries that may have
+other licenses. </property>
+    <property name="authors">Hans Oesterholt</property>
+    <property name="logo">logo_line.png</property>
+    <property name="license_type">gpl-2-0</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="aboutdialog-vbox1">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="aboutdialog-action_area1">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkDialog" id="dlg_edit_lyric">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -1118,6 +1161,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
+                        <signal name="activate" handler="btb_about" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -1525,7 +1569,7 @@
                                 </child>
                                 <child>
                                   <object class="GtkScale" id="sc_volume">
-                                    <property name="width_request">125</property>
+                                    <property name="width_request">100</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="fill_level">100</property>
@@ -1930,7 +1974,6 @@
                                             </child>
                                             <child>
                                               <object class="GtkExpander" id="exp_lyric">
-                                                <property name="width_request">200</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="vexpand">True</property>
@@ -2019,6 +2062,7 @@
                                                     <property name="can_focus">False</property>
                                                     <property name="label" translatable="yes">&lt;b&gt;&lt;i&gt;Lyric&lt;/i&gt;&lt;/b&gt;</property>
                                                     <property name="use_markup">True</property>
+                                                    <property name="ellipsize">middle</property>
                                                   </object>
                                                 </child>
                                               </object>

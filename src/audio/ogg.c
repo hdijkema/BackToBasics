@@ -57,7 +57,8 @@ static audio_result_t init(audio_worker_t* worker, const char* file_or_url, el_b
   
   ogg->is_open = el_false;
   ogg->length  = -1;
-  sem_init(&ogg->length_set, 0, 0);
+  //sem_init(&ogg->length_set, 0, 0);
+  ogg->length_set = psem_new(0);
   ogg->buffer = (char*) mc_malloc(BUFFER_SIZE(ogg));
   
   ogg->ao_handle = aodev_new();
@@ -77,7 +78,7 @@ static audio_result_t init(audio_worker_t* worker, const char* file_or_url, el_b
   int thread_id = pthread_create(&ogg->player_thread, NULL, player_thread, ogg);
 
   // wait until fully loaded (length is set)
-  sem_wait(&ogg->length_set);
+  psem_wait(ogg->length_set);
 
   return AUDIO_OK;
 }
@@ -150,7 +151,7 @@ static void* player_thread(void* _minfo)
             minfo->is_open = el_true;
             minfo->can_seek = ov_seekable(&minfo->vf);
             minfo->length = (long) (ov_time_total(&minfo->vf, -1) * 1000.0);
-            sem_post(&minfo->length_set);
+            psem_post(minfo->length_set);
             minfo->current_section = 0;
             vorbis_info* vi = ov_info(&minfo->vf, -1);
             aodev_set_format(minfo->ao_handle, 16, vi->rate, vi->channels);
@@ -263,7 +264,7 @@ static audio_result_t load_file(void* _minfo, const char* file)
   mc_free(minfo->file_or_url);
   minfo->file_or_url = mc_strdup(file);
   post_event(minfo->player_control, INTERNAL_CMD_LOAD_FILE, -1);
-  sem_wait(&minfo->length_set);
+  psem_wait(minfo->length_set);
   return AUDIO_OK;
 }
 
@@ -272,7 +273,7 @@ static audio_result_t load_url(void* _minfo, const char* url)
   ogg_t* minfo = (ogg_t*) _minfo;
   minfo->file_or_url = mc_strdup(url);
   post_event(minfo->player_control, INTERNAL_CMD_LOAD_URL, -1);
-  sem_wait(&minfo->length_set);
+  psem_wait(minfo->length_set);
   return AUDIO_OK;
 }
 
@@ -342,6 +343,8 @@ static void destroy(void* _minfo)
   }
   
   audio_event_fifo_destroy(minfo->player_control);
+  
+  psem_destroy(minfo->length_set);
   
   mc_free(minfo->file_or_url);
   mc_free(minfo->buffer);

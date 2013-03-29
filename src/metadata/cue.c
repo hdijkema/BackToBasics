@@ -103,8 +103,8 @@ static int eq(const char* s, const char* e)
     return 0;
   }
   
-  log_debug6("%-15s %s, %d, %d %d", r, e, lr, le, strncasecmp(r, e, le));
-  log_debug3("%d, %d", r[0], e[0]);
+  //log_debug6("%-15s %s, %d, %d %d", r, e, lr, le, strncasecmp(r, e, le));
+  //log_debug3("%d, %d", r[0], e[0]);
   
   if (strncasecmp(r, e, le) == 0) {
     mc_free(r);

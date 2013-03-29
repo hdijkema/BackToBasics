@@ -307,11 +307,10 @@ void proces_next(playlist_player_t* plp)
 }
 
 
-void proces_media_event(playlist_player_t* plp) {
-  audio_event_t* aevent = media_get_event(plp->worker);
+void proces_media_event(playlist_player_t* plp, audio_event_t* aevent) {
+  
   audio_state_t state = aevent->state;
   long pos_in_ms = aevent->position_in_ms;
-  audio_event_destroy(aevent);
 
   pthread_mutex_lock(plp->mutex);
   plp->current_position_in_ms = pos_in_ms;
@@ -570,16 +569,21 @@ void* playlist_player_thread(void* _plp)
     }
     
     // Now check the worker state
-    if (plp->player_state == PLAYLIST_PLAYER_PLAYING) {
-      proces_media_event(plp);
-      while (media_peek_event(plp->worker)) {
-        proces_media_event(plp);
-      }
-    } else {
-      while (media_peek_event(plp->worker)) {
-        proces_media_event(plp);
+    {
+      audio_event_t *event = media_get_event_when_available(plp->worker, 200);
+      if (event != NULL) {
+        do {
+          proces_media_event(plp, event);
+          audio_event_destroy(event);
+          if (media_peek_event(plp->worker)) {
+            event = media_get_event(plp->worker);
+          } else {
+            event = NULL;
+          }
+        } while (event != NULL);
       }
     }
+    
     
   }
   

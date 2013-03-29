@@ -50,7 +50,8 @@ static audio_result_t init(audio_worker_t* worker, const char* file_or_url, el_b
   
   flac->is_open = el_false;
   flac->length  = -1;
-  sem_init(&flac->length_set, 0, 0);
+  //sem_init(&flac->length_set, 0, 0);
+  flac->length_set = psem_new(0);
   
   flac->ao_handle = aodev_new();
 
@@ -69,7 +70,7 @@ static audio_result_t init(audio_worker_t* worker, const char* file_or_url, el_b
   int thread_id = pthread_create(&flac->player_thread, NULL, player_thread, flac);
 
   // wait until fully loaded (length is set)
-  sem_wait(&flac->length_set);
+  psem_wait(flac->length_set);
 
   return AUDIO_OK;
 }
@@ -214,7 +215,7 @@ static void* player_thread(void* _minfo)
             } else {
               minfo->is_open = el_true;
               minfo->can_seek = el_true;
-              sem_post(&minfo->length_set);
+              psem_post(minfo->length_set);
               
               aodev_set_format(minfo->ao_handle, minfo->bits, minfo->rate, minfo->channels);
               aodev_open(minfo->ao_handle);
@@ -335,7 +336,7 @@ static audio_result_t load_file(void* _minfo, const char* file)
   flac_t* minfo = (flac_t*) _minfo;
   minfo->file_or_url = mc_strdup(file);
   post_event(minfo->player_control, INTERNAL_CMD_LOAD_FILE, -1);
-  sem_wait(&minfo->length_set);
+  psem_wait(minfo->length_set);
   return AUDIO_OK;
 }
 
@@ -344,7 +345,7 @@ static audio_result_t load_url(void* _minfo, const char* url)
   flac_t* minfo = (flac_t*) _minfo;
   minfo->file_or_url = mc_strdup(url);
   post_event(minfo->player_control, INTERNAL_CMD_LOAD_URL, -1);
-  sem_wait(&minfo->length_set);
+  psem_wait(minfo->length_set);
   return AUDIO_OK;
 }
 
@@ -405,7 +406,8 @@ static void destroy(void* _minfo)
   }
   
   audio_event_fifo_destroy(minfo->player_control);
-  
+
+  psem_destroy(minfo->length_set);  
   mc_free(minfo);
 }
 

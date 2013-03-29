@@ -98,6 +98,7 @@ long media_length_in_ms(audio_worker_t* worker);
 
 el_bool media_peek_event(audio_worker_t *worker);
 audio_event_t *media_get_event(audio_worker_t *worker);
+audio_event_t *media_get_event_when_available(audio_worker_t *worker, int timeout_in_ms);
 void audio_event_destroy(audio_event_t *event);
 audio_state_t audio_event_state(audio_event_t* event);
 long audio_event_ms(audio_event_t* event);

@@ -5,7 +5,7 @@
 #include <audio/aodev.h>
 #include <mpg123.h>
 #include <elementals.h>
-#include <semaphore.h>
+//#include <semaphore.h>
 
 DECLARE_FIFO(mp3_stream_fifo, memblock_t);
 
@@ -25,12 +25,12 @@ typedef struct {
   el_bool is_open;
   char* file_or_url;    // This is an intermediate buffer. Don't free at destroy
   long length;
-  sem_t length_set;
+  psem_t* length_set;
   
   // http stream
   mp3_stream_fifo* stream_fifo;
   el_bool continue_streaming;
-  sem_t stream_ready;
+  psem_t* stream_ready;
   memblock_t* current_block;
   el_bool streaming;
   

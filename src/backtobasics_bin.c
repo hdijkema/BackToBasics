@@ -586,3 +586,12 @@ GtkWindow* btb_main_window(Backtobasics* btb)
 {
   return btb->main_window;
 }
+
+void btb_about(GtkMenuItem* item, Backtobasics* btb)
+{
+  GtkWindow* window = GTK_WINDOW(gtk_builder_get_object (btb->builder, TOP_WINDOW));
+  GtkDialog* about = GTK_DIALOG(gtk_builder_get_object(btb->builder, "dlg_about"));
+  gtk_dialog_run(about);
+  gtk_widget_hide(GTK_WIDGET(about));
+}
+

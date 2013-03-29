@@ -84,6 +84,12 @@ void radio_view_init(radio_view_t* view)
   
   // Web page
   view->web_view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+  file_info_t* btb_cfg_dir = file_info_new_home(".backtobasics");
+  file_info_t* btb_cookie_file = file_info_combine(btb_cfg_dir, "btb.cookies");
+  add_webkit_cookie_support(view->web_view, file_info_absolute_path(btb_cookie_file));
+  file_info_destroy(btb_cookie_file);
+  file_info_destroy(btb_cfg_dir);
+
   //WebKitWebContext* c = webkit_web_context_get_default();
   GtkBox* webp = GTK_BOX(gtk_builder_get_object(view->builder, "scw_radio"));
   //gtk_box_pack_start(webp, GTK_WIDGET(view->web_view), TRUE, TRUE, 4);
@@ -108,6 +114,9 @@ void radio_view_destroy(radio_view_t* view)
   }
   
   station_model_destroy(view->station_model);
+  
+  destroy_webkit_cookie_support(view->web_view);
+  
   mc_free(view);
 }
 

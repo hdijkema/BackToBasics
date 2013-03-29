@@ -98,13 +98,15 @@ static audio_result_t init(audio_worker_t* worker, const char* file_or_url, el_b
   mp3->stream_fifo = mp3_stream_fifo_new();
   mp3->continue_streaming = el_true;
   mp3->current_block = NULL;
-  sem_init(&mp3->stream_ready, 0, 0);
+  //sem_init(&mp3->stream_ready, 0, 0);
+  mp3->stream_ready = psem_new(0);
   mp3->streaming = el_false;
   
   // etc.  
   mp3->is_open = el_false;
   mp3->length  = -1;
-  sem_init(&mp3->length_set, 0, 0);
+  //sem_init(&mp3->length_set, 0, 0);
+  mp3->length_set = psem_new(0);
   
   mp3->ao_handle = aodev_new();
 
@@ -123,7 +125,7 @@ static audio_result_t init(audio_worker_t* worker, const char* file_or_url, el_b
   int thread_id = pthread_create(&mp3->player_thread, NULL, player_thread, mp3);
 
   // wait until fully loaded (length is set)
-  sem_wait(&mp3->length_set);
+  psem_wait(mp3->length_set);
 
   return AUDIO_OK;
 }
@@ -210,7 +212,7 @@ void* stream_thread(void* data)
     memblock_destroy(b);
   }
   
-  sem_post(&mp3_info->stream_ready);
+  psem_post(mp3_info->stream_ready);
   mp3_info->streaming = el_false;
   
   return NULL;
@@ -268,7 +270,7 @@ void* player_thread(void* _mp3_info)
         // Stop stream, if playing
         if (!mp3_info->is_file) {
           mp3_info->continue_streaming = el_false;
-          sem_wait(&mp3_info->stream_ready);
+          psem_wait(mp3_info->stream_ready);
         }
         
         if (mp3_info->is_open) {
@@ -295,7 +297,7 @@ void* player_thread(void* _mp3_info)
           } else {
             mp3_info->length = (l * 1000) / mp3_info->rate;
           }
-          sem_post(&mp3_info->length_set);
+          psem_post(mp3_info->length_set);
         }
       }
       break;
@@ -305,7 +307,7 @@ void* player_thread(void* _mp3_info)
         // Wait for feeding streams to end
         if (!mp3_info->is_file) {
           mp3_info->continue_streaming = el_false;
-          sem_wait(&mp3_info->stream_ready);
+          psem_wait(mp3_info->stream_ready);
         }
         mp3_info->is_file = el_false;
         log_debug("current stream ended");
@@ -330,7 +332,7 @@ void* player_thread(void* _mp3_info)
         mp3_info->length = 0;
         mp3_info->continue_streaming = el_true;
         
-        sem_post(&mp3_info->length_set);
+        psem_post(mp3_info->length_set);
       }
       break;
       case INTERNAL_CMD_SEEK: {
@@ -468,7 +470,7 @@ void* player_thread(void* _mp3_info)
   // Kill playing streams
   if (mp3_info->streaming) {
     mp3_info->continue_streaming = el_false;
-    sem_wait(&mp3_info->stream_ready);
+    psem_wait(mp3_info->stream_ready);
   }
   
   audio_event_destroy(event);
@@ -487,7 +489,7 @@ static audio_result_t load_file(void* _mp3_info, const char* file)
   mc_free(mp3_info->file_or_url);
   mp3_info->file_or_url = mc_strdup(file);
   post_event(mp3_info->player_control, INTERNAL_CMD_LOAD_FILE, -1);
-  sem_wait(&mp3_info->length_set);
+  psem_wait(mp3_info->length_set);
   return AUDIO_OK;
 }
 
@@ -497,7 +499,7 @@ static audio_result_t load_url(void* _mp3_info, const char* url)
   mc_free(mp3_info->file_or_url);
   mp3_info->file_or_url = mc_strdup(url);
   post_event(mp3_info->player_control, INTERNAL_CMD_LOAD_URL, -1);
-  sem_wait(&mp3_info->length_set);
+  psem_wait(mp3_info->length_set);
   return AUDIO_OK;
 }
 
@@ -573,6 +575,9 @@ static void destroy(void* _mp3_info)
   mc_free(mp3_info->file_or_url);
   
   mc_free(mp3_info->buffer);
+  
+  psem_destroy(mp3_info->length_set);
+  psem_destroy(mp3_info->stream_ready);
   
   mc_free(mp3_info);
 }

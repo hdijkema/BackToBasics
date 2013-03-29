@@ -50,11 +50,12 @@ am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(btbdir)" \
 	"$(DESTDIR)$(uidir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__objects_1 = simple_html.$(OBJEXT) image_fetcher.$(OBJEXT) \
-	config.$(OBJEXT) aodev.$(OBJEXT) audio.$(OBJEXT) mp3.$(OBJEXT) \
-	ogg.$(OBJEXT) flac.$(OBJEXT) ripstream.$(OBJEXT) \
-	track.$(OBJEXT) cue.$(OBJEXT) tracks_source.$(OBJEXT) \
-	playlist.$(OBJEXT) playlist_player.$(OBJEXT) i18n.$(OBJEXT) \
-	library.$(OBJEXT) radio.$(OBJEXT)
+	webkitcookies.$(OBJEXT) config.$(OBJEXT) aodev.$(OBJEXT) \
+	audio.$(OBJEXT) mp3.$(OBJEXT) ogg.$(OBJEXT) flac.$(OBJEXT) \
+	ripstream.$(OBJEXT) track.$(OBJEXT) cue.$(OBJEXT) \
+	tracks_source.$(OBJEXT) playlist.$(OBJEXT) \
+	playlist_player.$(OBJEXT) i18n.$(OBJEXT) library.$(OBJEXT) \
+	radio.$(OBJEXT)
 am_backtobasics_bin_OBJECTS = $(am__objects_1) main.$(OBJEXT) \
 	backtobasics_bin.$(OBJEXT) library_view.$(OBJEXT) \
 	playlist_model.$(OBJEXT) string_model.$(OBJEXT) \
@@ -277,6 +278,8 @@ GENERICSRC = \
 	util/simple_html.h \
 	util/image_fetcher.c \
 	util/image_fetcher.h \
+	util/webkitcookies.c \
+	util/webkitcookies.h \
 	util/config.c \
 	util/config.h \
 	audio/aodev.c \
@@ -446,6 +449,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/string_model.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/track.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tracks_source.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/webkitcookies.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -488,6 +492,20 @@ image_fetcher.obj: util/image_fetcher.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='util/image_fetcher.c' object='image_fetcher.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o image_fetcher.obj `if test -f 'util/image_fetcher.c'; then $(CYGPATH_W) 'util/image_fetcher.c'; else $(CYGPATH_W) '$(srcdir)/util/image_fetcher.c'; fi`
+
+webkitcookies.o: util/webkitcookies.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT webkitcookies.o -MD -MP -MF $(DEPDIR)/webkitcookies.Tpo -c -o webkitcookies.o `test -f 'util/webkitcookies.c' || echo '$(srcdir)/'`util/webkitcookies.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/webkitcookies.Tpo $(DEPDIR)/webkitcookies.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='util/webkitcookies.c' object='webkitcookies.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o webkitcookies.o `test -f 'util/webkitcookies.c' || echo '$(srcdir)/'`util/webkitcookies.c
+
+webkitcookies.obj: util/webkitcookies.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT webkitcookies.obj -MD -MP -MF $(DEPDIR)/webkitcookies.Tpo -c -o webkitcookies.obj `if test -f 'util/webkitcookies.c'; then $(CYGPATH_W) 'util/webkitcookies.c'; else $(CYGPATH_W) '$(srcdir)/util/webkitcookies.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/webkitcookies.Tpo $(DEPDIR)/webkitcookies.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='util/webkitcookies.c' object='webkitcookies.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o webkitcookies.obj `if test -f 'util/webkitcookies.c'; then $(CYGPATH_W) 'util/webkitcookies.c'; else $(CYGPATH_W) '$(srcdir)/util/webkitcookies.c'; fi`
 
 config.o: util/config.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT config.o -MD -MP -MF $(DEPDIR)/config.Tpo -c -o config.o `test -f 'util/config.c' || echo '$(srcdir)/'`util/config.c

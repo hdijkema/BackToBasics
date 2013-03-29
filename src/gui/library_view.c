@@ -44,8 +44,9 @@ library_view_t* library_view_new(Backtobasics* btb, library_t* library)
   view->sliding = 0;
   view->repeat = -1;
   
-  view->img_w = 200;
-  view->img_h = 200;
+  view->img_w = el_config_get_int(btb_config(view->btb), "image_art.width", 200);
+  view->img_h = el_config_get_int(btb_config(view->btb), "image_art.height", 200);
+  log_debug3("image art w=%d, h=%d", view->img_w, view->img_h);
   
   view->btn_play = NULL;
   view->btn_pause = NULL;
@@ -103,6 +104,7 @@ void library_view_clear_playlist(library_view_t* view)
 static void library_view_aspect_page(library_view_t* view, aspect_enum aspect);
 static void library_view_adjust_aspect_buttons(library_view_t* view, aspect_enum aspect);
 static void library_view_library_col_sort(GtkTreeViewColumn* col, library_view_t* view);
+static void library_view_col_width_set(GtkTreeViewColumn* col, GParamSpec* spec, library_view_t* view);
 
 void library_view_init(library_view_t* view)
 {
@@ -131,11 +133,13 @@ void library_view_init(library_view_t* view)
     sprintf(path, "library.column.%s.width", column_id(e));
     int width = el_config_get_int(btb_config(view->btb), path, 100);
     if (width < 10) { width = 100; }
+    g_object_set_data(G_OBJECT(col), "column_id", (gpointer) column_id(e));
     gtk_tree_view_column_set_fixed_width(col, width);
     gtk_tree_view_column_set_reorderable(col, TRUE);
     gtk_tree_view_column_set_resizable(col, TRUE);
     gtk_tree_view_column_set_clickable(col, TRUE);
     g_signal_connect(col, "clicked", (GCallback) library_view_library_col_sort, view);
+    g_signal_connect (col, "notify::width", G_CALLBACK (library_view_col_width_set), view);
     view->cols[e] = col;
     g_object_ref(view->cols[e]);
     gtk_tree_view_append_column(tview, col);
@@ -200,8 +204,9 @@ void library_view_init(library_view_t* view)
                                                         TRUE,
                                                         &err
                                                         );
+      GtkImage* img = GTK_IMAGE(gtk_builder_get_object(view->builder, "img_art"));
+      gtk_widget_set_size_request(GTK_WIDGET(img), view->img_w, view->img_h);
       if (pb != NULL) {
-        GtkImage* img = GTK_IMAGE(gtk_builder_get_object(view->builder, "img_art"));
         gtk_image_set_from_pixbuf(img, pb);
         g_object_unref(pb);
       } else {
@@ -533,9 +538,14 @@ static void library_view_play_at(library_view_t* view, int track)
     view->time_in_ms = -1;
     playlist_player_set_track(player, track); // implies play
   } else {
-    if (!playlist_player_is_paused(player)) {
+    //if (!playlist_player_is_paused(player)) {
+    if (track != playlist_player_get_track_index(player)) {
       playlist_player_set_track(player, track); // implies play
+    } else {
+      playlist_player_play(player);
     }
+    //} else { // paused, play again
+    //}
   }
 }
 
@@ -945,6 +955,59 @@ static void library_view_library_col_sort(GtkTreeViewColumn* col, library_view_t
   playlist_model_sort(view->playlist_model, e);
 }
 
+void library_view_col_order_set(GtkTreeViewColumn* col, library_view_t* view) 
+{
+  if (view->column_layout_changing) {
+    return;
+  }
+
+  long long hash = playlist_model_tracks_hash(view->playlist_model);
+
+  // column order
+  int i;  
+  GList *cols = gtk_tree_view_get_columns(view->tview);
+  char* val = mc_strdup("");
+  char* comma = ""; 
+  for(i = 0; i < PLAYLIST_MODEL_N_COLUMNS; ++i) {
+    int k = g_list_index(cols, (gpointer) view->cols[i]);
+    char pos[100];
+    sprintf(pos,"%s%d", comma, k);
+    char* v1 = hre_concat(val, pos);
+    mc_free(val);
+    val = v1;
+    comma = ",";
+  }
+  { 
+    char cfgitem[200];
+    sprintf(cfgitem,"library.cols.hash_%lld.%s", hash, "order");
+    el_config_set_string(btb_config(view->btb), cfgitem, val);
+    mc_free(val);
+  }
+}
+
+static void library_view_col_width_set(GtkTreeViewColumn* col, GParamSpec* spec, library_view_t* view)
+{
+  log_debug2("changing %d", view->column_layout_changing);
+  if (view->column_layout_changing) {
+    return;
+  }
+
+  long long hash = playlist_model_tracks_hash(view->playlist_model);
+
+  int i;
+  const char* name = g_object_get_data(G_OBJECT(col), "column_id"); 
+  for(i = 0; strcmp(name, column_id(i)) != 0; ++i);
+  log_debug4("i = %d, name = %s, colid = %s", i, name, column_id(i));
+  
+  if (column_id(i) != NULL) {
+    char cfgitem[200];
+    sprintf(cfgitem,"library.cols.hash_%lld.%s.width", hash, column_id(i));
+    int width = gtk_tree_view_column_get_width(view->cols[i]);
+    
+    el_config_set_int(btb_config(view->btb), cfgitem, width);
+  }
+}
+
 void library_view_col_visible(GtkCheckMenuItem* item, GObject* lview)
 {
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
@@ -955,6 +1018,7 @@ void library_view_col_visible(GtkCheckMenuItem* item, GObject* lview)
   
   //long long hash = playlist_player_get_hash(backtobasics_player(view->btb));
   long long hash = playlist_model_tracks_hash(view->playlist_model);
+  log_debug2("set column layout for hash %lld", hash);
   
   const char* names[] = {
     "chk_col_nr", "chk_col_title", "chk_col_artist", "chk_col_composer",
@@ -971,12 +1035,14 @@ void library_view_col_visible(GtkCheckMenuItem* item, GObject* lview)
   int i;
   const char* name = gtk_widget_get_name(GTK_WIDGET(item));
   for(i = 0; names[i] != NULL && strcmp(name, names[i]) != 0;++i);
+  
   if (names[i] != NULL) {
     char cfgitem[200];
     sprintf(cfgitem,"library.cols.hash_%lld.%s", hash, names[i]);
     int active =  gtk_check_menu_item_get_active(item);
     el_config_set_int(btb_config(view->btb), cfgitem, active);
-    gtk_tree_view_column_set_visible(view->cols[es[i]], gtk_check_menu_item_get_active(item));
+    int ei = es[i];
+    gtk_tree_view_column_set_visible(view->cols[ei], gtk_check_menu_item_get_active(item));
   }
 }
 
@@ -992,7 +1058,23 @@ gboolean library_view_set_coverart(GtkImage* img, GdkEvent* evt, GObject* lview)
                         button_evt->button, button_evt->time);
     return TRUE;
   } else {
-    return FALSE;
+    GtkImage* img = GTK_IMAGE(gtk_builder_get_object(view->builder, "img_art"));
+    gint w,h;
+    gtk_widget_get_size_request(GTK_WIDGET(img), &w, &h);
+    if (w == 200) {
+      gtk_widget_set_size_request(GTK_WIDGET(img), 100, 100);
+      view->img_w = 100;
+      view->img_h = 100;
+      view->track_index = -1;
+    } else {
+      gtk_widget_set_size_request(GTK_WIDGET(img), 200, 200);
+      view->img_w = 200;
+      view->img_h = 200;
+      view->track_index = -1;
+    }
+    el_config_set_int(btb_config(view->btb), "image_art.width", view->img_w);
+    el_config_set_int(btb_config(view->btb), "image_art.height", view->img_h);
+    return TRUE;
   }
 }
 
@@ -1103,6 +1185,10 @@ void library_view_search_cover_art(GtkMenuItem* item, GObject* lview)
 static void get_column_layout(library_view_t* view, long long hash) 
 {
   view->column_layout_changing = el_true;
+  log_debug2("get column layout for hash %lld", hash);
+    log_debug2("changing %d", view->column_layout_changing);
+
+  
   
   const char* names[] = {
     "chk_col_nr", "chk_col_title", "chk_col_artist", "chk_col_composer",
@@ -1121,13 +1207,15 @@ static void get_column_layout(library_view_t* view, long long hash)
   for(i = 0; names[i] != NULL; ++i) {
     GtkCheckMenuItem* item = GTK_CHECK_MENU_ITEM(gtk_builder_get_object(view->builder, names[i]));
     char cfgitem[100];
-    sprintf(cfgitem,"library.cols.%lld, %s", hash, names[i]);
+    sprintf(cfgitem,"library.cols.hash_%lld.%s", hash, names[i]);
     int visible = el_config_get_int(btb_config(view->btb), cfgitem, 1);
     gtk_tree_view_column_set_visible(view->cols[es[i]], visible);
     gtk_check_menu_item_set_active(item, visible);    
   }
-
+  
   view->column_layout_changing = el_false;
+    log_debug2("changing %d", view->column_layout_changing);
+
 }
 
 

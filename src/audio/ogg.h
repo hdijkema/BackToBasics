@@ -21,7 +21,7 @@ typedef struct {
   
   el_bool is_open;
   long length;
-  sem_t length_set;
+  psem_t* length_set;
   
   el_bool can_seek;
   el_bool is_file;

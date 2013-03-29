@@ -39,6 +39,8 @@ GENERICSRC = \
 	util/simple_html.h \
 	util/image_fetcher.c \
 	util/image_fetcher.h \
+	util/webkitcookies.c \
+	util/webkitcookies.h \
 	util/config.c \
 	util/config.h \
 	audio/aodev.c \

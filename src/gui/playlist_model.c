@@ -134,6 +134,7 @@ playlist_model_t* playlist_model_new()
                                     cell_value
                                     );
   model->valid_tracks = NULL;
+  model->col_properties = col_property_hash_new(10, HASH_CASE_SENSITIVE);
   gtk_list_model_set_filter(model->model, filter);
   
   return model;                                    
@@ -143,6 +144,7 @@ void playlist_model_destroy(playlist_model_t* model)
 {
   gtk_list_model_destroy(model->model);
   playlist_destroy(model->playlist);
+  col_property_hash_destroy(model->col_properties);
   model->playlist = NULL;
   mc_free(model);
 }
@@ -235,5 +237,163 @@ void playlist_model_sort(playlist_model_t* model, playlist_column_enum e)
 {
   model->sort_col = e;
   gtk_list_model_sort(model->model, (int (*)(void*, int, int)) cmp); 
+}
+
+/*****************************************************************************
+ * Storing column properties
+ *****************************************************************************/
+
+el_bool playlist_model_save_col_properties(playlist_model_t* model, const char* filename)
+{
+  FILE *f = fopen(filename, "wb");
+  if (filename != NULL) {
+    hash_iter_t iter = col_property_hash_iter(model->col_properties);
+    while (!col_property_hash_iter_end(iter)) {
+      col_properties_t* p = col_property_hash_iter_data(iter);
+      if (!col_properties_write(p, f)) {
+        log_error("Error writing col properties");
+        fclose(f);
+        return el_false;
+      }
+      iter = col_property_hash_iter_next(iter);       
+    }
+    fclose(f);
+    return el_true;
+  } else {
+    log_error2("Cannot write file '%s'", filename); 
+    return el_false;
+  }
+  
+  // should not be reached
+  log_error("this line should not be reached!");
+  return el_false;
+}
+
+ 
+static col_properties_t* copy(col_properties_t* p)
+{
+  col_properties_t* pp = col_properties_new(p->hash);
+  int i;
+  for(i = 0; i < PLAYLIST_MODEL_N_COLUMNS; ++i) {
+    pp->col_index[i] = p->col_index[i];
+    pp->col_width[i] = p->col_width[i];
+    pp->col_visible[i] = p->col_visible[i];
+  }
+  return pp;
+}
+
+static void destroy(col_properties_t* p)
+{
+  col_properties_destroy(p);
+}
+ 
+IMPLEMENT_HASH(col_property_hash, col_properties_t, copy, destroy);
+ 
+col_properties_t* col_properties_new(long long hash)
+{
+  int i;
+  col_properties_t* p = (col_properties_t*) mc_malloc(sizeof(col_properties_t));
+  for(i = 0; i < PLAYLIST_MODEL_N_COLUMNS; ++i) {
+    p->col_index[i] = i;
+    p->col_width[i] = 100;
+    p->col_visible[i] = el_true;
+  }
+  p->hash = hash;
+  char s[1024];
+  sprintf(s,"%lld", hash);
+  p->hash_as_str = mc_strdup(s);
+  return p;
+}
+
+void col_properties_destroy(col_properties_t* p)
+{
+  mc_free(p->hash_as_str);
+  mc_free(p);
+}
+
+const char* col_properties_key(const col_properties_t* p)
+{
+  return p->hash_as_str;
+}
+
+#define MAGIC_NUMBER 12832
+#define VERSION 1
+
+el_bool col_properties_write(const col_properties_t* p, FILE* f)
+{
+  short magic_number = MAGIC_NUMBER;
+  short version = VERSION;
+  fwrite(&magic_number, sizeof(magic_number), 1, f);
+  fwrite(&version, sizeof(version), 1, f);
+  fwrite(p->col_index, sizeof(int), PLAYLIST_MODEL_N_COLUMNS, f);
+  fwrite(p->col_width, sizeof(int), PLAYLIST_MODEL_N_COLUMNS, f);
+  fwrite(p->col_visible, sizeof(el_bool), PLAYLIST_MODEL_N_COLUMNS, f);
+  fwrite(&p->hash, sizeof(long long), 1, f);
+  return el_true;
+}
+
+el_bool col_properties_read(col_properties_t* p, FILE* f)
+{
+  short magic_number;
+  short version;
+  fread(&magic_number, sizeof(magic_number), 1, f);
+  fread(&version, sizeof(version), 1, f);
+  if (magic_number != MAGIC_NUMBER || version != VERSION) {
+    return el_false;
+  } else {
+    fread(p->col_index, sizeof(int), PLAYLIST_MODEL_N_COLUMNS, f);
+    fread(p->col_width, sizeof(int), PLAYLIST_MODEL_N_COLUMNS, f);
+    fread(p->col_visible, sizeof(el_bool), PLAYLIST_MODEL_N_COLUMNS, f);
+    fread(&p->hash, sizeof(long long), 1, f);
+    mc_free(p->hash_as_str);
+    char s[1024];
+    sprintf(s, "%lld", p->hash);
+    p->hash_as_str = mc_strdup(s);
+    return el_true;
+  }
+}
+
+int col_properties_get_width(const col_properties_t* p, int e)
+{
+  return p->col_width[e];
+}
+
+el_bool col_properties_get_visible(const col_properties_t* p, int e)
+{
+  return p->col_visible[e];
+}
+
+int col_properties_get_index(const col_properties_t* p, int e)
+{
+  return p->col_index[e];
+}
+
+void col_properties_set_width(col_properties_t* p, int e, int width)
+{
+  p->col_width[e] = width;
+}
+
+void col_properties_set_visible(col_properties_t* p, int e, el_bool visible)
+{
+  p->col_visible[e] = visible;
+}
+
+void col_properties_set_index(col_properties_t* p, int e, int index)
+{
+  p->col_index[e] = index;
+}
+
+const col_properties_t* playlist_get_col_properties(playlist_model_t* model, long long hash)
+{
+  char s[1024];
+  sprintf(s, "%lld", hash);
+  return (const col_properties_t*) col_property_hash_get(model->col_properties, s);
+}
+
+void playlist_set_col_properties(playlist_model_t* model, long long hash, const col_properties_t* p)
+{
+  char s[1024];
+  sprintf(s, "%lld", hash);
+  col_property_hash_put(model->col_properties, s, (col_properties_t*) p);
 }
 

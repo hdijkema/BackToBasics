@@ -31,6 +31,11 @@ audio_event_t *media_get_event(audio_worker_t *worker)
   return audio_event_fifo_dequeue(worker->fifo);
 }
 
+audio_event_t *media_get_event_when_available(audio_worker_t *worker, int timeout_in_ms)
+{
+  return audio_event_fifo_dequeue_timeout(worker->fifo, timeout_in_ms);
+}
+
 void audio_event_destroy(audio_event_t *event)
 {
   destroy_event(event);
