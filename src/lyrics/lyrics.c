@@ -249,6 +249,7 @@ void fetch_lyric(track_t* t, void (*f)(char* lyric, void* data), void* dt)
 {
   struct fetcher* data = (struct fetcher*) mc_malloc(sizeof(struct fetcher));
   data->track = track_copy(t);
+  log_track(data->track);
   data->f = f;
   data->lyric = NULL;
   data->data = dt;

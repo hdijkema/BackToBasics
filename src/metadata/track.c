@@ -1,5 +1,6 @@
 #include <metadata/track.h>
 #include <elementals.h>
+#include <pthread.h>
 
 #define I(a) t->/**/a = mc_strdup("")
 

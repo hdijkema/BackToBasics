@@ -56,7 +56,7 @@ void newrequest(SoupSession *s, SoupMessage *msg, gpointer v)
 	SoupURI *uri;
 	const char* c;
 	
-	log_debug2("cookiefile = %s", cookiefile);
+	//log_debug2("cookiefile = %s", cookiefile);
 	
 	soup_message_headers_remove(h, "Cookie");
 	uri = soup_message_get_uri(msg);
@@ -85,7 +85,7 @@ void gotheaders(SoupMessage *msg, gpointer v)
 	//SoupURI *uri;
 	GSList *l, *p;
 	
-	log_debug2("cookiefile = %s", cookiefile);
+	//log_debug2("cookiefile = %s", cookiefile);
 
 	//uri = soup_message_get_uri(msg);
 	for(p = l = soup_cookies_from_response(msg); p;

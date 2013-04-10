@@ -56,7 +56,7 @@ library_view_t* library_view_new(Backtobasics* btb, library_t* library)
   
   view->playlists_model = playlists_model_new(view->library);
   
-  view->current_lyric_track = NULL;
+  view->current_lyric_track_id = NULL;
   
   view->column_layout_changing = el_false;
   
@@ -87,6 +87,11 @@ void library_view_destroy(library_view_t* view)
   string_model_destroy(view->artist_model);
   string_model_destroy(view->album_model);
   playlists_model_destroy(view->playlists_model);
+  
+  if (view->current_lyric_track_id != NULL) { 
+    mc_free(view->current_lyric_track_id);
+  }
+  
   mc_free(view);
 }
 
@@ -666,7 +671,7 @@ gboolean library_view_slider_unset(GtkWidget* widget, GdkEvent* event, GObject* 
 }
 
 struct lyric_cb {
-  track_t* track;
+  char* track_id;
   library_view_t* view;
 };
 
@@ -674,30 +679,41 @@ static void library_view_process_lyric(char* lyric, void* data)
 {
   
   struct lyric_cb* cb = (struct lyric_cb*) data;
-  track_t* t = cb->track;
+  char* t_id = cb->track_id;
   library_view_t* view = cb->view;
   mc_free(cb);
-
-  view->current_lyric_track = t;
-  if (strcmp(lyric, "") != 0) {
-    track_set_lyric(t, lyric);
+  
+  if (view->current_lyric_track_id != NULL) {
+    mc_free(view->current_lyric_track_id);
   }
+  view->current_lyric_track_id = t_id;
   
-  char *artist = text_to_html(track_get_artist(t));
-  char *title = text_to_html(track_get_title(t));
-
-  char* s = (char*) mc_malloc(strlen(artist)+sizeof(", ")+strlen(title)+200);
-  sprintf(s,"<span size=\"x-small\"><i><b>%s\n%s</b></i></span>", artist, title);
-  gtk_label_set_markup(view->lbl_lyric_track,s);
-  mc_free(s);
+  track_t* t = library_get(view->library, t_id);
+  if (t != NULL) {
+    if (strcmp(lyric, "") != 0) {
+      track_set_lyric(t, lyric);
+    }
+    
+    char *artist = text_to_html(track_get_artist(t));
+    char *title = text_to_html(track_get_title(t));
   
-  mc_free(title);
-  mc_free(artist);
-  
-  char* html = lyric_text_to_html(lyric);
-  write_lyric(t, lyric, el_false); // write but don't overwrite
-  webkit_web_view_load_string(view->lyric_view, html, NULL, NULL, "");
-  mc_free(html);
+    char* s = (char*) mc_malloc(strlen(artist)+sizeof(", ")+strlen(title)+200);
+    sprintf(s,"<span size=\"x-small\"><i><b>%s\n%s</b></i></span>", artist, title);
+    gtk_label_set_markup(view->lbl_lyric_track,s);
+    mc_free(s);
+    
+    mc_free(title);
+    mc_free(artist);
+    
+    char* html = lyric_text_to_html(lyric);
+    write_lyric(t, lyric, el_false); // write but don't overwrite
+    webkit_web_view_load_string(view->lyric_view, html, NULL, NULL, "");
+    mc_free(html);
+  } else {
+    char* html = "<html><head></head><body></body></html>";
+    gtk_label_set_markup(view->lbl_lyric_track, "");
+    webkit_web_view_load_string(view->lyric_view, html, NULL, NULL, "");
+  }
   
   mc_free(lyric);
 }
@@ -706,35 +722,37 @@ void library_view_edit_lyric(GtkToolButton *btn, GObject *lview)
 {
   library_view_t* view = (library_view_t*) g_object_get_data(lview, "library_view_t");
   
-  if (view->current_lyric_track != NULL) {
-    track_t* t = view->current_lyric_track;
-    GtkLabel* lbl = GTK_LABEL(gtk_builder_get_object(view->builder, "lbl_lyr_edit_track"));
-    char* s = (char*) mc_malloc(strlen(track_get_artist(t))+sizeof(", ")+strlen(track_get_title(t))+200);
-    sprintf(s,"<span size=\"x-small\"><i><b>%s\n%s</b></i></span>", track_get_artist(t), track_get_title(t));
-    gtk_label_set_markup(lbl,s);
-    mc_free(s);
-    
-    GtkDialog* dlg = GTK_DIALOG(gtk_builder_get_object(view->builder, "dlg_edit_lyric"));
-    g_object_set_data(G_OBJECT(dlg), "track", (gpointer) t );
-    
-    GtkTextView* tv = GTK_TEXT_VIEW(gtk_builder_get_object(view->builder, "txt_lyric_edit"));
-    GtkTextBuffer* buf = gtk_text_view_get_buffer(tv);
-    const char* lyric = track_get_lyric(view->current_lyric_track);
-    gtk_text_buffer_set_text(buf, lyric, -1);
-    int response = gtk_dialog_run(dlg);
-    if (response) {
-      GtkTextIter start, end;
-      gtk_text_buffer_get_iter_at_offset(buf, &start, 0);
-      gtk_text_buffer_get_iter_at_offset(buf, &end, -1);
-      char* txt = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
-      write_lyric(view->current_lyric_track, txt, el_true);
-      track_set_lyric(view->current_lyric_track, txt);
-      char* html = lyric_text_to_html(txt);
-      webkit_web_view_load_string(view->lyric_view, html, NULL, NULL, "");
-      mc_free(html);
-      g_free(txt);
+  if (view->current_lyric_track_id != NULL) {
+    track_t* t = library_get(view->library, view->current_lyric_track_id);
+    if (t != NULL) {
+      GtkLabel* lbl = GTK_LABEL(gtk_builder_get_object(view->builder, "lbl_lyr_edit_track"));
+      char* s = (char*) mc_malloc(strlen(track_get_artist(t))+sizeof(", ")+strlen(track_get_title(t))+200);
+      sprintf(s,"<span size=\"x-small\"><i><b>%s\n%s</b></i></span>", track_get_artist(t), track_get_title(t));
+      gtk_label_set_markup(lbl,s);
+      mc_free(s);
+      
+      GtkDialog* dlg = GTK_DIALOG(gtk_builder_get_object(view->builder, "dlg_edit_lyric"));
+      g_object_set_data(G_OBJECT(dlg), "track", (gpointer) t );
+      
+      GtkTextView* tv = GTK_TEXT_VIEW(gtk_builder_get_object(view->builder, "txt_lyric_edit"));
+      GtkTextBuffer* buf = gtk_text_view_get_buffer(tv);
+      const char* lyric = track_get_lyric(t);
+      gtk_text_buffer_set_text(buf, lyric, -1);
+      int response = gtk_dialog_run(dlg);
+      if (response) {
+        GtkTextIter start, end;
+        gtk_text_buffer_get_iter_at_offset(buf, &start, 0);
+        gtk_text_buffer_get_iter_at_offset(buf, &end, -1);
+        char* txt = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
+        write_lyric(t, txt, el_true);
+        track_set_lyric(t, txt);
+        char* html = lyric_text_to_html(txt);
+        webkit_web_view_load_string(view->lyric_view, html, NULL, NULL, "");
+        mc_free(html);
+        g_free(txt);
+      }
+      gtk_widget_hide(GTK_WIDGET(dlg));
     }
-    gtk_widget_hide(GTK_WIDGET(dlg));
   }
 }
 
@@ -812,12 +830,12 @@ static gboolean library_view_update_info(library_view_t* view)
           // fetch lyric if possible
           if (strcmp(track_get_lyric(track),"") == 0) {
             struct lyric_cb* cb = (struct lyric_cb*) mc_malloc(sizeof(struct lyric_cb));
-            cb->track = track;
+            cb->track_id = mc_strdup(track_get_id(track));
             cb->view = view;
             fetch_lyric(track, library_view_process_lyric, cb);
           } else {
             struct lyric_cb* cb = (struct lyric_cb*) mc_malloc(sizeof(struct lyric_cb));
-            cb->track = track;
+            cb->track_id = mc_strdup(track_get_id(track));
             cb->view = view;
             library_view_process_lyric(mc_strdup(track_get_lyric(track)), cb);
           }

@@ -54,7 +54,7 @@ typedef struct {
   
   WebKitWebView* lyric_view;
   GtkLabel* lbl_lyric_track;
-  track_t* current_lyric_track;
+  char* current_lyric_track_id;
   
   el_bool column_layout_changing;
   

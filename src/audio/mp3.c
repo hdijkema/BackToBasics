@@ -126,6 +126,8 @@ static audio_result_t init(audio_worker_t* worker, const char* file_or_url, el_b
 
   // wait until fully loaded (length is set)
   psem_wait(mp3->length_set);
+  
+  log_debug("INIT OK");
 
   return AUDIO_OK;
 }
@@ -580,5 +582,7 @@ static void destroy(void* _mp3_info)
   psem_destroy(mp3_info->stream_ready);
   
   mc_free(mp3_info);
+  
+  log_debug("DETROY OK");
 }
 
