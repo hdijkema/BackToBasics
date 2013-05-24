@@ -237,9 +237,10 @@ static void* fetch(void* tt)
   //printf("__RESULT__\n%s\n__RESULT_END\n",lyric);
   
   data->lyric = lyric;  
-  gdk_threads_enter();
+  gdk_threads_add_timeout(10, callback, data);
+  /*gdk_threads_enter();
   g_timeout_add(10, callback, data);
-  gdk_threads_leave();
+  gdk_threads_leave();*/
 
   return NULL;
 }

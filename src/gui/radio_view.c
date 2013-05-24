@@ -3,6 +3,7 @@
 #include <curl/curl.h>
 #include <metadata/track.h>
 #include <util/config.h>
+#include <util/webkitcookies.h>
 
 
 static void radio_determine_stream_url(radio_t* radio, const char* start_url);

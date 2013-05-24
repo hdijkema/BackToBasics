@@ -101,7 +101,7 @@ backtobasics_bin_SOURCES = \
 backtobasics_bin_LDFLAGS = \
 	-Wl,--export-dynamic
 
-backtobasics_bin_LDADD = $(BACKTOBASICS_LIBS)
+backtobasics_bin_LDADD = $(BACKTOBASICS_LIBS) $(PTHREAD_LIBS)
 
 EXTRA_DIST = $(ui_DATA) $(icons_DATA) $(pixmaps_DATA) $(menu1_DATA) $(menu2_DATA)
 

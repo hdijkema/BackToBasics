@@ -97,6 +97,23 @@ AC_SUBST(TARGET_READLINE_LIBS)
 AC_SUBST(TARGET_READLINE_INC)
 AC_SUBST(TARGET_HAVE_READLINE)
 
+dnl
+dnl  Detect pthreads libraries
+dnl
+
+PTHREAD_LIBS=error
+AC_CHECK_LIB(pthread, pthread_attr_init, PTHREAD_LIBS="-lpthread")
+if test "x$PTHREAD_LIBS" = xerror; then
+        AC_CHECK_LIB(pthreads, pthread_attr_init, PTHREAD_LIBS="-lpthreads")
+fi
+if test "x$PTHREAD_LIBS" = xerror; then
+        AC_CHECK_LIB(c_r, pthread_attr_init, PTHREAD_LIBS="-lc_r")
+fi
+if test "x$PTHREAD_LIBS" = xerror; then
+	AC_MSG_ERROR([Pthreads are mandatory])
+fi
+AC_SUBST(PTHREAD_LIBS)
+
 
 AC_OUTPUT([
 Makefile

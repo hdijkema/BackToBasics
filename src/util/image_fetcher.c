@@ -64,9 +64,10 @@ static void* fetchimg(void* _fetch)
     fetch->fetched = el_false;
   }
   
-  gdk_threads_enter();
+  gdk_threads_add_timeout(10, callback, fetch);
+  /*gdk_threads_enter();
   g_timeout_add(10, callback, fetch);
-  gdk_threads_leave();  
+  gdk_threads_leave();  */
   
   return NULL;
 }

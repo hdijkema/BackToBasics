@@ -40,7 +40,7 @@ el_bool el_config_load(el_config_t* cfg, const char* filename)
 
 int el_config_get_int(el_config_t* cfg, const char* path, int default_val)
 {
-  long v = default_val;
+  int v = default_val;
   config_t* config = &cfg->cfg;
   config_lookup_int(config, path, &v);
   return (int) v;
