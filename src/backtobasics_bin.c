@@ -70,6 +70,8 @@ char* ui_file(Backtobasics* btb, const char* filename)
 	file_info_t* bi1 = mc_take_over(file_info_new(file_info_dirname(bi0)));
 	file_info_t* t0 = mc_take_over(file_info_combine(bi0, filename));
 	file_info_t* t1 = mc_take_over(file_info_combine(bi1, filename));
+	//log_debug2("t0 = %s", file_info_path(t0));
+	//log_debug2("t1 = %s", file_info_path(t1));
 	if (file_info_exists(t0)) {
 	  char* path = mc_strdup(file_info_absolute_path(t0));
 	  file_info_destroy(t0);
@@ -113,10 +115,25 @@ char* backtobasics_logo(Backtobasics* app)
 
 static void btb_show_hide_window(GtkStatusIcon* icon, Backtobasics* btb)
 {
+  GtkWindow* window = btb->main_window;
   if (gtk_widget_get_visible(GTK_WIDGET(btb->main_window))) {
+    gint x, y;
+    gtk_window_get_position(window, &x, &y);
+    gint w,h;
+    gtk_window_get_size(window, &w, &h);
+    el_config_set_int(btb->config, "main.window.x", x);
+    el_config_set_int(btb->config, "main.window.y", y);
+    el_config_set_int(btb->config, "main.window.w", w);
+    el_config_set_int(btb->config, "main.window.h", h);
     gtk_widget_hide(GTK_WIDGET(btb->main_window));
   } else {
     gtk_widget_show(GTK_WIDGET(btb->main_window));
+    int x = el_config_get_int(btb->config, "main.window.x", 25);
+    int y = el_config_get_int(btb->config, "main.window.y", 25);
+    int w = el_config_get_int(btb->config, "main.window.w", 500);
+    int h = el_config_get_int(btb->config, "main.window.h", 400);
+    gtk_window_move(GTK_WINDOW(window), x, y);
+    gtk_window_resize(GTK_WINDOW(window), w, h);
   }
 }
 
@@ -161,10 +178,61 @@ static void backtobasics_new_window (GApplication *app)
 	btb->main_window = GTK_WINDOW(window);
 	g_signal_connect(window, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), NULL);
 	
-	char* s_icon = ui_file(btb, "btb_status.png");
+#ifdef USE_APPINDICATOR     // APP INDICATOR
+
+  log_debug("Using AppIndicator");
+
+  char* icon_place = ui_file(btb, "btb.png");
+  file_info_t* icon_path = file_info_new(icon_place);
+
+  const char *icon_theme_path = file_info_dirname(icon_path);
+  log_debug2("icon theme path = %s", icon_theme_path);
+
+  btb->app_indicator = app_indicator_new_with_path (
+                                          "BackToBasics", 
+                                          "btb", 
+                  											  APP_INDICATOR_CATEGORY_APPLICATION_STATUS,
+                  											  icon_theme_path
+                  											 );
+
+  app_indicator_set_icon_theme_path(btb->app_indicator, icon_theme_path);
+  
+  app_indicator_set_icon_full(btb->app_indicator, "btb", "BackToBasics");
+  app_indicator_set_attention_icon_full(btb->app_indicator, "btb", "BackToBasics");
+  
+  app_indicator_set_status(btb->app_indicator, APP_INDICATOR_STATUS_ACTIVE);
+  
+  { 
+    GtkWidget *menu, *item;
+    menu = gtk_menu_new();
+
+    item = gtk_menu_item_new_with_label(_("Show"));
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    g_signal_connect(item, "activate", G_CALLBACK(btb_show_hide_window), (gpointer) btb);
+
+    item = gtk_separator_menu_item_new();
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+    item = gtk_menu_item_new_with_label(_("Quit"));
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    g_signal_connect(item, "activate", G_CALLBACK(menu_quit), (gpointer) btb);
+
+    gtk_widget_show_all(menu);
+    
+    app_indicator_set_menu(btb->app_indicator, GTK_MENU(menu));
+  }
+
+  file_info_destroy(icon_path);
+  mc_free(icon_place);
+  
+#else // STATUS ICON
+  log_debug("Using GtkStatusIcon");
+	char* s_icon = ui_file(btb, "btb.png");
 	btb->status_icon = gtk_status_icon_new_from_file(s_icon);
 	g_signal_connect(btb->status_icon, "activate", G_CALLBACK(btb_show_hide_window), (gpointer) btb);
 	mc_free(s_icon);
+	
+#endif	
 	
 	mc_free(builder_path);
 	
@@ -326,7 +394,7 @@ static void backtobasics_class_init (BacktobasicsClass *klass)
 
 Backtobasics *backtobasics_new (void)
 {
-	g_type_init ();
+	//g_type_init ();
 	return g_object_new (backtobasics_get_type (),
 	                     "BackToBasics", "net.oesterholt.backtobasics",
 	                     NULL);

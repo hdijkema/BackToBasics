@@ -54,7 +54,7 @@ void radio_view_init(radio_view_t* view)
   
   renderer = gtk_cell_renderer_text_new();
   toggle = gtk_cell_renderer_toggle_new();
-  g_object_set(toggle, "editable", TRUE, NULL);
+  //g_object_set(toggle, "editable", TRUE, NULL);
   g_signal_connect(toggle, "toggled", (GCallback) start_stop_recording, (gpointer) view);
   
   view->cols = (GtkTreeViewColumn**) mc_malloc(sizeof(GtkTreeViewColumn*) * STATION_MODEL_N_COLUMNS);
@@ -92,7 +92,7 @@ void radio_view_init(radio_view_t* view)
   file_info_destroy(btb_cfg_dir);
 
   //WebKitWebContext* c = webkit_web_context_get_default();
-  GtkBox* webp = GTK_BOX(gtk_builder_get_object(view->builder, "scw_radio"));
+  GtkContainer* webp = GTK_CONTAINER(gtk_builder_get_object(view->builder, "scw_radio"));
   //gtk_box_pack_start(webp, GTK_WIDGET(view->web_view), TRUE, TRUE, 4);
   gtk_container_add(GTK_CONTAINER(webp), GTK_WIDGET(view->web_view));
 }

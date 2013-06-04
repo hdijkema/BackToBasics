@@ -82,7 +82,7 @@ am_backtobasics_bin_OBJECTS = $(am__objects_1) main.$(OBJEXT) \
 backtobasics_bin_OBJECTS = $(am_backtobasics_bin_OBJECTS)
 am__DEPENDENCIES_1 =
 backtobasics_bin_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 backtobasics_bin_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(backtobasics_bin_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -151,6 +151,8 @@ ACLOCAL = @ACLOCAL@
 ALL_LINGUAS = @ALL_LINGUAS@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+APPINDICATOR_CFLAGS = @APPINDICATOR_CFLAGS@
+APPINDICATOR_LIBS = @APPINDICATOR_LIBS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -286,7 +288,10 @@ iconsdir = $(datarootdir)/icons/64x64/apps
 icons_DATA = share/icons/64x64/apps/*
 btbdir = $(prefix)/bin
 btb_DATA = backtobasics
+@HAVE_APPINDICATOR_FALSE@USE_APPINDICATOR = 
+@HAVE_APPINDICATOR_TRUE@USE_APPINDICATOR = -DUSE_APPINDICATOR $(APPINDICATOR_CFLAGS)
 AM_CPPFLAGS = \
+	$(USE_APPINDICATOR) \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(pkgdatadir)"\" \
@@ -362,7 +367,7 @@ backtobasics_bin_SOURCES = \
 backtobasics_bin_LDFLAGS = \
 	-Wl,--export-dynamic
 
-backtobasics_bin_LDADD = $(BACKTOBASICS_LIBS) $(PTHREAD_LIBS)
+backtobasics_bin_LDADD = $(BACKTOBASICS_LIBS) $(PTHREAD_LIBS) $(APPINDICATOR_LIBS)
 EXTRA_DIST = $(ui_DATA) $(icons_DATA) $(pixmaps_DATA) $(menu1_DATA) $(menu2_DATA)
 all: all-am
 

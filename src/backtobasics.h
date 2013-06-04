@@ -26,6 +26,10 @@
 #include <playlist/playlist_player.h>
 #include <util/config.h>
 
+#ifdef USE_APPINDICATOR
+#include <libappindicator/app-indicator.h>
+#endif
+
 G_BEGIN_DECLS
 
 #define BACKTOBASICS_TYPE_APPLICATION             (backtobasics_get_type ())
@@ -62,7 +66,12 @@ struct _Backtobasics
 	library_view_t* library_view;
 	radio_view_t* radio_view;
 	GtkWindow* main_window;
+	
+#ifdef USE_APPINDICATOR
+  AppIndicator* app_indicator;
+#else
 	GtkStatusIcon* status_icon;
+#endif
 	
 	// Audio player
 	playlist_player_t* player;
@@ -96,6 +105,8 @@ void btb_config_set_string(Backtobasics* app, const char* path, const char* val)
 char* btb_config_get_string(Backtobasics* app, const char* path, const char* default_val);
 
 GtkWindow* btb_main_window(Backtobasics* btb);
+void menu_quit(GObject* object, gpointer data);
+
 /* Callbacks */
 
 G_END_DECLS

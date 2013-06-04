@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl Created by Anjuta application wizard.
 
-AC_INIT(backtobasics, 0.1)
+AC_INIT(backtobasics, 0.2)
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -29,6 +29,11 @@ AM_GLIB_GNU_GETTEXT
 PKG_CHECK_MODULES(BACKTOBASICS, [gtk+-3.0 >= 2.90.3 ao vorbisfile flac libmpg123 libstreamripper taglib taglib_c gdk-3.0 libpcre elementals libgtklistmodel libconfig libtagcoverart libcurl webkitgtk-3.0])
 PKG_CHECK_MODULES(BTB_PLAY, [ao vorbisfile flac libmpg123 libstreamripper taglib_c libpcre elementals libtagcoverart libcurl libconfig])
 
+CHK_APPINDICATOR=`pkg-config --exists appindicator3-0.1;echo $?`
+if test x"$CHK_APPINDICATOR" = "x0"; then
+PKG_CHECK_MODULES(APPINDICATOR, [appindicator3-0.1])
+fi
+AM_CONDITIONAL([HAVE_APPINDICATOR], [test x$CHK_APPINDICATOR = x0])
 
 ##########
 # Figure out what C libraries are required to compile programs

@@ -1,8 +1,5 @@
 ## Process this file with automake to produce Makefile.in
 
-## Created by Anjuta
-
-
 uidir = $(pkgdatadir)/ui
 ui_DATA = backtobasics.ui btb.png ../images/* *.css
 
@@ -21,7 +18,14 @@ icons_DATA = share/icons/64x64/apps/*
 btbdir = $(prefix)/bin
 btb_DATA = backtobasics
 
+if HAVE_APPINDICATOR
+USE_APPINDICATOR=-DUSE_APPINDICATOR $(APPINDICATOR_CFLAGS)
+else
+USE_APPINDICATOR=
+endif
+
 AM_CPPFLAGS = \
+	$(USE_APPINDICATOR) \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(pkgdatadir)"\" \
@@ -101,7 +105,7 @@ backtobasics_bin_SOURCES = \
 backtobasics_bin_LDFLAGS = \
 	-Wl,--export-dynamic
 
-backtobasics_bin_LDADD = $(BACKTOBASICS_LIBS) $(PTHREAD_LIBS)
+backtobasics_bin_LDADD = $(BACKTOBASICS_LIBS) $(PTHREAD_LIBS) $(APPINDICATOR_LIBS)
 
 EXTRA_DIST = $(ui_DATA) $(icons_DATA) $(pixmaps_DATA) $(menu1_DATA) $(menu2_DATA)
 
