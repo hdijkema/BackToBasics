@@ -113,9 +113,15 @@ char* backtobasics_logo(Backtobasics* app)
   return mc_take_over(ui_file(app, "logo_vague.png"));
 }
 
-static void btb_show_hide_window(GtkStatusIcon* icon, Backtobasics* btb)
+static void btb_show_hide_window(GObject* object, Backtobasics* btb)
 {
   GtkWindow* window = btb->main_window;
+  GtkMenuItem* item = NULL;
+  
+  if (GTK_IS_MENU_ITEM(object)) { 
+    item = GTK_MENU_ITEM(object);
+  }
+  
   if (gtk_widget_get_visible(GTK_WIDGET(btb->main_window))) {
     gint x, y;
     gtk_window_get_position(window, &x, &y);
@@ -126,6 +132,7 @@ static void btb_show_hide_window(GtkStatusIcon* icon, Backtobasics* btb)
     el_config_set_int(btb->config, "main.window.w", w);
     el_config_set_int(btb->config, "main.window.h", h);
     gtk_widget_hide(GTK_WIDGET(btb->main_window));
+    if (item!=NULL) { gtk_menu_item_set_label(item, _("_Show")); }
   } else {
     gtk_widget_show(GTK_WIDGET(btb->main_window));
     int x = el_config_get_int(btb->config, "main.window.x", 25);
@@ -134,6 +141,7 @@ static void btb_show_hide_window(GtkStatusIcon* icon, Backtobasics* btb)
     int h = el_config_get_int(btb->config, "main.window.h", 400);
     gtk_window_move(GTK_WINDOW(window), x, y);
     gtk_window_resize(GTK_WINDOW(window), w, h);
+    if (item!=NULL) { gtk_menu_item_set_label(item, _("_Hide")); }
   }
 }
 
@@ -206,14 +214,14 @@ static void backtobasics_new_window (GApplication *app)
     GtkWidget *menu, *item;
     menu = gtk_menu_new();
 
-    item = gtk_menu_item_new_with_label(_("Show"));
+    item = gtk_menu_item_new_with_mnemonic(_("_Hide"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     g_signal_connect(item, "activate", G_CALLBACK(btb_show_hide_window), (gpointer) btb);
 
     item = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
-    item = gtk_menu_item_new_with_label(_("Quit"));
+    item = gtk_menu_item_new_with_mnemonic(_("_Quit"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     g_signal_connect(item, "activate", G_CALLBACK(menu_quit), (gpointer) btb);
 
