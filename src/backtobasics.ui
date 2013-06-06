@@ -11,7 +11,7 @@
     <property name="icon">btb.png</property>
     <property name="type_hint">dialog</property>
     <property name="program_name">Back To Basics - Music Player</property>
-    <property name="version">v0.1</property>
+    <property name="version">v0.2</property>
     <property name="copyright" translatable="yes">(c) Hans Oesterholt</property>
     <property name="comments" translatable="yes">Back to basics is a music player that 
 aims to provide a good, low resource 
@@ -69,11 +69,9 @@ other licenses. </property>
             <child>
               <object class="GtkButton" id="button2">
                 <property name="label">gtk-cancel</property>
-                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -85,11 +83,9 @@ other licenses. </property>
             <child>
               <object class="GtkButton" id="button1">
                 <property name="label">gtk-ok</property>
-                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -148,10 +144,8 @@ other licenses. </property>
                 <property name="toolbar_style">both-horiz</property>
                 <child>
                   <object class="GtkToolButton" id="toolbutton1">
-                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="use_action_appearance">False</property>
                     <property name="use_underline">True</property>
                     <property name="label_widget">lbl_lyr_lyricsondemand</property>
                     <property name="stock_id">gtk-find</property>
@@ -164,10 +158,8 @@ other licenses. </property>
                 </child>
                 <child>
                   <object class="GtkToolButton" id="toolbutton2">
-                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="use_action_appearance">False</property>
                     <property name="use_underline">True</property>
                     <property name="label_widget">lbl_lyr_lyricsworld</property>
                     <property name="stock_id">gtk-find</property>
@@ -180,10 +172,8 @@ other licenses. </property>
                 </child>
                 <child>
                   <object class="GtkToolButton" id="toolbutton3">
-                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="use_action_appearance">False</property>
                     <property name="use_underline">True</property>
                     <property name="label_widget">lbl_lyr_google</property>
                     <property name="stock_id">gtk-find</property>
@@ -234,11 +224,9 @@ other licenses. </property>
             <child>
               <object class="GtkButton" id="button9">
                 <property name="label">gtk-cancel</property>
-                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -250,11 +238,9 @@ other licenses. </property>
             <child>
               <object class="GtkButton" id="button8">
                 <property name="label">gtk-ok</property>
-                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -403,11 +389,9 @@ other licenses. </property>
             <child>
               <object class="GtkButton" id="button3">
                 <property name="label" translatable="yes">Done</property>
-                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -479,11 +463,9 @@ other licenses. </property>
                         <child>
                           <object class="GtkButton" id="button4">
                             <property name="label">gtk-refresh</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="use_stock">True</property>
                             <signal name="clicked" handler="btb_scan_library" object="window" swapped="no"/>
                           </object>
@@ -574,11 +556,9 @@ other licenses. </property>
                         <child>
                           <object class="GtkCheckButton" id="chk_editable">
                             <property name="label" translatable="yes">Editable track information</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="xalign">0</property>
                             <property name="draw_indicator">True</property>
                           </object>
@@ -592,11 +572,9 @@ other licenses. </property>
                         <child>
                           <object class="GtkCheckButton" id="chk_radio">
                             <property name="label" translatable="yes">Enable Radio station management</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="xalign">0</property>
                             <property name="draw_indicator">True</property>
                           </object>
@@ -610,11 +588,9 @@ other licenses. </property>
                         <child>
                           <object class="GtkCheckButton" id="chk_coverart">
                             <property name="label" translatable="yes">Editable cover images</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="xalign">0</property>
                             <property name="draw_indicator">True</property>
                           </object>
@@ -683,11 +659,9 @@ other licenses. </property>
             <child>
               <object class="GtkButton" id="btn_scan_ok">
                 <property name="label">gtk-ok</property>
-                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -752,11 +726,9 @@ other licenses. </property>
                 </child>
                 <child>
                   <object class="GtkButton" id="button7">
-                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <property name="use_action_appearance">False</property>
                     <property name="relief">none</property>
                     <signal name="clicked" handler="scan_job_cancel" object="dlg_scan_generic" swapped="no"/>
                     <child>
@@ -850,7 +822,6 @@ other licenses. </property>
     <property name="can_focus">False</property>
     <child>
       <object class="GtkMenuItem" id="menuitem9">
-        <property name="use_action_appearance">False</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">_Paste link to image on the Web</property>
@@ -860,14 +831,12 @@ other licenses. </property>
     </child>
     <child>
       <object class="GtkSeparatorMenuItem" id="menuitem10">
-        <property name="use_action_appearance">False</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
       </object>
     </child>
     <child>
       <object class="GtkMenuItem" id="menuitem11">
-        <property name="use_action_appearance">False</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">Search _Google for cover art</property>
@@ -894,7 +863,6 @@ other licenses. </property>
             <property name="can_focus">False</property>
             <child>
               <object class="GtkMenuItem" id="menuitem1">
-                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_Media Library</property>
@@ -906,7 +874,6 @@ other licenses. </property>
                     <child>
                       <object class="GtkImageMenuItem" id="mnu_add_radio">
                         <property name="label" translatable="yes">_Add radio station</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="image">image10</property>
@@ -918,7 +885,6 @@ other licenses. </property>
                     <child>
                       <object class="GtkImageMenuItem" id="mnu_edit_radio">
                         <property name="label" translatable="yes">_Edit radio station</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="image">image12</property>
@@ -929,7 +895,6 @@ other licenses. </property>
                     <child>
                       <object class="GtkImageMenuItem" id="mnu_remove_radio">
                         <property name="label" translatable="yes">_Remove radio station</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="image">image11</property>
@@ -939,7 +904,6 @@ other licenses. </property>
                     </child>
                     <child>
                       <object class="GtkSeparatorMenuItem" id="menuitem3">
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                       </object>
@@ -947,7 +911,6 @@ other licenses. </property>
                     <child>
                       <object class="GtkImageMenuItem" id="mnu_quit">
                         <property name="label">gtk-quit</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
@@ -961,7 +924,6 @@ other licenses. </property>
             </child>
             <child>
               <object class="GtkMenuItem" id="menuitem2">
-                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_Preferences</property>
@@ -973,7 +935,6 @@ other licenses. </property>
                     <child>
                       <object class="GtkImageMenuItem" id="imagemenuitem6">
                         <property name="label" translatable="yes">setup _Library</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="image">image3</property>
@@ -987,7 +948,6 @@ other licenses. </property>
             </child>
             <child>
               <object class="GtkMenuItem" id="menuitem6">
-                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_View</property>
@@ -998,7 +958,6 @@ other licenses. </property>
                     <property name="can_focus">False</property>
                     <child>
                       <object class="GtkMenuItem" id="menuitem7">
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Library _Columns</property>
@@ -1009,7 +968,6 @@ other licenses. </property>
                             <property name="can_focus">False</property>
                             <child>
                               <object class="GtkCheckMenuItem" id="chk_col_nr">
-                                <property name="use_action_appearance">False</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">_Nr</property>
@@ -1019,7 +977,6 @@ other licenses. </property>
                             </child>
                             <child>
                               <object class="GtkCheckMenuItem" id="chk_col_title">
-                                <property name="use_action_appearance">False</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">_Title</property>
@@ -1029,7 +986,6 @@ other licenses. </property>
                             </child>
                             <child>
                               <object class="GtkCheckMenuItem" id="chk_col_artist">
-                                <property name="use_action_appearance">False</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">_Artist</property>
@@ -1039,7 +995,6 @@ other licenses. </property>
                             </child>
                             <child>
                               <object class="GtkCheckMenuItem" id="chk_col_composer">
-                                <property name="use_action_appearance">False</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">_Composer</property>
@@ -1049,7 +1004,6 @@ other licenses. </property>
                             </child>
                             <child>
                               <object class="GtkCheckMenuItem" id="chk_col_piece">
-                                <property name="use_action_appearance">False</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">_Piece</property>
@@ -1059,7 +1013,6 @@ other licenses. </property>
                             </child>
                             <child>
                               <object class="GtkCheckMenuItem" id="chk_col_album">
-                                <property name="use_action_appearance">False</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">_Album</property>
@@ -1069,7 +1022,6 @@ other licenses. </property>
                             </child>
                             <child>
                               <object class="GtkCheckMenuItem" id="chk_col_albumartist">
-                                <property name="use_action_appearance">False</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Album A_rtist</property>
@@ -1079,7 +1031,6 @@ other licenses. </property>
                             </child>
                             <child>
                               <object class="GtkCheckMenuItem" id="chk_col_genre">
-                                <property name="use_action_appearance">False</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">_Genre</property>
@@ -1089,7 +1040,6 @@ other licenses. </property>
                             </child>
                             <child>
                               <object class="GtkCheckMenuItem" id="chk_col_year">
-                                <property name="use_action_appearance">False</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">_Year</property>
@@ -1099,7 +1049,6 @@ other licenses. </property>
                             </child>
                             <child>
                               <object class="GtkCheckMenuItem" id="chk_col_length">
-                                <property name="use_action_appearance">False</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">_Length</property>
@@ -1113,14 +1062,12 @@ other licenses. </property>
                     </child>
                     <child>
                       <object class="GtkSeparatorMenuItem" id="menuitem5">
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkCheckMenuItem" id="skin_small">
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Small fonts</property>
@@ -1130,7 +1077,6 @@ other licenses. </property>
                     </child>
                     <child>
                       <object class="GtkCheckMenuItem" id="skin_dark">
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Dark skin</property>
@@ -1144,7 +1090,6 @@ other licenses. </property>
             </child>
             <child>
               <object class="GtkMenuItem" id="menuitem4">
-                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_Hulp</property>
@@ -1156,7 +1101,6 @@ other licenses. </property>
                     <child>
                       <object class="GtkImageMenuItem" id="imagemenuitem10">
                         <property name="label">gtk-about</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
@@ -1193,10 +1137,8 @@ other licenses. </property>
                     <property name="orientation">vertical</property>
                     <child>
                       <object class="GtkToolButton" id="tbtn_library">
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="label" translatable="yes">Library</property>
                         <property name="use_underline">True</property>
                         <property name="stock_id">gtk-home</property>
@@ -1209,10 +1151,8 @@ other licenses. </property>
                     </child>
                     <child>
                       <object class="GtkToolButton" id="tbtn_radio">
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="label" translatable="yes">Radio</property>
                         <property name="use_underline">True</property>
                         <property name="stock_id">gtk-connect</property>
@@ -1225,10 +1165,8 @@ other licenses. </property>
                     </child>
                     <child>
                       <object class="GtkSeparatorToolItem" id="toolbutton4">
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="use_action_appearance">False</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1237,10 +1175,8 @@ other licenses. </property>
                     </child>
                     <child>
                       <object class="GtkToggleToolButton" id="tbtn_playlists">
-                        <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="label" translatable="yes">Playlists</property>
                         <property name="use_underline">True</property>
                         <property name="stock_id">gtk-index</property>
@@ -1283,10 +1219,8 @@ other licenses. </property>
                         <property name="can_focus">False</property>
                         <child>
                           <object class="GtkToolButton" id="tbtn_library_previous">
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="label" translatable="yes">Previous</property>
                             <property name="use_underline">True</property>
                             <property name="stock_id">gtk-media-previous</property>
@@ -1299,10 +1233,8 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkToolButton" id="tbtn_library_play">
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="label" translatable="yes">Play</property>
                             <property name="use_underline">True</property>
                             <property name="stock_id">gtk-media-play</property>
@@ -1315,9 +1247,7 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkToolButton" id="tbtn_library_pause">
-                            <property name="use_action_appearance">False</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="label" translatable="yes">Pause</property>
                             <property name="use_underline">True</property>
                             <property name="stock_id">gtk-media-pause</property>
@@ -1330,10 +1260,8 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkToolButton" id="tbtn_library_next">
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="label" translatable="yes">Next</property>
                             <property name="use_underline">True</property>
                             <property name="stock_id">gtk-media-next</property>
@@ -1346,10 +1274,8 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkSeparatorToolItem" id="sep1">
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1358,11 +1284,9 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkToolItem" id="library_slider_holder">
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="hexpand">True</property>
-                            <property name="use_action_appearance">False</property>
                             <child>
                               <object class="GtkBox" id="box4">
                                 <property name="visible">True</property>
@@ -1462,10 +1386,8 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkToolButton" id="tbtn_repeat">
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="label" translatable="yes">Repeat</property>
                             <property name="use_underline">True</property>
                             <property name="icon_name">media-playlist-repeat-symbolic</property>
@@ -1478,9 +1400,7 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkToolButton" id="tbtn_repeat_one">
-                            <property name="use_action_appearance">False</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="label" translatable="yes">Repeat one</property>
                             <property name="use_underline">True</property>
                             <property name="icon_name">media-playlist-repeat-one-symbolic</property>
@@ -1493,9 +1413,7 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkToolButton" id="tbtn_repeat_all">
-                            <property name="use_action_appearance">False</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="label" translatable="yes">Repeat all</property>
                             <property name="use_underline">True</property>
                             <property name="icon_name">media-playlist-repeat-active-symbolic</property>
@@ -1508,10 +1426,8 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkSeparatorToolItem" id="seprep">
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1520,10 +1436,8 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkSeparatorToolItem" id="sep3">
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="draw">False</property>
                           </object>
                           <packing>
@@ -1533,10 +1447,8 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkSeparatorToolItem" id="sepvol">
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1545,11 +1457,9 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkToolItem" id="toolitem1">
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="hexpand">True</property>
-                            <property name="use_action_appearance">False</property>
                             <child>
                               <object class="GtkBox" id="box10">
                                 <property name="visible">True</property>
@@ -1596,11 +1506,9 @@ other licenses. </property>
                                 </child>
                                 <child>
                                   <object class="GtkToggleButton" id="tbtn_mute">
-                                    <property name="use_action_appearance">False</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <property name="use_action_appearance">False</property>
                                     <property name="relief">none</property>
                                     <signal name="toggled" handler="btb_volume_mute" object="window" swapped="no"/>
                                     <child>
@@ -1626,10 +1534,8 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkSeparatorToolItem" id="sep6">
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1638,10 +1544,8 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkToolButton" id="tbtn_fullscreen">
-                            <property name="use_action_appearance">False</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="label" translatable="yes">Full Screen</property>
                             <property name="use_underline">True</property>
                             <property name="stock_id">gtk-fullscreen</property>
@@ -1654,9 +1558,7 @@ other licenses. </property>
                         </child>
                         <child>
                           <object class="GtkToolButton" id="tbtn_normal">
-                            <property name="use_action_appearance">False</property>
                             <property name="can_focus">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="label" translatable="yes">Leave Full Screen</property>
                             <property name="use_underline">True</property>
                             <property name="stock_id">gtk-leave-fullscreen</property>
@@ -1713,10 +1615,8 @@ other licenses. </property>
                                         <property name="show_arrow">False</property>
                                         <child>
                                           <object class="GtkToggleToolButton" id="tbtn_genres">
-                                            <property name="use_action_appearance">False</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="use_action_appearance">False</property>
                                             <property name="label" translatable="yes">Genres</property>
                                             <property name="use_underline">True</property>
                                             <signal name="toggled" handler="library_view_genres" object="view_library" swapped="no"/>
@@ -1728,10 +1628,8 @@ other licenses. </property>
                                         </child>
                                         <child>
                                           <object class="GtkToggleToolButton" id="tbtn_artists">
-                                            <property name="use_action_appearance">False</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="use_action_appearance">False</property>
                                             <property name="label" translatable="yes">Artists</property>
                                             <property name="use_underline">True</property>
                                             <signal name="toggled" handler="library_view_artists" object="view_library" swapped="no"/>
@@ -1743,10 +1641,8 @@ other licenses. </property>
                                         </child>
                                         <child>
                                           <object class="GtkToggleToolButton" id="tbtn_albums">
-                                            <property name="use_action_appearance">False</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="use_action_appearance">False</property>
                                             <property name="label" translatable="yes">Albums</property>
                                             <property name="use_underline">True</property>
                                             <signal name="toggled" handler="library_view_albums" object="view_library" swapped="no"/>
@@ -1994,11 +1890,9 @@ other licenses. </property>
                                                             <property name="can_focus">False</property>
                                                             <child>
                                                             <object class="GtkToolButton" id="tbtn_edit_lyric">
-                                                            <property name="use_action_appearance">False</property>
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">False</property>
                                                             <property name="tooltip_text" translatable="yes">Edit Lyric</property>
-                                                            <property name="use_action_appearance">False</property>
                                                             <property name="label" translatable="yes">Edit Lyric</property>
                                                             <property name="use_underline">True</property>
                                                             <property name="stock_id">gtk-edit</property>
@@ -2011,10 +1905,8 @@ other licenses. </property>
                                                             </child>
                                                             <child>
                                                             <object class="GtkToolItem" id="tb_lyr_track">
-                                                            <property name="use_action_appearance">False</property>
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">False</property>
-                                                            <property name="use_action_appearance">False</property>
                                                             <child>
                                                             <object class="GtkLabel" id="lbl_lyric_track">
                                                             <property name="visible">True</property>
