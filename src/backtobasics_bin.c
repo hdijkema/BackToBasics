@@ -217,6 +217,10 @@ static void backtobasics_new_window (GApplication *app)
     item = gtk_menu_item_new_with_mnemonic(_("_Hide"));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     g_signal_connect(item, "activate", G_CALLBACK(btb_show_hide_window), (gpointer) btb);
+    
+    item = gtk_menu_item_new_with_mnemonic(_("_Pause / Play"));
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    g_signal_connect(item, "activate", G_CALLBACK(btb_tray_play_pause), (gpointer) btb);
 
     item = gtk_separator_menu_item_new();
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
@@ -263,6 +267,18 @@ static void backtobasics_new_window (GApplication *app)
 	// Hide things we want to hide
   GtkToolButton* normal_window = GTK_TOOL_BUTTON(gtk_builder_get_object(builder, "tbtn_normal"));
   gtk_widget_hide(GTK_WIDGET(normal_window));
+  
+  // Getting the player preset buttons
+  {
+    int i;
+    for(i = 0; i < PLAYLIST_PLAYER_MAX_PRESETS; ++i) {
+      char name[100];
+      sprintf(name, "lbl_preset%d", i+1);
+      GtkLabel *btn = GTK_LABEL(gtk_builder_get_object(btb->builder, name));
+      log_debug3("lbl_preset%d = %p", i+1, btn);
+      btb->player_presets[i] = btn;
+    }
+  }
   
   // Initialize things we want to initialize
   GtkScale* volume_scale = GTK_SCALE(gtk_builder_get_object(builder, "sc_volume"));
@@ -338,6 +354,7 @@ static void backtobasics_init (Backtobasics *btb)
   file_info_destroy(btb_cfg_dir);
   
   btb->player = playlist_player_new();
+  
 }
 
 static void backtobasics_finalize (GObject *object)
@@ -537,6 +554,15 @@ void btb_stop_cmd(Backtobasics* btb)
   log_debug("yes");
 }
 
+void btb_tray_play_pause(GObject *obj, Backtobasics *btb)
+{
+  if (playlist_player_is_playing(btb->player)) {
+    playlist_player_pause(btb->player);
+  } else if (playlist_player_is_paused(btb->player)) {
+    playlist_player_play(btb->player);
+  }
+}
+
 void btb_play(GtkToolButton* btn, GObject* window)
 {
   Backtobasics* btb = g_object_get_data(G_OBJECT(window), "btb");
@@ -545,6 +571,61 @@ void btb_play(GtkToolButton* btn, GObject* window)
   } else {
     radio_view_play(btn, btb->radio_view);
   }
+}
+
+static gboolean preset_act(Backtobasics* btb) 
+{
+  if (btb->active_preset_number >= 0) {
+    playlist_player_seek_preset(btb->player, btb->active_preset_number);
+  }
+  
+  return FALSE;
+}
+
+static void reflect_preset(Backtobasics* btb, int preset_number)
+{
+  GtkLabel* lbl = btb->player_presets[preset_number];
+  if (playlist_player_preset_set(btb->player, preset_number)) {
+    char s[100];
+    sprintf(s,"<b>%d</b>", preset_number + 1);
+    //gtk_button_set_label(btn, s);
+    gtk_label_set_markup(lbl, s);
+  } else {
+    char s[100];
+    sprintf(s,"%d", preset_number + 1);
+    gtk_label_set_markup(lbl, s);
+  }
+}
+
+void reflect_presets(Backtobasics* btb)
+{
+  int i;
+  log_debug("reflecting presets");
+  for(i = 0;i < PLAYLIST_PLAYER_MAX_PRESETS; ++i) {
+    reflect_preset(btb, i);
+  }
+}
+
+gboolean preset_clicked(GtkButton* btn, GdkEventButton* evt, Backtobasics* btb)
+{
+  GtkLabel *lbl = gtk_bin_get_child(GTK_BIN(btn));
+  const char* cpreset_number = gtk_label_get_text(lbl);
+  int preset_number = atoi(cpreset_number) - 1;
+  
+  if (evt->type == GDK_2BUTTON_PRESS) { // we know what to do. Set preset
+    btb->active_preset_number = -1;
+    playlist_player_set_preset(btb->player, preset_number);
+    reflect_preset(btb, preset_number);
+  } else if (evt->type == GDK_3BUTTON_PRESS) { // we know what to do. Clear preset
+    btb->active_preset_number = -1;
+    playlist_player_clear_preset(btb->player, preset_number);
+    reflect_preset(btb, preset_number);
+  } else if (evt->type == GDK_BUTTON_PRESS) { // we wait for something to happen. If nothing happens with 1/4 second, we timeout and act
+    btb->active_preset_number = preset_number;
+    g_timeout_add(260, (GSourceFunc) preset_act, btb);
+  }
+  
+  return FALSE;
 }
 
  
@@ -652,7 +733,6 @@ void menu_quit(GObject* object, gpointer data)
   el_config_set_int(btb->config, "main.window.y", y);
   el_config_set_int(btb->config, "main.window.w", w);
   el_config_set_int(btb->config, "main.window.h", h);
-
 
   // Quit the application by detroying the main window  
   gtk_widget_destroy(GTK_WIDGET(window));

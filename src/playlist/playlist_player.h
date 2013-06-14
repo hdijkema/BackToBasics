@@ -4,6 +4,8 @@
 #include <playlist/playlist.h>
 #include <audio/audio.h>
 
+#define PLAYLIST_PLAYER_MAX_PRESETS 12
+
 typedef enum {
   PLAYLIST_PLAYER_STOPPED,
   PLAYLIST_PLAYER_PLAYING,
@@ -21,7 +23,7 @@ typedef enum {
   PLP_CMD_NEXT = 5,
   PLP_CMD_PREVIOUS = 6,
   PLP_CMD_RESTART_TRACK = 7,
-
+  
   PLP_CMD_NO_REPEAT = 8,
   PLP_CMD_TRACK_REPEAT = 9,
   PLP_CMD_LIST_REPEAT = 10,
@@ -58,6 +60,8 @@ typedef struct {
   long current_position_in_ms;
   long track_position_in_ms;
   
+  long preset_positions_in_ms[PLAYLIST_PLAYER_MAX_PRESETS];
+  
   el_bool track_changed;
   playlist_player_state_t player_state;
   playlist_player_repeat_t repeat;
@@ -68,7 +72,7 @@ typedef struct {
   
   pthread_mutex_t *mutex;
   pthread_t playlist_player_thread;
-  
+
 } playlist_player_t;
 
 playlist_player_t *playlist_player_new(void);
@@ -84,6 +88,11 @@ void playlist_player_previous(playlist_player_t* player);
 void playlist_player_again(playlist_player_t* player);
 void playlist_player_seek(playlist_player_t* player, long position_in_ms);
 void playlist_player_set_repeat(playlist_player_t* player, playlist_player_repeat_t repeat);
+
+void playlist_player_set_preset(playlist_player_t* player, int preset_number);
+void playlist_player_clear_preset(playlist_player_t* player, int preset_number);
+void playlist_player_seek_preset(playlist_player_t* plp, int preset_number);
+el_bool playlist_player_preset_set(playlist_player_t* player, int preset_number);
 
 int  playlist_player_get_track_index(playlist_player_t* player);
 track_t* playlist_player_get_track(playlist_player_t* player);

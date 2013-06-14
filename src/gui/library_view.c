@@ -796,6 +796,9 @@ static gboolean library_view_update_info(library_view_t* view)
         sprintf(s,"<span size=\"x-small\"><b><i>%02d:%02d</i></b></span>", min, sec);
         GtkLabel* lbl = GTK_LABEL(gtk_builder_get_object(view->builder, "lbl_time"));
         gtk_label_set_markup(lbl, s);
+        
+        // update presets
+        reflect_presets(view->btb);
       }
       
       GtkScale* sc_playback = GTK_SCALE(gtk_builder_get_object(view->builder, "sc_library_playback"));
@@ -827,6 +830,7 @@ static gboolean library_view_update_info(library_view_t* view)
         log_debug3("updating track info, index = %d, %p", index, track);
         view->track_index = index;
         if (track != NULL) {
+          
           // fetch lyric if possible
           if (strcmp(track_get_lyric(track),"") == 0) {
             struct lyric_cb* cb = (struct lyric_cb*) mc_malloc(sizeof(struct lyric_cb));
@@ -1005,7 +1009,7 @@ void library_view_col_order_set(GtkTreeViewColumn* col, library_view_t* view)
 
 static void library_view_col_width_set(GtkTreeViewColumn* col, GParamSpec* spec, library_view_t* view)
 {
-  log_debug2("changing %d", view->column_layout_changing);
+  //log_debug2("changing %d", view->column_layout_changing);
   if (view->column_layout_changing) {
     return;
   }
@@ -1015,7 +1019,7 @@ static void library_view_col_width_set(GtkTreeViewColumn* col, GParamSpec* spec,
   int i;
   const char* name = g_object_get_data(G_OBJECT(col), "column_id"); 
   for(i = 0; strcmp(name, column_id(i)) != 0; ++i);
-  log_debug4("i = %d, name = %s, colid = %s", i, name, column_id(i));
+  //log_debug4("i = %d, name = %s, colid = %s", i, name, column_id(i));
   
   if (column_id(i) != NULL) {
     char cfgitem[200];

@@ -67,6 +67,9 @@ struct _Backtobasics
 	radio_view_t* radio_view;
 	GtkWindow* main_window;
 	
+	// Some more data
+	int active_preset_number;
+	
 #ifdef USE_APPINDICATOR
   AppIndicator* app_indicator;
 #else
@@ -75,6 +78,7 @@ struct _Backtobasics
 	
 	// Audio player
 	playlist_player_t* player;
+	GtkLabel * player_presets[PLAYLIST_PLAYER_MAX_PRESETS]; 
 	
 	// My data
 	library_t*  library;
@@ -97,6 +101,7 @@ playlist_player_t* backtobasics_player(Backtobasics* app);
 char* backtobasics_logo(Backtobasics* app);
 
 void btb_stop_cmd(Backtobasics* btb);
+void btb_tray_play_pause(GObject *obj, Backtobasics *btb);
 
 el_config_t* btb_config(Backtobasics* btb);
 void btb_config_set_int(Backtobasics* app, const char* path, int val);
@@ -106,6 +111,8 @@ char* btb_config_get_string(Backtobasics* app, const char* path, const char* def
 
 GtkWindow* btb_main_window(Backtobasics* btb);
 void menu_quit(GObject* object, gpointer data);
+
+void reflect_presets(Backtobasics* btb);
 
 /* Callbacks */
 

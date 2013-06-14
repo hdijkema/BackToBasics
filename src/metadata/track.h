@@ -5,6 +5,8 @@
 #include <time.h>
 #include <stdio.h>
 
+#define TRACK_MAX_PRESETS 12
+
 
 typedef struct {
   char* id_str;
@@ -33,6 +35,7 @@ typedef struct {
                             // !never exact! it is calculated when track_set_file is used.
                             // it can be used to estimate the size of a copy of tracks to an audio 
                             // device.
+  long presets[TRACK_MAX_PRESETS];                            
 } track_t;
 
 
@@ -75,6 +78,9 @@ const char* track_get_album_artist(track_t* t);
 
 void track_set_album_composer(track_t* t, const char* val);
 const char* track_get_album_composer(track_t* t);
+
+void track_set_preset(track_t* t, int preset, long ms);
+long track_get_preset(track_t* t, int preset);
 
 void track_set_year(track_t* t, int year);
 int track_get_year(track_t* t);

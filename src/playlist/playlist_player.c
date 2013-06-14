@@ -44,6 +44,10 @@ playlist_player_t* playlist_player_new(void)
   plp->current_track = -1;
   plp->current_position_in_ms = 0;
   plp->track_position_in_ms = -1;
+  int i;
+  for(i = 0; i < PLAYLIST_PLAYER_MAX_PRESETS; ++i) {
+    plp->preset_positions_in_ms[i] = -1;
+  }
   plp->playlist_hash = -1;
   plp->player_control = playlist_player_command_fifo_new();
   plp->playlist = playlist_new(NULL,_("Untitled"));
@@ -88,6 +92,36 @@ void playlist_player_play(playlist_player_t* plp)
   post_command(plp, PLP_CMD_PLAY, NULL);
 }
 
+void playlist_player_set_preset(playlist_player_t* plp, int preset_number)
+{
+  log_debug3("set preset %d to position = %ld ms", preset_number, plp->track_position_in_ms);
+  track_t* t = playlist_player_get_track(plp);
+  long ms = plp->track_position_in_ms;
+  plp->preset_positions_in_ms[preset_number] = ms; 
+  track_set_preset(t, preset_number, ms);
+}
+
+void playlist_player_clear_preset(playlist_player_t* plp, int preset_number)
+{
+  log_debug2("clear preset %d", preset_number);
+  track_t* t = playlist_player_get_track(plp);
+  plp->preset_positions_in_ms[preset_number] = -1;
+  track_set_preset(t, preset_number, -1);
+}
+
+void playlist_player_seek_preset(playlist_player_t* plp, int preset_number)
+{
+  if (plp->preset_positions_in_ms[preset_number] >= 0) {
+    log_debug3("seeking to preset %d (%ld ms)", preset_number, plp->preset_positions_in_ms[preset_number]);
+    playlist_player_seek(plp, plp->preset_positions_in_ms[preset_number]);
+  }
+}
+
+el_bool playlist_player_preset_set(playlist_player_t* player, int preset_number) 
+{
+  return player->preset_positions_in_ms[preset_number] >= 0;
+}
+
 void playlist_player_pause(playlist_player_t* plp)
 {
   post_command(plp, PLP_CMD_PAUSE, NULL);
@@ -112,6 +146,7 @@ void playlist_player_previous(playlist_player_t* plp)
 
 void playlist_player_seek(playlist_player_t* plp, long position_in_ms)
 {
+  log_debug2("Seeking to position %ld", position_in_ms);
   long* pos = (long*) mc_malloc(sizeof(long));
   *pos = position_in_ms;
   post_command(plp, PLP_CMD_SEEK, (void*) pos); 
@@ -171,8 +206,6 @@ track_t* playlist_player_get_track(playlist_player_t* plp)
   }
 }
 
-
-
 long playlist_player_get_current_position_in_ms(playlist_player_t* plp)
 {
   long result;
@@ -221,6 +254,17 @@ el_bool playlist_player_does_nothing(playlist_player_t* plp) {
 /****************************************************************************************
  * playlist player thread
  ****************************************************************************************/
+ 
+void set_presets_from_track(playlist_player_t* plp, track_t* t) 
+{
+  int i;
+  log_debug("Setting presets from track");
+  for(i = 0; i < PLAYLIST_PLAYER_MAX_PRESETS; ++i) {
+    long ms = track_get_preset(t, i);
+    plp->preset_positions_in_ms[i] = ms;
+    log_debug3("preset %d = %ld", i, ms);
+  }
+}
 
 void load_and_play(playlist_player_t* plp, track_t* t)
 {
@@ -248,6 +292,7 @@ void load_and_play(playlist_player_t* plp, track_t* t)
     media_play(plp->worker);
   }
   log_debug("loadandplay");
+  set_presets_from_track(plp, t);
 }
 
 void seek_and_guard(playlist_player_t* plp, track_t* t)
@@ -256,7 +301,8 @@ void seek_and_guard(playlist_player_t* plp, track_t* t)
     media_seek(plp->worker, track_get_begin_offset_in_ms(t));
     if (track_get_end_offset_in_ms(t) >= 0) {
       media_guard(plp->worker, track_get_end_offset_in_ms(t));
-    }
+    } 
+    set_presets_from_track(plp, t);  
   }
 }
 
@@ -264,10 +310,11 @@ void guard(playlist_player_t* plp, track_t* t)
 {
   if (track_get_end_offset_in_ms(t) >= 0) {
     media_guard(plp->worker, track_get_end_offset_in_ms(t));
+    set_presets_from_track(plp, t);
   }
 }
 
-void proces_next(playlist_player_t* plp)
+void proces_next(playlist_player_t* plp, el_bool force)
 {
   pthread_mutex_lock(plp->mutex);
   int next_index = plp->current_track + 1;
@@ -280,6 +327,7 @@ void proces_next(playlist_player_t* plp)
     // check if tracks are of same file and end_offset = next.begin_offset
     track_t* t_current = playlist_get(plp->playlist, plp->current_track);
     track_t* t_next = playlist_get(plp->playlist, next_index);
+    log_debug3("current: %p, next %p", t_current, t_next);
     plp->current_track = next_index;
     plp->track_changed = el_true;
     pthread_mutex_unlock(plp->mutex);
@@ -289,18 +337,24 @@ void proces_next(playlist_player_t* plp)
                                                    : track_get_url(t_next);
                                           
     if (strcmp(c_fu, n_fu) == 0) {
-      if ((track_get_begin_offset_in_ms(t_next) - track_get_end_offset_in_ms(t_current)) <= 1) {
+      log_debug3("%d - next %d", track_get_end_offset_in_ms(t_current), track_get_begin_offset_in_ms(t_next));
+      if (force) {
+        seek_and_guard(plp, t_next);
+      } else if ((track_get_begin_offset_in_ms(t_next) - track_get_end_offset_in_ms(t_current)) <= 1) {
         // do nothing, tracks follow each other 
         // only notify that the track has changed.
         // and guard the end.
+        log_debug("Guarding next position");
         guard(plp, t_next);
         //seek_and_guard(plp, t_next);
       } else {
         // seek in the current file and set a new guard
+        log_debug("Seeking to next");
         seek_and_guard(plp, t_next);
       }
     } else {
       // load an other
+      log_debug("Loading a new track");
       load_and_play(plp, t_next);
     }
   }
@@ -345,14 +399,14 @@ void proces_media_event(playlist_player_t* plp, audio_event_t* aevent) {
             load_and_play(plp, trk0);
           } else {
             pthread_mutex_unlock(plp->mutex);
-            proces_next(plp);
+            proces_next(plp, el_false);
           }
         } else {
           pthread_mutex_unlock(plp->mutex);
         }
       } else {
         pthread_mutex_unlock(plp->mutex);
-        proces_next(plp);
+        proces_next(plp, el_false);
       }
     }
     break;
@@ -463,7 +517,7 @@ void* playlist_player_thread(void* _plp)
         if (plp->player_state == PLAYLIST_PLAYER_PLAYING ||
               plp->player_state == PLAYLIST_PLAYER_PAUSED) {
           pthread_mutex_unlock(plp->mutex);
-          proces_next(plp);
+          proces_next(plp, el_true);
         } else {
           pthread_mutex_unlock(plp->mutex);
         }

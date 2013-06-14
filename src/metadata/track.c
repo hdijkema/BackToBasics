@@ -28,6 +28,12 @@ track_t* track_new()
   t->end_offset_in_ms = -1;
   t->length_in_ms = -1;
   t->file_size = -1;
+  {
+    int i;
+    for(i = 0; i< TRACK_MAX_PRESETS; ++i) {
+      t->presets[i] = -1; 
+    }
+  }
   return t;
 }
 
@@ -38,6 +44,7 @@ el_bool track_valid_id(track_t* t)
 
 #define C(a) t->/**/a = mc_strdup(s->/**/a)
 #define CC(a) t->/**/a = s->/**/a
+#define CCC(a) memcpy(t->/**/a, s->/**/a, sizeof(s->/**/a));
 
 track_t* track_copy(track_t* s) 
 {
@@ -62,6 +69,7 @@ track_t* track_copy(track_t* s)
   CC(begin_offset_in_ms);
   CC(end_offset_in_ms);
   CC(length_in_ms);
+  CCC(presets);
   return t;
 }
 
@@ -218,13 +226,14 @@ void log_track(track_t* t)
 }
 
 #define TRACK_MAGIC_NUMBER 93224244L
+#define TRACK_MAGIC_NUMBER2 93224245L
 #define WSTR(s, f) { long len = strlen(s)+1;fwrite(&len,sizeof(long),1,f);fwrite(s,len,1,f); }
 #define WNR(n, f) fwrite(&n, sizeof(n), 1, f)
 
 void track_fwrite(track_t* t, FILE* f) 
 {
   // Don't store lyrics.
-  long track_magic_number = TRACK_MAGIC_NUMBER;
+  long track_magic_number = TRACK_MAGIC_NUMBER2;
   fwrite(&track_magic_number, sizeof(long), 1, f);
   WSTR(t->id_str, f);
   WSTR(t->title, f);
@@ -246,6 +255,7 @@ void track_fwrite(track_t* t, FILE* f)
   WNR(t->end_offset_in_ms, f);
   WNR(t->length_in_ms, f);
   WNR(t->file_size, f);
+  WNR(t->presets, f);
 }
 
 #define RSTR(result, s, f) if (result) { long len; \
@@ -265,7 +275,7 @@ el_bool track_fread(track_t* t, FILE* f)
     return el_false;
   }
   
-  if (track_magic_number == TRACK_MAGIC_NUMBER) {
+  if (track_magic_number == TRACK_MAGIC_NUMBER || track_magic_number == TRACK_MAGIC_NUMBER2) {
     el_bool result = el_true;
     RSTR(result, t->id_str, f);
     RSTR(result, t->title, f);
@@ -290,6 +300,9 @@ el_bool track_fread(track_t* t, FILE* f)
     RNR(result, t->end_offset_in_ms, f);
     RNR(result, t->length_in_ms, f);
     RNR(result, t->file_size, f);
+    if (track_magic_number == TRACK_MAGIC_NUMBER2) {
+      RNR(result, t->presets, f);
+    }
     return result;
   } else {
     return el_false;
@@ -316,5 +329,13 @@ int track_cmp(track_t* t1, track_t* t2)
   } else {
     return r1;
   }
+}
+
+void track_set_preset(track_t* t, int preset, long ms) {
+  t->presets[preset] = ms;
+}
+
+long track_get_preset(track_t* t, int preset) {
+  return t->presets[preset];
 }
 
