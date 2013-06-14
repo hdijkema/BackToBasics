@@ -11,7 +11,7 @@
     <property name="icon">btb.png</property>
     <property name="type_hint">dialog</property>
     <property name="program_name">Back To Basics - Music Player</property>
-    <property name="version">v0.2</property>
+    <property name="version">v0.3</property>
     <property name="copyright" translatable="yes">(c) Hans Oesterholt</property>
     <property name="comments" translatable="yes">Back to basics is a music player that 
 aims to provide a good, low resource 
