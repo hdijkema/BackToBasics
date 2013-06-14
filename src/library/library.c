@@ -293,6 +293,25 @@ static void destroy(char* c)
 DECLARE_STATIC_HASH(scanned_hash, char);
 IMPLEMENT_STATIC_HASH(scanned_hash, char, copy, destroy);
 
+typedef struct {
+  long presets[TRACK_MAX_PRESETS];
+} presets_hash_t;
+
+static presets_hash_t* copy_psh(presets_hash_t* p)
+{
+  presets_hash_t* n = (presets_hash_t*) mc_malloc(sizeof(presets_hash_t));
+  memcpy(n, p, sizeof(presets_hash_t));
+  return n;
+}
+
+static void destroy_psh(presets_hash_t *p)
+{
+  mc_free(p);
+}
+
+DECLARE_STATIC_HASH(presets_hash, presets_hash_t);
+IMPLEMENT_STATIC_HASH(presets_hash, presets_hash_t, copy_psh, destroy_psh);
+
 static void fill_arrays(library_t* l)
 {
   if (l->dirty) {
@@ -562,6 +581,31 @@ void scan_library(scan_job_t* job, ScanJobCBFunc cb, void* lib)
   scanned_hash *h = scanned_hash_new(100, HASH_CASE_SENSITIVE);
   file_info_t* info = file_info_new(path);
   
+  // Save relevant presets
+  presets_hash *psh = presets_hash_new(100, HASH_CASE_SENSITIVE);
+  hash_iter_t iter = library_db_iter(library->tracks_db);
+  int psh_count = 0;
+  while (!library_db_iter_end(iter)) {
+    track_t *t = library_db_iter_data(iter);
+    {
+      int i;
+      el_bool relevant = el_false;
+      presets_hash_t psh_elem;
+      for(i = 0; i < TRACK_MAX_PRESETS; ++i) {
+        long ms = track_get_preset(t, i);
+        psh_elem.presets[i] = ms;
+        if (ms >= 0) { relevant = el_true; }
+      }
+      if (relevant) {
+        presets_hash_put(psh, track_get_id_as_str(t), &psh_elem);
+        psh_count += 1;
+      }
+    }
+    iter = library_db_iter_next(iter);
+  }
+  log_debug2("presets hash has %d entries", psh_count);
+  
+  // Clear current library
   library_clear(library);
   
   log_info2("Scanning library, %s", path); 
@@ -592,6 +636,28 @@ void scan_library(scan_job_t* job, ScanJobCBFunc cb, void* lib)
   library_sort(library);
   
   log_debug2("library count: %d", library_count(library));
+  
+  // Reput presets
+  {
+    hash_iter_t iter = presets_hash_iter(psh);
+    int psh_count = 0;
+    while (!presets_hash_iter_end(iter)) {
+      presets_hash_t *psh_elem = presets_hash_iter_data(iter);
+      const char* track_id = presets_hash_iter_key(iter);
+      track_t* t = library_get(library, track_id);
+      if (t != NULL) {
+        int i;
+        for(i = 0; i < TRACK_MAX_PRESETS; ++i) {
+          track_set_preset(t, i, psh_elem->presets[i]); 
+        }
+        psh_count += 1;
+      }
+      iter = presets_hash_iter_next(iter);
+    }
+    log_debug2("Reinstalled presets for %d tracks", psh_count);
+  }
+  
+  presets_hash_destroy(psh);
 
   if (cb) {   
     cb(job, el_true, _("Scanning media library"), _("Finished"), count, total_files);
