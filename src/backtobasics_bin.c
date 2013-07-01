@@ -419,7 +419,7 @@ static void backtobasics_class_init (BacktobasicsClass *klass)
 
 Backtobasics *backtobasics_new (void)
 {
-	//g_type_init ();
+	g_type_init ();  // deprecated, but not on all machines that I need to support.
 	return g_object_new (backtobasics_get_type (),
 	                     "BackToBasics", "net.oesterholt.backtobasics",
 	                     NULL);
